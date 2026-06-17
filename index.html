@@ -3440,7 +3440,13 @@ function saveData(){
   saveStoneImages().catch(()=>{});
   saveDecoImages().catch(()=>{});
 }
+let _loadDataPromise=null;
 async function loadData(){
+  // Serialize concurrent calls — ถ้ามี call กำลัง run อยู่ ให้รอก่อน
+  if(_loadDataPromise){ await _loadDataPromise; }
+  let _resolve;
+  _loadDataPromise=new Promise(r=>{_resolve=r;});
+  try{
   // โหลด decos metadata จาก localStorage, รูปจาก IndexedDB
   try{
     const raw=localStorage.getItem(SK+'_decos');
@@ -3534,6 +3540,7 @@ async function loadData(){
     const raw=localStorage.getItem(SK+'_uidc');
     if(raw){ const v=parseInt(raw); if(v>uidCounter) uidCounter=v; }
   } catch(e){}
+  }finally{ _loadDataPromise=null; _resolve(); }
 }
 // ── ADMIN LOCK ──
 let isAdminMode=false,logoTapCount=0,logoTapTimer=null;
