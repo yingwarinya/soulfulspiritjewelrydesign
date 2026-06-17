@@ -3475,7 +3475,11 @@ async function loadData(){
   try{
     const raw=localStorage.getItem(SK+'_stones');
     if(raw){
-      const saved=JSON.parse(raw);
+      // deduplicate by ID — keep last occurrence (ป้องกัน stone ซ้ำใน saved data)
+      const savedRaw=JSON.parse(raw);
+      const seenIds=new Map();
+      for(const s of savedRaw) seenIds.set(s.id,s);
+      const saved=Array.from(seenIds.values());
       const builtinImgs={};
       const builtinMeta={};
       stones.forEach(s=>{
