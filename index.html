@@ -3497,10 +3497,20 @@ async function loadData(){
         if(ss.id<=14){
           if(builtinImgs[ss.id]) ss.img=builtinImgs[ss.id];
         } else {
-          // โหลดรูปจาก IndexedDB
-          try{ const img=await dbGet('stone_'+ss.id); if(img)ss.img=img; }catch(e){}
-          try{ const img2=await dbGet('stone_'+ss.id+'_2'); if(img2)ss.img2=img2; }catch(e){}
-          try{ const img3=await dbGet('stone_'+ss.id+'_3'); if(img3)ss.img3=img3; }catch(e){}
+          // โหลดรูปจาก IndexedDB (ลอง stone_X ก่อน ถ้าไม่มีลอง deco_X เป็น fallback)
+          try{
+            let img=await dbGet('stone_'+ss.id);
+            if(!img){img=await dbGet('deco_'+ss.id);if(img)dbPut('stone_'+ss.id,img).catch(()=>{});}
+            if(img)ss.img=img;
+          }catch(e){}
+          try{
+            let img2=await dbGet('stone_'+ss.id+'_2');
+            if(img2)ss.img2=img2;
+          }catch(e){}
+          try{
+            let img3=await dbGet('stone_'+ss.id+'_3');
+            if(img3)ss.img3=img3;
+          }catch(e){}
           // Migration: ย้ายรูปจาก localStorage เก่า → IndexedDB (ถ้ายังมีอยู่)
           if(!ss.img){
             const old=localStorage.getItem(SK+'_simg_'+ss.id)||
@@ -3699,7 +3709,10 @@ async function exportEmbeddedHTML(){
       }catch(ex){}
       // 3c. fallback: old-format localStorage keys (soulful_v1_simg_X / _dimg_X)
       try{
-        const stoneIdSet=new Set(typeof stones!=='undefined'?stones.map(s=>String(s.id)):[]);
+        // อ่าน stone IDs จาก localStorage (sync) เพื่อ mapping ที่ถูกต้อง
+        const stoneIdSet=new Set();
+        try{const sm=JSON.parse(localStorage.getItem('soulful_v1_stones')||'[]');sm.forEach(s=>stoneIdSet.add(String(s.id)));}catch(e){}
+        if(typeof stones!=='undefined')stones.forEach(s=>stoneIdSet.add(String(s.id)));
         for(let i=0;i<localStorage.length;i++){
           const k=localStorage.key(i); if(!k) continue;
           const sm=k.match(/^soulful_v1_simg_(\d+(_2|_3)?)$/);
