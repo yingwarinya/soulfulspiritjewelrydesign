@@ -3676,6 +3676,13 @@ async function exportEmbeddedHTML(){
           lsData[k]=v;
         }
       }
+      // override stones/decos metadata ด้วย in-memory array (de-duped, ถูกต้อง)
+      try{
+        if(typeof stones!=='undefined')
+          lsData['soulful_v1_stones']=JSON.stringify(stones.map(s=>({...s,img:'',img2:'',img3:''})));
+        if(typeof decos!=='undefined')
+          lsData['soulful_v1_decos']=JSON.stringify(decos.map(d=>({...d,img:''})));
+      }catch(ex){}
 
       // 3. collect images from in-memory stones/decos arrays (source of truth)
       const idbData={};
