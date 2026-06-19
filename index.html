@@ -661,9 +661,9 @@
       <div style="margin-bottom:7px;">
         <div class="color-swatch-label">สีของอะไหล่:</div>
         <div class="metal-tab-row">
-          <div id="nMetalGold" class="metal-tab active" onclick="selectMetal('n','gold',this)">🥇 ทอง</div>
-          <div id="nMetalSilver" class="metal-tab" onclick="selectMetal('n','silver',this)">🥈 เงิน</div>
-          <div id="nMetalRosegold" class="metal-tab" onclick="selectMetal('n','rosegold',this)">🌸 โรสโกล</div>
+          <div id="nMetalGold" class="metal-tab active" onclick="selectMetal('n','gold')">🥇 ทอง</div>
+          <div id="nMetalSilver" class="metal-tab" onclick="selectMetal('n','silver')">🥈 เงิน</div>
+          <div id="nMetalRosegold" class="metal-tab" onclick="selectMetal('n','rosegold')">🌸 โรสโกล</div>
         </div>
         <input type="hidden" id="nDecoMetal" value="gold">
         <input type="hidden" id="nDecoColor" value="#c9a040">
@@ -805,9 +805,9 @@
     <div id="editDecoColorRow" style="display:none;margin-bottom:4px;">
       <div class="color-swatch-label">สีของอะไหล่:</div>
       <div class="metal-tab-row">
-        <div id="eMetalGold" class="metal-tab" onclick="selectMetal('e','gold',this)">🥇 ทอง</div>
-        <div id="eMetalSilver" class="metal-tab" onclick="selectMetal('e','silver',this)">🥈 เงิน</div>
-        <div id="eMetalRosegold" class="metal-tab" onclick="selectMetal('e','rosegold',this)">🌸 โรสโกล</div>
+        <div id="eMetalGold" class="metal-tab" onclick="selectMetal('e','gold')">🥇 ทอง</div>
+        <div id="eMetalSilver" class="metal-tab" onclick="selectMetal('e','silver')">🥈 เงิน</div>
+        <div id="eMetalRosegold" class="metal-tab" onclick="selectMetal('e','rosegold')">🌸 โรสโกล</div>
       </div>
       <input type="hidden" id="eDecoMetal" value="gold">
     </div>
@@ -2382,7 +2382,7 @@ function renderAdmin(){
       ${adminThumb(d,true)}
       <div class="admin-info">
         <div class="admin-name">${d.name} — ${d.thai} (${d.w||d.size}×${d.h||d.size}mm)</div>
-        <div class="admin-sub">฿${d.price}/ชิ้น${(d.type==='spacer'||d.type==='logo')&&d.freeQty!=null?' · ฟรี '+d.freeQty+' ชิ้นแรก':''}${d.metal?' · '+(d.metal==='gold'?'🥇ทอง':d.metal==='silver'?'🥈เงิน':'🌸โรส'):''}${d.hidden?' · 🚫ซ่อน':''}</div>
+        <div class="admin-sub">฿${d.price}/ชิ้น${(d.type==='spacer'||d.type==='logo')&&d.freeQty!=null?' · ฟรี '+d.freeQty+' ชิ้นแรก':''}${d.metal?' · '+(d.metal||'gold').split(',').map(m=>m==='gold'?'🥇ทอง':m==='silver'?'🥈เงิน':'🌸โรส').join('+'):''}${d.hidden?' · 🚫ซ่อน':''}</div>
       </div>
       <div class="admin-actions">
         ${d.img?`<button class="admin-btn" onclick="removeBgDeco(${d.id})" title="ลบพื้นหลัง">🪄</button>`:''}
@@ -2392,8 +2392,9 @@ function renderAdmin(){
         <button class="admin-btn del-btn" onclick="deleteDeco(${d.id})" title="ลบ">🗑</button>
       </div>
     </div>`;
-    const items=decos.filter(d=>d.type===adminDecoType&&(adminDecoMetal.includes('all')||adminDecoMetal.includes(d.metal||'gold')))
-      .sort((a,b)=>({silver:0,gold:1,rosegold:2}[a.metal||'gold']??1)-({silver:0,gold:1,rosegold:2}[b.metal||'gold']??1));
+    const _firstMetal=d=>(d.metal||'gold').split(',')[0];
+    const items=decos.filter(d=>d.type===adminDecoType&&(adminDecoMetal.includes('all')||(d.metal||'gold').split(',').some(m=>adminDecoMetal.includes(m))))
+      .sort((a,b)=>({silver:0,gold:1,rosegold:2}[_firstMetal(a)]??1)-({silver:0,gold:1,rosegold:2}[_firstMetal(b)]??1));
     decoList.innerHTML=items.length?items.map(decoItemHTML).join('')
       :`<div class="empty" style="padding:16px;font-size:12px;">ยังไม่มีรายการในหมวดนี้</div>`;
   }
@@ -2671,7 +2672,7 @@ function addDeco(){
   const h=parseInt(document.getElementById('nDecoH').value)||10;
   const size=decoType==='pendant'?1:Math.max(w,h);
   const metal=document.getElementById('nDecoMetal').value||'gold';
-  const col=METAL_COLORS[metal]||document.getElementById('nDecoColor').value;
+  const col=METAL_COLORS[metal.split(',')[0]]||document.getElementById('nDecoColor').value;
   const img=document.getElementById('nDecoImgData').value;
   const img2=(decoType==='pendant'?document.getElementById('nDecoImgData2')?.value:'')||'';
   if(!name){showToast('⚠️ กรุณากรอกชื่อ (English)');return;}
@@ -2849,7 +2850,7 @@ function saveEdit(){
   const price=parseFloat(document.getElementById('editPrice').value)||0;
   const size=parseFloat(document.getElementById('editSize').value)||8;
   const eMetal=document.getElementById('eDecoMetal').value||'gold';
-  const col=isStone?document.getElementById('editColor').value:(METAL_COLORS[eMetal]||document.getElementById('editColor').value);
+  const col=isStone?document.getElementById('editColor').value:(METAL_COLORS[eMetal.split(',')[0]]||document.getElementById('editColor').value);
   const img=document.getElementById('editImgData').value;
   const img2=document.getElementById('editImgData2').value;
   const img3=document.getElementById('editImgData3').value;
@@ -2955,18 +2956,33 @@ function getChips(groupId) {
 // ── UTILS ──
 const METAL_COLORS={gold:'#c9a040',silver:'#c8c8c8',rosegold:'#d4886a'};
 const METAL_PREFIX_MAP={n:{metalId:'nDecoMetal',colorId:'nDecoColor',tabs:['nMetalGold','nMetalSilver','nMetalRosegold']},e:{metalId:'eDecoMetal',colorId:'editColor',tabs:['eMetalGold','eMetalSilver','eMetalRosegold']}};
-function selectMetal(prefix,metal,el){
-  const map=METAL_PREFIX_MAP[prefix]; if(!map)return;
-  map.tabs.forEach(id=>{const t=document.getElementById(id);if(t)t.classList.remove('active');});
-  el.classList.add('active');
-  document.getElementById(map.metalId).value=metal;
-  document.getElementById(map.colorId).value=METAL_COLORS[metal]||'#c9a040';
+const METAL_TAB_KEYS=['gold','silver','rosegold'];
+function _getSelectedMetals(prefix){
+  const map=METAL_PREFIX_MAP[prefix]; if(!map)return['gold'];
+  const val=document.getElementById(map.metalId).value||'gold';
+  return val.split(',').filter(Boolean);
 }
-function setMetalTab(prefix,metal){
+function _syncMetalUI(prefix){
   const map=METAL_PREFIX_MAP[prefix]; if(!map)return;
-  const key=metal||'gold';
-  const tabId={gold:map.tabs[0],silver:map.tabs[1],rosegold:map.tabs[2]}[key]||map.tabs[0];
-  const el=document.getElementById(tabId); if(el){selectMetal(prefix,key,el);}
+  const selected=_getSelectedMetals(prefix);
+  METAL_TAB_KEYS.forEach((k,i)=>{const el=document.getElementById(map.tabs[i]);if(el)el.classList.toggle('active',selected.includes(k));});
+  const firstColor=METAL_COLORS[selected[0]]||'#c9a040';
+  document.getElementById(map.colorId).value=firstColor;
+}
+function selectMetal(prefix,metal){
+  const map=METAL_PREFIX_MAP[prefix]; if(!map)return;
+  let selected=_getSelectedMetals(prefix);
+  const idx=selected.indexOf(metal);
+  if(idx>-1){ if(selected.length>1) selected.splice(idx,1); } // ลดออก แต่ต้องเหลืออย่างน้อย 1
+  else selected.push(metal);
+  document.getElementById(map.metalId).value=selected.join(',');
+  _syncMetalUI(prefix);
+}
+function setMetalTab(prefix,metalStr){
+  const map=METAL_PREFIX_MAP[prefix]; if(!map)return;
+  const metals=(metalStr||'gold').split(',').filter(m=>METAL_TAB_KEYS.includes(m));
+  document.getElementById(map.metalId).value=(metals.length?metals:['gold']).join(',');
+  _syncMetalUI(prefix);
 }
 function lighten(hex,amt){let c=parseInt(hex.slice(1),16);return '#'+[Math.min(255,(c>>16)+amt),Math.min(255,((c>>8)&0xff)+amt),Math.min(255,(c&0xff)+amt)].map(x=>x.toString(16).padStart(2,'0')).join('');}
 function darken(hex,amt){let c=parseInt(hex.slice(1),16);return '#'+[Math.max(0,(c>>16)-amt),Math.max(0,((c>>8)&0xff)-amt),Math.max(0,(c&0xff)-amt)].map(x=>x.toString(16).padStart(2,'0')).join('');}
@@ -3091,7 +3107,7 @@ function switchDecoMetal(m){
 }
 function renderDecoModalGrid(){
   const _metalOrder={silver:0,gold:1,rosegold:2};
-  const all=decos.filter(d=>!d.hidden&&d.type===decoModalTab&&(decoModalMetal.includes('all')||decoModalMetal.includes(d.metal||'gold')))
+  const all=decos.filter(d=>!d.hidden&&d.type===decoModalTab&&(decoModalMetal.includes('all')||(d.metal||'gold').split(',').some(m=>decoModalMetal.includes(m))))
     .sort((a,b)=>(_metalOrder[a.metal||'gold']??1)-(_metalOrder[b.metal||'gold']??1));
   const isLogoTab=(decoModalTab==='logo');
   const isSpacerTab=(decoModalTab==='spacer');
