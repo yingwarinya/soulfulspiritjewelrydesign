@@ -3398,11 +3398,12 @@ function exportDesign(){
   roundRect(PAD-10, bY-10, bSize+20, bSize+20, 16, 'rgba(255,255,255,0.012)', BORDER, 1);
   c.drawImage(srcC, PAD, bY, bSize, bSize);
 
-  // wrist size pill — วัดความกว้างข้อความก่อนวาดกล่อง
-  c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
+  // wrist size pill — ใช้ font ขนาดเล็กลง + padding넉넉 ให้แน่ใจว่าข้อความอยู่ในกล่อง
+  c.font='bold 11px "Trebuchet MS",Arial,sans-serif';
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
   const pillTW=c.measureText(pillText).width;
-  const pillW=Math.max(130, pillTW+24), pillH=24, pillX=(W-pillW)/2, pillY=bY+bSize-28;
+  const pillPad=28;
+  const pillW=pillTW+pillPad, pillH=24, pillX=(W-pillW)/2, pillY=bY+bSize-28;
   roundRect(pillX, pillY, pillW, pillH, 12, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID; c.textAlign='center';
   c.fillText(pillText, W/2, pillY+16);
@@ -3547,19 +3548,18 @@ function exportDesign(){
   totBgG.addColorStop(1, 'rgba(40,4,14,0.55)');
   roundRect(PAD-10, sy-2, W-PAD*2+20, TOTAL_H-4, 10, totBgG, 'rgba(213,175,64,0.35)', 1);
 
-  // Label "ราคารวม" ซ้าย
+  // Label "ราคารวม" + ตัวเลขต่อข้างกัน ฝั่งซ้าย
   c.textAlign='left';
   c.font='bold 16px "Tahoma","Segoe UI",Arial,sans-serif';
   c.fillStyle=TEXT_THAI;
   c.fillText('ราคารวม', PAD+6, sy+TOTAL_H/2+6);
+  const _labelW=c.measureText('ราคารวม').width;
 
-  // ยอดรวม — right-aligned ชัดเจน สีทองสว่าง
-  c.textAlign='right';
-  c.font='bold 28px "Trebuchet MS",Arial,sans-serif';
+  c.font='bold 26px "Trebuchet MS",Arial,sans-serif';
   c.fillStyle=PRICE_COL;
   c.shadowColor='rgba(245,213,96,0.45)';
-  c.shadowBlur=10;
-  c.fillText('฿'+totalPrice.toLocaleString(), W-PAD-6, sy+TOTAL_H/2+10);
+  c.shadowBlur=8;
+  c.fillText('฿'+totalPrice.toLocaleString(), PAD+6+_labelW+14, sy+TOTAL_H/2+9);
   c.shadowBlur=0;
   sy += TOTAL_H;
 
