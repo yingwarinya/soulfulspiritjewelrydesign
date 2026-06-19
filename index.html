@@ -456,7 +456,8 @@
   <div class="list-label">🔮 เพิ่มหินด่วน · ออร่า &amp; คุณสมบัติ</div>
   <div class="chakra-row" id="auraChips" style="margin-bottom:4px;"></div>
   <div class="grade-row" id="quickGradeChips" style="margin-bottom:4px;"></div>
-  <div class="grade-row" id="quickPropChips" style="margin-bottom:8px;"></div>
+  <div class="grade-row" id="quickPropChips" style="margin-bottom:4px;"></div>
+  <div class="grade-row" id="quickSortChips" style="margin-bottom:8px;"></div>
   <div class="quick-grid" id="quickGrid"></div>
 </div>
 
@@ -2066,7 +2067,7 @@ function invalidateCatalogCache(){_catalogCacheKey='';}
 // Admin render cache
 let _adminCacheKey='';
 let _dataVersion=0; // เพิ่มทุกครั้งที่ saveData()
-function _adminKey(){return adminSection+'|'+adminStoneGrade+'|'+adminDecoType+'|'+adminDecoMetal+'|'+_dataVersion;}
+function _adminKey(){return adminSection+'|'+adminStoneGrade+'|'+adminDecoType+'|'+adminDecoMetal.join(',')+'|'+_dataVersion;}
 function invalidateAdminCache(){_adminCacheKey='';}
 
 // Debounced refreshAll — ป้องกันเรียกซ้ำหลายครั้งใน tick เดียว
@@ -2247,15 +2248,17 @@ function toggleAura(id){
   const i=selectedAuras.indexOf(id);
   if(i>=0){selectedAuras.splice(i,1);}
   else{if(selectedAuras.length>=3)selectedAuras.shift();selectedAuras.push(id);}
-  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickGrid();
+  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickSortChips();renderQuickGrid();
 }
 function renderQuickGrid(){
-  const visible=sortByGrade(stones.filter(s=>!s.hidden).filter(s=>{
+  let visible=sortByGrade(stones.filter(s=>!s.hidden).filter(s=>{
     const cOk=!selectedAuras.length||(()=>{const sc=Array.isArray(s.chakra)?s.chakra:[s.chakra];return selectedAuras.some(a=>sc.includes(a));})();
     const sTags=Array.isArray(s.tags)?s.tags:(s.tags?[s.tags]:[]);
     const pOk=quickProps.includes('all')||quickProps.some(p=>p==='wealth'?(sTags.includes('wealth')||sTags.includes('finance')):sTags.includes(p));
     const gOk=quickGrade==='all'||s.grade===quickGrade;
     return cOk&&pOk&&gOk;}));
+  if(quickSort==='asc') visible.sort((a,b)=>(a.price||0)-(b.price||0));
+  else if(quickSort==='desc') visible.sort((a,b)=>(b.price||0)-(a.price||0));
   document.getElementById('quickGrid').innerHTML=visible.map(s=>{
     const cnt=bracelet.filter(b=>b&&b.isStone&&b.itemId===s.id).length;
     return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
@@ -2389,7 +2392,7 @@ function renderAdmin(){
         <button class="admin-btn del-btn" onclick="deleteDeco(${d.id})" title="ลบ">🗑</button>
       </div>
     </div>`;
-    const items=decos.filter(d=>d.type===adminDecoType&&(adminDecoMetal==='all'||(d.metal||'gold')===adminDecoMetal))
+    const items=decos.filter(d=>d.type===adminDecoType&&(adminDecoMetal.includes('all')||adminDecoMetal.includes(d.metal||'gold')))
       .sort((a,b)=>({silver:0,gold:1,rosegold:2}[a.metal||'gold']??1)-({silver:0,gold:1,rosegold:2}[b.metal||'gold']??1));
     decoList.innerHTML=items.length?items.map(decoItemHTML).join('')
       :`<div class="empty" style="padding:16px;font-size:12px;">ยังไม่มีรายการในหมวดนี้</div>`;
@@ -3035,7 +3038,7 @@ function showTab(tab,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   el.classList.add('active');
-  if(tab==='catalog'){setTimeout(()=>{renderChakraChips();renderGradeChips();renderPropChips();renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderCatalog();},0);}
+  if(tab==='catalog'){setTimeout(()=>{renderChakraChips();renderGradeChips();renderPropChips();renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickSortChips();renderCatalog();},0);}
   if(tab==='admin'){setTimeout(()=>{renderAdmin();buildChakraChips('nStoneChakraGroup',[]);buildPropChips('nStoneTagGroup',[]);},0);}
   if(tab==='summary'){setTimeout(()=>renderStoneMeanings(),0);}
 }
@@ -3059,20 +3062,36 @@ function renderDecoPreview(){
   }
 }
 let decoModalTab='pendant';
-let decoModalMetal='all';
+let decoModalMetal=['all'];
 let quickProps=['all']; // multi-select array
 let quickGrade='all';
+let quickSort='none'; // 'none' | 'asc' | 'desc'
 function renderQuickGradeChips(){
   document.getElementById('quickGradeChips').innerHTML=
     [{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'}]
     .map(g=>`<div class="grade-chip${quickGrade===g.id?' active':''}" onclick="setQuickGrade('${g.id}')">${g.label}</div>`).join('');
 }
 function setQuickGrade(v){quickGrade=v;renderQuickGradeChips();renderQuickGrid();}
-function switchDecoTab(tab){decoModalTab=tab;decoModalMetal='all';['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
-function switchDecoMetal(m){decoModalMetal=m;['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',x===m);});renderDecoModalGrid();}
+function renderQuickSortChips(){
+  const chips=[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก → แพง'},{id:'desc',label:'฿ แพง → ถูก'}];
+  document.getElementById('quickSortChips').innerHTML=chips.map(c=>`<div class="grade-chip${quickSort===c.id?' active':''}" onclick="setQuickSort('${c.id}')">${c.label}</div>`).join('');
+}
+function setQuickSort(v){quickSort=v;renderQuickSortChips();renderQuickGrid();}
+function switchDecoTab(tab){decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
+function switchDecoMetal(m){
+  if(m==='all'){decoModalMetal=['all'];}
+  else{
+    decoModalMetal=decoModalMetal.filter(x=>x!=='all');
+    const idx=decoModalMetal.indexOf(m);
+    if(idx>-1) decoModalMetal.splice(idx,1); else decoModalMetal.push(m);
+    if(!decoModalMetal.length) decoModalMetal=['all'];
+  }
+  ['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',decoModalMetal.includes(x));});
+  renderDecoModalGrid();
+}
 function renderDecoModalGrid(){
   const _metalOrder={silver:0,gold:1,rosegold:2};
-  const all=decos.filter(d=>!d.hidden&&d.type===decoModalTab&&(decoModalMetal==='all'||(d.metal||'gold')===decoModalMetal))
+  const all=decos.filter(d=>!d.hidden&&d.type===decoModalTab&&(decoModalMetal.includes('all')||decoModalMetal.includes(d.metal||'gold')))
     .sort((a,b)=>(_metalOrder[a.metal||'gold']??1)-(_metalOrder[b.metal||'gold']??1));
   const isLogoTab=(decoModalTab==='logo');
   const isSpacerTab=(decoModalTab==='spacer');
@@ -3245,7 +3264,7 @@ function enterApp(){
   selectedAuras=[...introTopChakras];
   // ถ้าลูกค้าเลือกคุณสมบัติใน Step 3 → filter ตามนั้นทันที
   quickProps = introSel.length ? [...introSel] : ['all'];
-  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickGrid();
+  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickSortChips();renderQuickGrid();
   const ov=document.getElementById('introOverlay');
   ov.classList.add('hidden');
   setTimeout(()=>ov.style.display='none',560);
@@ -3838,7 +3857,7 @@ function logoTap(){
 let adminSection=null; // 'stone' | 'deco'
 let adminStoneGrade='all'; // 'all' | 'premium' | 'gem' | 'topjewelry'
 let adminDecoType='charm'; // 'charm' | 'pendant' | 'logo' | 'spacer'
-let adminDecoMetal='all'; // 'all' | 'silver' | 'gold' | 'rosegold'
+let adminDecoMetal=['all']; // array, multi-select
 
 function selectAdminSection(sec){
   adminSection=sec;
@@ -3876,7 +3895,7 @@ function selectAdminGrade(grade){
 
 function selectAdminDecoType(type){
   adminDecoType=type;
-  adminDecoMetal='all'; // reset metal filter when switching type
+  adminDecoMetal=['all']; // reset metal filter when switching type
   ['charm','pendant','logo','spacer'].forEach(t=>{
     const id={charm:'adminDecoCharm',pendant:'adminDecoPendant',logo:'adminDecoLogo',spacer:'adminDecoSpacer'}[t];
     const el=document.getElementById(id);
@@ -3894,10 +3913,16 @@ function selectAdminDecoType(type){
 }
 
 function selectAdminDecoMetal(metal){
-  adminDecoMetal=metal;
+  if(metal==='all'){adminDecoMetal=['all'];}
+  else{
+    adminDecoMetal=adminDecoMetal.filter(m=>m!=='all');
+    const idx=adminDecoMetal.indexOf(metal);
+    if(idx>-1) adminDecoMetal.splice(idx,1); else adminDecoMetal.push(metal);
+    if(!adminDecoMetal.length) adminDecoMetal=['all'];
+  }
   ['all','silver','gold','rosegold'].forEach(m=>{
     const el=document.getElementById('adminDecoMetal_'+m);
-    if(el)el.classList.toggle('active',m===metal);
+    if(el)el.classList.toggle('active',adminDecoMetal.includes(m));
   });
   _adminCacheKey=''; // invalidate cache
   renderAdmin();
@@ -4507,7 +4532,7 @@ function _mkInitDrag(){
   ensureLockedLogo();
   loadImg(1, stones[0].img);
   // render UI ที่คนเห็นบน design tab เท่านั้น (tab อื่นโหลดเมื่อคลิก)
-  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();
+  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickSortChips();
   drawBracelet();renderBeadList();calcPrice();
   // ซ่อน loader ทันทีที่ถาดหินพร้อม
   const loader=document.getElementById('appLoader');
