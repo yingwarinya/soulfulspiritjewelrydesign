@@ -3426,17 +3426,22 @@ function exportDesign(){
   roundRect(PAD-10, bY-10, bSize+20, bSize+20, 16, 'rgba(255,255,255,0.012)', BORDER, 1);
   c.drawImage(srcC, PAD, bY, bSize, bSize);
 
-  // wrist size pill — ใช้ font ขนาดเล็กลง + padding넉넉 ให้แน่ใจว่าข้อความอยู่ในกล่อง
-  c.font='bold 11px "Trebuchet MS",Arial,sans-serif';
+  // wrist size pill — ใช้ save/restore ป้องกัน state pollution, textBaseline=middle
+  c.save();
+  c.textAlign='center';
+  c.textBaseline='middle';
+  c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
-  // Thai fallback font ทำให้ measureText underestimate — คูณ 1.25 + padding เผื่อไว้
-  const pillTW=c.measureText(pillText).width * 1.25;
-  const pillPad=44;
-  const braceCX=W/2; // center of export canvas
-  const pillW=pillTW+pillPad, pillH=24, pillX=braceCX-pillW/2, pillY=bY+bSize-28;
-  roundRect(pillX, pillY, pillW, pillH, 12, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
-  c.fillStyle=GOLD_MID; c.textAlign='center';
-  c.fillText(pillText, braceCX, pillY+16);
+  const pillCX=W/2; // กึ่งกลางภาพ export พอดี
+  const pillH=26;
+  const pillCY=bY+bSize-22; // กึ่งกลาง pill แนวตั้ง
+  // Thai fallback ทำให้ measureText underestimate — เพิ่ม 40% + minimum 200px
+  const pillW=Math.max(c.measureText(pillText).width*1.4+48, 200);
+  const pillX=pillCX-pillW/2;
+  roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
+  c.fillStyle=GOLD_MID;
+  c.fillText(pillText, pillCX, pillCY);
+  c.restore();
 
   // ── SECTION DIVIDER ───────────────────────────────────────────
   let sy = HEADER_H + BRACELET_H + 10;
