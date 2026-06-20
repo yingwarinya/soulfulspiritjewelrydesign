@@ -3095,14 +3095,8 @@ function renderQuickSortChips(){
 function setQuickSort(v){quickSort=v;renderQuickSortChips();renderQuickGrid();}
 function switchDecoTab(tab){decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
 function switchDecoMetal(m){
-  if(m==='all'){decoModalMetal=['all'];}
-  else{
-    decoModalMetal=decoModalMetal.filter(x=>x!=='all');
-    const idx=decoModalMetal.indexOf(m);
-    if(idx>-1) decoModalMetal.splice(idx,1); else decoModalMetal.push(m);
-    if(!decoModalMetal.length) decoModalMetal=['all'];
-  }
-  ['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',decoModalMetal.includes(x));});
+  decoModalMetal=[m]; // single-select filter
+  ['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',x===m);});
   renderDecoModalGrid();
 }
 function renderDecoModalGrid(){
@@ -3929,16 +3923,10 @@ function selectAdminDecoType(type){
 }
 
 function selectAdminDecoMetal(metal){
-  if(metal==='all'){adminDecoMetal=['all'];}
-  else{
-    adminDecoMetal=adminDecoMetal.filter(m=>m!=='all');
-    const idx=adminDecoMetal.indexOf(metal);
-    if(idx>-1) adminDecoMetal.splice(idx,1); else adminDecoMetal.push(metal);
-    if(!adminDecoMetal.length) adminDecoMetal=['all'];
-  }
+  adminDecoMetal=[metal]; // single-select filter
   ['all','silver','gold','rosegold'].forEach(m=>{
     const el=document.getElementById('adminDecoMetal_'+m);
-    if(el)el.classList.toggle('active',adminDecoMetal.includes(m));
+    if(el)el.classList.toggle('active',m===metal);
   });
   _adminCacheKey=''; // invalidate cache
   renderAdmin();
