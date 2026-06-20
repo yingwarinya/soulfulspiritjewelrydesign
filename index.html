@@ -3348,12 +3348,15 @@ function introGo(step){
 const AG_LEVEL_KEY='soulful_access_level';
 const AG_NORMAL_KEY='soulful_v1_access_normal';
 const AG_GOLD_KEY='soulful_v1_access_gold';
+// Default codes baked into file — admin can override via admin panel
+const AG_DEFAULT_NORMAL='1234';
+const AG_DEFAULT_GOLD='9999';
+
+function _getNormalCode(){ return localStorage.getItem(AG_NORMAL_KEY)||AG_DEFAULT_NORMAL; }
+function _getGoldCode(){ return localStorage.getItem(AG_GOLD_KEY)||AG_DEFAULT_GOLD; }
 
 function checkAccessGate(){
   if(isAdminMode) return; // admin ข้ามได้เลย
-  const normalCode=localStorage.getItem(AG_NORMAL_KEY)||'';
-  const goldCode=localStorage.getItem(AG_GOLD_KEY)||'';
-  if(!normalCode&&!goldCode) return; // ยังไม่ได้ตั้งรหัส → ไม่แสดง gate
   const level=localStorage.getItem(AG_LEVEL_KEY);
   if(!level){
     // ยังไม่เคยกรอกรหัส → แสดง gate
@@ -3374,14 +3377,14 @@ function checkAccessGate(){
 
 function submitAccessCode(){
   const code=document.getElementById('accessCodeInput').value.trim();
-  const normalCode=localStorage.getItem(AG_NORMAL_KEY)||'';
-  const goldCode=localStorage.getItem(AG_GOLD_KEY)||'';
+  const normalCode=_getNormalCode();
+  const goldCode=_getGoldCode();
   const errEl=document.getElementById('accessCodeErr');
   errEl.style.display='none';
-  if(goldCode&&code===goldCode){
+  if(code===goldCode){
     localStorage.setItem(AG_LEVEL_KEY,'gold');
     hideAccessGate();
-  } else if(normalCode&&code===normalCode){
+  } else if(code===normalCode){
     localStorage.setItem(AG_LEVEL_KEY,'normal');
     hideAccessGate();
   } else {
@@ -3416,14 +3419,11 @@ function isGoldUser(){ return localStorage.getItem(AG_LEVEL_KEY)==='gold'; }
 function updateSkipBtn(){
   const btn=document.getElementById('skipIntroBtn');
   const link=document.getElementById('newCodeLink');
-  const normalCode=localStorage.getItem(AG_NORMAL_KEY)||'';
-  const goldCode=localStorage.getItem(AG_GOLD_KEY)||'';
-  const hasGate=normalCode||goldCode;
+  // gate is always active (default codes exist)
   if(btn){
-    // ถ้ามีระบบ access code → แสดงเฉพาะ Gold / ถ้าไม่มีระบบ → แสดงเสมอ
-    btn.style.display=(hasGate&&!isGoldUser())?'none':'';
+    btn.style.display=isGoldUser()?'':'none';
   }
-  if(link) link.style.display=hasGate?'':'none';
+  if(link) link.style.display='';
 }
 
 /* ── Enter App ── */
@@ -4486,8 +4486,8 @@ function saveAccessCodes(){
 function loadAccessCodeFields(){
   const nEl=document.getElementById('adminAccessNormal');
   const gEl=document.getElementById('adminAccessGold');
-  if(nEl) nEl.value=localStorage.getItem(AG_NORMAL_KEY)||'';
-  if(gEl) gEl.value=localStorage.getItem(AG_GOLD_KEY)||'';
+  if(nEl) nEl.value=_getNormalCode();
+  if(gEl) gEl.value=_getGoldCode();
   loadLineOAUrlField();
 }
 
