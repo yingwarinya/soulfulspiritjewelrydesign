@@ -3592,7 +3592,7 @@ function exportDesign(){
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
   const pillCX=W/2; // กึ่งกลางภาพ export พอดี
   const pillH=26;
-  const pillCY=bY+bSize-22; // กึ่งกลาง pill แนวตั้ง
+  const pillCY=bY+bSize+16; // กึ่งกลาง pill — ต่ำกว่าวงกำไลเพื่อไม่ทับหิน
   // Thai fallback ทำให้ measureText underestimate — เพิ่ม 40% + minimum 200px
   const pillW=Math.max(c.measureText(pillText).width*1.4+48, 200);
   const pillX=pillCX-pillW/2;
