@@ -348,6 +348,16 @@
   </div>
 </div>
 
+<!-- ── NOT FULL MODAL ── -->
+<div id="notFullOverlay" style="display:none;position:fixed;inset:0;z-index:2600;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px;" onclick="closeNotFullModal()">
+  <div style="max-width:320px;width:100%;background:linear-gradient(145deg,#1a0804,#2a1008,#1a0804);border:1.5px solid rgba(201,160,64,.4);border-radius:20px;padding:28px 22px 22px;text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.9);" onclick="event.stopPropagation()">
+    <div style="font-size:36px;margin-bottom:10px;">🪨</div>
+    <div style="font-size:15px;font-weight:800;color:#f5e080;margin-bottom:10px;letter-spacing:.3px;">ยังใส่หินไม่เต็มเส้นค่ะ</div>
+    <div style="font-size:13px;color:rgba(240,216,176,.8);line-height:1.7;margin-bottom:18px;">บันทึกภาพกำไลได้ก็ต่อเมื่อ<br>ใส่หินเต็มเส้นเท่านั้น<br><span id="notFullRemText" style="color:#f5e080;font-weight:700;font-size:14px;"></span></div>
+    <button onclick="closeNotFullModal()" style="width:100%;background:linear-gradient(135deg,rgba(201,160,64,.2),rgba(180,130,40,.15));border:1px solid rgba(201,160,64,.5);color:var(--gold2);border-radius:12px;padding:11px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.5px;">ตกลง ใส่หินต่อค่ะ 💎</button>
+  </div>
+</div>
+
 <!-- ── VIP POPUP MODAL ── -->
 <div id="vipPopupOverlay" style="display:none;position:fixed;inset:0;z-index:2500;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px;">
   <div style="max-width:360px;width:100%;background:linear-gradient(145deg,#1a0a04,#2e1208,#1a0a04);border:1.5px solid rgba(201,160,64,.55);border-radius:20px;padding:22px 20px 18px;text-align:center;box-shadow:0 8px 48px rgba(0,0,0,.8),0 0 40px rgba(201,160,64,.12);position:relative;">
@@ -355,7 +365,7 @@
     <div style="font-size:22px;margin-bottom:6px;">👑</div>
     <div style="font-size:16px;font-weight:800;color:#f5e080;letter-spacing:.5px;margin-bottom:10px;">VIP Privilege Granted!</div>
     <div style="font-size:12px;color:rgba(240,216,176,.82);line-height:1.7;margin-bottom:16px;">"เนื่องจากดีไซน์กำไลหินเกรดพรีเมียมของคุณลูกค้ามียอดรวมครบตามเงื่อนไขขั้นต่ำ <span style="color:#f5e080;font-weight:700;">10,000 บาท</span>แล้ว... คุณลูกค้าได้รับสิทธิ์พิเศษ อัปเกรดเป็นบริการ <em>Video Call</em> คุยสด 1-on-1 กับคุณหญิง ฟรี! (เพื่อร่วมเลือกเม็ดหินจริงหน้ากล้อง 1 ชั่วโมงเต็ม)"</div>
-    <button onclick="closeVIPPopup();exportDesignChecked();" style="width:100%;background:linear-gradient(135deg,rgba(140,20,20,.85),rgba(100,10,10,.85));border:1px solid var(--gold3);color:var(--gold2);border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:9px;letter-spacing:.5px;">📸 บันทึกรูปเพื่อส่งซื้อในแชททันที</button>
+    <button onclick="closeVIPPopup();exportDesign();" style="width:100%;background:linear-gradient(135deg,rgba(140,20,20,.85),rgba(100,10,10,.85));border:1px solid var(--gold3);color:var(--gold2);border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:9px;letter-spacing:.5px;">📸 บันทึกรูปเพื่อส่งซื้อในแชททันที</button>
     <button onclick="closeVIPPopup();openLineOA();" style="width:100%;background:linear-gradient(135deg,rgba(66,133,244,.25),rgba(30,100,220,.2));border:1px solid rgba(66,133,244,.5);color:#8ab4f8;border-radius:12px;padding:13px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.5px;">📅 จองคิว Video Call ร่วมกับคุณหญิง</button>
   </div>
 </div>
@@ -1855,8 +1865,6 @@ function addItem(itemId, isStone) {
     if(item.img3) loadImg(item.id+'_3', item.img3);
   }
   refreshAll(); saveData();
-  // Show VIP popup when bracelet is full
-  if(getRemainingSlots()===0 && !isAdminMode) openVIPPopup();
 }
 function removeByUID(uid) {
   if(uid==='locked_logo'){ showToast('🔒 Logo นี้ล็อกไว้ที่ 12 นาฬิกา'); return; }
@@ -4523,10 +4531,23 @@ function closeVIPPopup(){
 function exportDesignChecked(){
   const rem=getRemainingSlots();
   if(rem>0){
-    showToast('⚠️ ใส่หินให้เต็มเส้นก่อนนะคะ ยังขาดอีก '+rem+' เม็ด');
+    const el=document.getElementById('notFullOverlay');
+    const txt=document.getElementById('notFullRemText');
+    if(txt) txt.textContent='ยังขาดอีก '+rem+' เม็ด';
+    if(el) el.style.display='flex';
     return;
   }
-  exportDesign();
+  // bracelet is full — show VIP popup (save button inside popup calls exportDesign directly)
+  if(!isAdminMode){
+    openVIPPopup();
+  } else {
+    exportDesign();
+  }
+}
+
+function closeNotFullModal(){
+  const el=document.getElementById('notFullOverlay');
+  if(el) el.style.display='none';
 }
 
 // ═══ MOCKUP FEATURE ═══
