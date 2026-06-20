@@ -3432,10 +3432,11 @@ function exportDesign(){
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
   const pillTW=c.measureText(pillText).width;
   const pillPad=28;
-  const pillW=pillTW+pillPad, pillH=24, pillX=(W-pillW)/2, pillY=bY+bSize-28;
+  const braceCX=PAD+bSize/2; // center of bracelet canvas (not full W)
+  const pillW=pillTW+pillPad, pillH=24, pillX=braceCX-pillW/2, pillY=bY+bSize-28;
   roundRect(pillX, pillY, pillW, pillH, 12, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID; c.textAlign='center';
-  c.fillText(pillText, W/2, pillY+16);
+  c.fillText(pillText, braceCX, pillY+16);
 
   // ── SECTION DIVIDER ───────────────────────────────────────────
   let sy = HEADER_H + BRACELET_H + 10;
