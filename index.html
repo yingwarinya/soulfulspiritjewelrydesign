@@ -205,6 +205,20 @@
   .gem-wrap{position:relative;display:block;margin:0 auto 14px;}.gem-diamond{position:absolute;pointer-events:none;color:#e5c969;font-size:13px;z-index:2;}
 
 
+  /* ── ACCESS GATE ── */
+  #accessGate{position:fixed;inset:0;z-index:3000;background:#080206;display:flex;align-items:center;justify-content:center;padding:28px 22px;}
+  #accessGate.hidden{display:none;}
+  .ag-inner{max-width:380px;width:100%;text-align:center;}
+  .ag-logo{width:68px;height:68px;object-fit:contain;margin:0 auto 10px;display:block;filter:drop-shadow(0 0 18px rgba(201,160,64,.55));}
+  .ag-brand{font-size:20px;font-weight:700;letter-spacing:3px;color:#c9a040;margin-bottom:2px;}
+  .ag-sub{font-size:11px;letter-spacing:2px;color:rgba(201,160,64,.5);margin-bottom:32px;}
+  .ag-label{font-size:13px;color:#e8c8a0;margin-bottom:10px;font-weight:600;}
+  .ag-input{width:100%;background:rgba(201,160,64,.06);border:1px solid rgba(201,160,64,.35);border-radius:12px;padding:14px 18px;font-size:16px;color:#f0d8c0;text-align:center;letter-spacing:4px;outline:none;margin-bottom:14px;box-sizing:border-box;}
+  .ag-input:focus{border-color:rgba(201,160,64,.7);box-shadow:0 0 0 3px rgba(201,160,64,.1);}
+  .ag-btn{width:100%;background:linear-gradient(135deg,#7a1510,#a01c14,#7a1510);border:1px solid #c9a040;color:#f0d060;border-radius:13px;padding:15px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.7px;box-shadow:0 4px 24px rgba(100,10,10,.5);margin-bottom:14px;}
+  .ag-err{color:#ff7070;font-size:12px;margin-bottom:14px;display:none;}
+  .ag-orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;opacity:.15;}
+
   /* ── INTRO OVERLAY ── */
   #introOverlay{position:fixed;inset:0;z-index:1000;background:#080304;overflow:hidden;display:flex;align-items:center;justify-content:center;transition:opacity .55s ease;}
   #introOverlay.hidden{opacity:0;pointer-events:none;}
@@ -318,6 +332,22 @@
   <style>@keyframes loaderBar{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}</style>
 </div>
 
+<!-- ── ACCESS GATE ── -->
+<div id="accessGate" class="hidden">
+  <div class="ag-orb" style="width:300px;height:300px;background:radial-gradient(#c9a04028,transparent);top:-80px;right:-60px;"></div>
+  <div class="ag-orb" style="width:240px;height:240px;background:radial-gradient(#7a151028,transparent);bottom:-60px;left:-50px;"></div>
+  <div class="ag-inner">
+    <img class="ag-logo" id="agLogoImg" src="" alt="SS">
+    <div class="ag-brand">SOULFUL SPIRIT</div>
+    <div class="ag-sub">CRYSTAL BRACELET DESIGNER</div>
+    <div class="ag-label">🔑 กรุณากรอกรหัสเพื่อเข้าใช้งาน</div>
+    <input class="ag-input" type="password" id="accessCodeInput" placeholder="••••••••" autocomplete="off"
+      onkeydown="if(event.key==='Enter')submitAccessCode()">
+    <div class="ag-err" id="accessCodeErr">รหัสไม่ถูกต้อง กรุณาลองใหม่</div>
+    <button class="ag-btn" onclick="submitAccessCode()">✨ เข้าสู่ระบบ</button>
+  </div>
+</div>
+
 <!-- ── INTRO OVERLAY ── -->
 <div id="introOverlay">
   <div class="intro-orb" style="width:320px;height:320px;background:radial-gradient(#c9a04030,transparent);top:-100px;right:-80px;"></div>
@@ -342,7 +372,10 @@
     <div class="i-tagline">ค้นพบหินที่ใช่<br>สำหรับพลังงานของคุณ</div>
     <div class="i-desc">ไม่ใช่แค่กำไลสวยงาม — แต่คือพลังงานที่คุณเลือก<br>เราจะช่วยคุณค้นหาหินตามออร่าและความต้องการของจิตใจ</div>
     <button class="i-main-btn" onclick="introGo(2)">✨ เริ่มค้นหาหินของฉัน</button>
-    <button class="i-skip-btn" onclick="skipIntro()">ข้ามขั้นตอน เข้าสู่การออกแบบ →</button>
+    <button id="skipIntroBtn" class="i-skip-btn" onclick="skipIntro()">ข้ามขั้นตอน เข้าสู่การออกแบบ →</button>
+    <div style="margin-top:6px;">
+      <span id="newCodeLink" onclick="resetAccessCode()" style="font-size:11px;color:var(--gold3);opacity:.45;cursor:pointer;display:none;">🔑 ใช้รหัสใหม่</span>
+    </div>
   </div>
 
   <!-- STEP 2: AURA COLOR SELECTION -->
@@ -493,6 +526,18 @@
     <button onclick="saveAllImages()" style="background:rgba(201,160,64,.12);border:1px solid var(--border2);color:var(--gold);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;">💾 บันทึกรูปทั้งหมด</button>
     <button class="header-btn" onclick="exitAdmin()" style="font-size:11px;padding:5px 14px;color:#ff8080;border-color:#8b2020;">🔒 ออกจากโหมด Admin</button>
   </div>
+  <!-- 🔑 Access Code Settings -->
+  <div style="background:rgba(201,160,64,.06);border:1px solid rgba(201,160,64,.25);border-radius:12px;padding:12px;margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:700;color:var(--gold3);margin-bottom:10px;">🔑 ตั้งรหัส Access</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">รหัสลูกค้าทั่วไป (Normal)</div>
+    <input type="text" id="adminAccessNormal" placeholder="รหัส Normal"
+      style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:8px;box-sizing:border-box;">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">รหัสลูกค้า Gold ⭐ (ข้ามขั้นตอนได้)</div>
+    <input type="text" id="adminAccessGold" placeholder="รหัส Gold"
+      style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;box-sizing:border-box;">
+    <button onclick="saveAccessCodes()" style="width:100%;background:rgba(201,160,64,.15);border:1px solid var(--gold3);color:var(--gold);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;">💾 บันทึกรหัส</button>
+  </div>
+
   <div style="margin-bottom:12px;">
     <button onclick="openDataModal()" style="width:100%;background:rgba(201,169,110,.1);border:1.5px solid var(--gold3);color:var(--gold);border-radius:10px;padding:10px 0;font-size:13px;font-weight:700;cursor:pointer;">📦 นำเข้า / ส่งออกข้อมูล</button>
     <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importBackup(this)">
@@ -3268,6 +3313,87 @@ function introGo(step){
   if(step===4)renderIntroResults();
 }
 
+/* ── ACCESS GATE ── */
+const AG_LEVEL_KEY='soulful_access_level';
+const AG_NORMAL_KEY='soulful_v1_access_normal';
+const AG_GOLD_KEY='soulful_v1_access_gold';
+
+function checkAccessGate(){
+  if(isAdminMode) return; // admin ข้ามได้เลย
+  const normalCode=localStorage.getItem(AG_NORMAL_KEY)||'';
+  const goldCode=localStorage.getItem(AG_GOLD_KEY)||'';
+  if(!normalCode&&!goldCode) return; // ยังไม่ได้ตั้งรหัส → ไม่แสดง gate
+  const level=localStorage.getItem(AG_LEVEL_KEY);
+  if(!level){
+    // ยังไม่เคยกรอกรหัส → แสดง gate
+    const gate=document.getElementById('accessGate');
+    gate.classList.remove('hidden');
+    // โหลดโลโก้เข้า gate ด้วย
+    const logoEl=document.querySelector('.logo-gold-wrap img');
+    const agLogo=document.getElementById('agLogoImg');
+    if(logoEl&&agLogo){ agLogo.src=logoEl.src; agLogo.style.display='block'; }
+    else if(agLogo){ agLogo.style.display='none'; }
+    // ซ่อน introOverlay ระหว่างรอกรอก
+    const ov=document.getElementById('introOverlay');
+    if(ov) ov.style.display='none';
+  } else {
+    updateSkipBtn(); // update ปุ่ม skip ตาม level ที่จำไว้
+  }
+}
+
+function submitAccessCode(){
+  const code=document.getElementById('accessCodeInput').value.trim();
+  const normalCode=localStorage.getItem(AG_NORMAL_KEY)||'';
+  const goldCode=localStorage.getItem(AG_GOLD_KEY)||'';
+  const errEl=document.getElementById('accessCodeErr');
+  errEl.style.display='none';
+  if(goldCode&&code===goldCode){
+    localStorage.setItem(AG_LEVEL_KEY,'gold');
+    hideAccessGate();
+  } else if(normalCode&&code===normalCode){
+    localStorage.setItem(AG_LEVEL_KEY,'normal');
+    hideAccessGate();
+  } else {
+    errEl.style.display='block';
+    document.getElementById('accessCodeInput').value='';
+  }
+}
+
+function hideAccessGate(){
+  document.getElementById('accessGate').classList.add('hidden');
+  // คืน introOverlay
+  const ov=document.getElementById('introOverlay');
+  if(ov){ ov.style.display=''; }
+  updateSkipBtn();
+}
+
+function resetAccessCode(){
+  localStorage.removeItem(AG_LEVEL_KEY);
+  const input=document.getElementById('accessCodeInput');
+  if(input) input.value='';
+  const errEl=document.getElementById('accessCodeErr');
+  if(errEl) errEl.style.display='none';
+  const gate=document.getElementById('accessGate');
+  gate.classList.remove('hidden');
+  const ov=document.getElementById('introOverlay');
+  if(ov) ov.style.display='none';
+}
+
+function isGoldUser(){ return localStorage.getItem(AG_LEVEL_KEY)==='gold'; }
+
+function updateSkipBtn(){
+  const btn=document.getElementById('skipIntroBtn');
+  const link=document.getElementById('newCodeLink');
+  const normalCode=localStorage.getItem(AG_NORMAL_KEY)||'';
+  const goldCode=localStorage.getItem(AG_GOLD_KEY)||'';
+  const hasGate=normalCode||goldCode;
+  if(btn){
+    // ถ้ามีระบบ access code → แสดงเฉพาะ Gold / ถ้าไม่มีระบบ → แสดงเสมอ
+    btn.style.display=(hasGate&&!isGoldUser())?'none':'';
+  }
+  if(link) link.style.display=hasGate?'':'none';
+}
+
 /* ── Enter App ── */
 function enterApp(){
   selectedAuras=[...introTopChakras];
@@ -3864,6 +3990,7 @@ function logoTap(){
       isAdminMode=true;
       document.getElementById('adminTab').style.display='';
       showToast('🔓 เข้าสู่โหมด Admin แล้ว');
+      loadAccessCodeFields();
     } else if(pin!==null){
       showToast('❌ รหัสไม่ถูกต้อง');
     }
@@ -4317,6 +4444,19 @@ function exitAdmin(){
   document.getElementById('tab-design').classList.add('active');
   showToast('🔒 ออกจากโหมด Admin แล้ว');
 }
+function saveAccessCodes(){
+  const n=(document.getElementById('adminAccessNormal').value||'').trim();
+  const g=(document.getElementById('adminAccessGold').value||'').trim();
+  if(n) localStorage.setItem(AG_NORMAL_KEY,n); else localStorage.removeItem(AG_NORMAL_KEY);
+  if(g) localStorage.setItem(AG_GOLD_KEY,g); else localStorage.removeItem(AG_GOLD_KEY);
+  showToast('✅ บันทึกรหัส Access แล้ว');
+}
+function loadAccessCodeFields(){
+  const nEl=document.getElementById('adminAccessNormal');
+  const gEl=document.getElementById('adminAccessGold');
+  if(nEl) nEl.value=localStorage.getItem(AG_NORMAL_KEY)||'';
+  if(gEl) gEl.value=localStorage.getItem(AG_GOLD_KEY)||'';
+}
 // ═══ MOCKUP FEATURE ═══
 const _MK_BOX_IMG='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAsICAoIBwsKCQoNDAsNERwSEQ8PESIZGhQcKSQrKigkJyctMkA3LTA9MCcnOEw5PUNFSElIKzZPVU5GVEBHSEX/2wBDAQwNDREPESESEiFFLicuRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUX/wAARCAB4AFADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAAAgQAAQMFBgf/xAAzEAACAgEDAwIDBgUFAAAAAAABAgADEQQSITFBUQVhEyKBIzJxkaGxFBVCUmLB0eHw8f/EABgBAAMBAQAAAAAAAAAAAAAAAAECAwAE/8QAHhEBAQEBAQADAAMAAAAAAAAAAAERAiESMUEDE3H/2gAMAwEAAhEDEQA/APoeJMQsSwIDB2zNzngdIbtngdO5gbZleec9oNsm2abZnttQDBFgGc56+0JrV4IkMoXLnDAoR5/L94eIcTrMiARNwuZDWuM9PeDCGQsG4MtFhThgpImKfY7nGcg4PvGkdLU4/qGCPETTSY5dXqAPFyY/yX/aOIyWDNbBvwnLNLIdrAgjsYaqQcjIPtNK6uuZ+OntkxFa9VYvDjePfrGUvrs77T4aPKh1LFNUrNuYZMioFGB+M12ywsKdoAs5nqmsCo1SHgD5yO/tHtbqfgV7UP2jD8hPM62wn5F+sW0/HP7Xo2cLnPG7k47RWm/Z6ka1JwRkjxFNf6mtGKaftL2+uI36P6bYmdRqCTY/PMnPaOZPXZNaXIBYob/SLWaAg5qO4f2t1/ONNZXSubHVB/kcRO71nT15+GGsPtwI1bn5fjP4WG2sCreDKanjOInqPW7LgUUKAeyruP5zP0x9a+sts1FbCl1CrvOec/pAp/pxXtpPyMQPHaMprvlO+v5gOMdINylBllIH93UfnF7Nq1M3bEbU7JSmqtJLMxyzTnGvcYy7b2JMKqksekU3VdbRei6XQ/Mql7D1dzkmO2qXpZVYoSMAjtLMmCVPmMnL680lGq1VjADZgkEvycx2n0YNg3OXI7do4/2OpD4+W3hvZv8Av7RtTkZE0g99dayo0NNK4VAPpNyoAx2l54lEwpMS7VjHYTN9PRepG3bu67TjMYKbh9P0iit8O0puBAi4puzQ/wAtqX7ssaUL0jStmEeYS2rhLBljrMzHUUh1ZOm7ofBgaazcmDww4I940y7lnK1Gf4hxkgHHA7wbis5/sPPqK6+GcZ8Dkxd9Yf6E+rRBtRVUcFhnwOTNqFt1ZxUu1e7t2g+Vqs/h559q3uts+85x4HAmBuCMCDCu0lqWFbGLeD2MiaPjpNC93nMhqjUbhNzcVC4XdnwekVSgocCMcbgvjiMgaEuADLzMDVTOZr/TX1NzOtxVCPuDvOgDgZgNZnpBZqnFvN2OZpvR0Rs2fdHYdTOouEUKoAUdAIGZMwyYe237E2HGDAUAHB/9lGwbgByc4/5hHBHMxbNRkHURQgh+meY0GKnnkeYNtIuGVdq3HRlgJ9eUQMLMzBl5hKH44a5qjwynj3EKKaypiwtX26dppp9R8YbX4sH6zLT68MZwJmSXyMED3lsoYYMnTgdJhWFAORxCgwhMCTP4ipYEzz48THVa1KwyVtmz9onU5VizHLGbQs810sy8ySTIrz2PIMQ1VJqPxKycdiO0kkFV4vrbS6xdSpUkCxeo8+83zJJCerzON6l62qsdPpWy3Rn8fhJJNWk9Y6YYUMx5PmbbueJJIgdV/9k=';
 const _mkSlots=[
@@ -4553,6 +4693,8 @@ function _mkInitDrag(){
     _mkInitDrag();
   },50);
   await _mkLoadSaved();
+  // ตรวจ access gate หลังโหลดข้อมูลเสร็จ (logo โหลดแล้ว)
+  checkAccessGate();
 })();
 
 // ── Pinch-to-zoom / pan / scroll-zoom on bracelet canvas ──
