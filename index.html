@@ -3600,15 +3600,12 @@ function exportDesign(){
   c.textBaseline='middle';
   c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
-  const pillCX=W/2; // กึ่งกลางของภาพ export
   const pillH=26;
-  const pillCY=bY+bSize+16; // กึ่งกลาง pill — ต่ำกว่าวงกำไลเพื่อไม่ทับหิน
-  // Thai fallback ทำให้ measureText underestimate — เพิ่ม 40% + minimum 200px
+  const pillCY=bY+bSize+16;
   const pillW=Math.max(c.measureText(pillText).width*1.4+48, 200);
-  const pillX=pillCX-pillW/2;
+  const pillX=PAD; // ชิดซ้าย
   roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID;
-  // Re-assert after roundRect to prevent iOS Safari canvas state drift
   c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
   c.fillText(pillText, pillX+pillW/2, pillCY);
   c.restore();
