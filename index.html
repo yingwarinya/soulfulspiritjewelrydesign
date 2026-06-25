@@ -1396,15 +1396,13 @@ function drawBracelet() {
   const pendantItems=bracelet.filter(b=>{if(!b)return false;const it=!b.isStone&&decos.find(d=>d.id===b.itemId);return it&&it.type==='pendant';});
   const maxPH=pendantItems.length?Math.max(...pendantItems.map(b=>{const it=decos.find(d=>d.id===b.itemId);return it?(it.h||it.size||8):8;})):0;
   const _cMMfit=(wristSize+0.5)*10;
-  const nomRBase=NOMINAL/2-nomBeadR-5;
-  // แก้สมการ: r + pendant_hPx ≤ NOMINAL/2 - margin
-  // pendant_hPx = maxPH * 2π/circumMM * r  →  r = avail / (1 + 2π*maxPH/circumMM)
-  const nomR = maxPH>0
-    ? Math.min(nomRBase, Math.max((NOMINAL/2-nomBeadR-12)/(1+2*Math.PI*maxPH/_cMMfit), nomRBase*0.5))
-    : nomRBase;
-  // คำนวณขนาด canvas — กว้างคงที่, สูงเพิ่มเฉพาะส่วนล่างถ้ามีจี้ (ใช้ nomR ที่ปรับแล้ว)
+  // nomR ไม่หด — ให้ canvas ขยายแทน
+  const nomR=NOMINAL/2-nomBeadR-5;
+  // pendant_hPx ตามสูตรเดียวกับ charm (ใช้ nomR เต็ม)
   const pendantHpx=maxPH>0?maxPH*2*(1/_cMMfit)*Math.PI*nomR:0;
-  const extPx = maxPH > 0 ? Math.ceil(pendantHpx) + 28 : 0;
+  // extPx = จำนวน pixel ที่ต้องขยาย canvas ด้านข้าง (worst case จี้อยู่ฝั่ง)
+  // เพิ่ม nomBeadR เพราะจี้ห้อยจากขอบหิน ไม่ใช่จากศูนย์กลาง
+  const extPx = maxPH > 0 ? Math.ceil(pendantHpx + nomBeadR) + 16 : 0;
   // คำนวณ radius จริงของหินใหญ่สุด เพื่อป้องกันโดนตัดขอบ canvas
   const circumMM_cs=(wristSize+0.5)*10;
   let maxActualBr=nomBeadR;
@@ -1417,6 +1415,7 @@ function drawBracelet() {
   const base = Math.max(NOMINAL, minCanForBeads);
   // ไม่มีจี้ → canSize = base (วงเต็มขนาด)
   // มีจี้  → canSize = 2*(nomR + extPx) พอดีให้จี้ไม่ตกขอบ วงเล็กลงตามสัดส่วน
+  // canSize ขยายรวม nomR + extPx (ซึ่งรวม nomBeadR + pendantHpx + margin แล้ว)
   const canSize = extPx > 0 ? Math.max(base, Math.ceil(2*(nomR + extPx))) : base;
   const canW = canSize, canH = canSize; // square เสมอ
 
