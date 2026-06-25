@@ -3212,7 +3212,6 @@ function renderQuickSortChips(){
 function setQuickSort(v){quickSort=v;renderQuickSortChips();renderQuickGrid();}
 function switchDecoTab(tab){decoSubGroup=null;decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
 function switchDecoMetal(m){
-  decoSubGroup=null;
   decoModalMetal=[m]; // single-select filter
   ['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',x===m);});
   renderDecoModalGrid();
