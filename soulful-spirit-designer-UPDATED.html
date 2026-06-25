@@ -3600,7 +3600,7 @@ function exportDesign(){
   c.textBaseline='middle';
   c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
-  const pillCX=W/2; // กึ่งกลางภาพ export พอดี
+  const pillCX=PAD + bSize/2; // กึ่งกลางของ bracelet canvas section
   const pillH=26;
   const pillCY=bY+bSize+16; // กึ่งกลาง pill — ต่ำกว่าวงกำไลเพื่อไม่ทับหิน
   // Thai fallback ทำให้ measureText underestimate — เพิ่ม 40% + minimum 200px
@@ -3666,7 +3666,7 @@ function exportDesign(){
 
     // Thumbnail circle
     const tCX=PAD+22, tCY=rowY+rowH/2-2, tR=19;
-    const ci=imgCache[s.item.id];
+    const ci=s.isStone ? imgCache[s.item.id] : imgCache['d_'+s.item.id];
     c.save(); c.beginPath(); c.arc(tCX, tCY, tR, 0, 2*Math.PI); c.clip();
     if(ci && ci.complete && ci.naturalWidth>0){
       c.drawImage(ci, tCX-tR, tCY-tR, tR*2, tR*2);
