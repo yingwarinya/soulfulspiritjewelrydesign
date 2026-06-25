@@ -3191,6 +3191,7 @@ function renderDecoPreview(){
 let decoModalTab='pendant';
 let decoModalMetal=['all'];
 let decoSubGroup=null; // null = main grid, string = showing variants of this group
+function setDecoSubGroup(el){decoSubGroup=el.dataset.g;renderDecoModalGrid();}
 let quickProps=['all']; // multi-select array
 let quickGrade='all';
 let quickSort='none'; // 'none' | 'asc' | 'desc'
@@ -3266,7 +3267,7 @@ function renderDecoModalGrid(){
     const totalInBracelet=items.reduce((sum,d)=>sum+bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length,0);
     const minPrice=Math.min(...items.map(d=>d.price));
     const rep=items.find(d=>imgCache['d_'+d.id])||items[0];
-    return `<div class="catalog-card" style="cursor:pointer;" onclick="decoSubGroup=${JSON.stringify(gName)};renderDecoModalGrid()">
+    return `<div class="catalog-card" style="cursor:pointer;" data-g="${gName.replace(/"/g,'&quot;')}" onclick="setDecoSubGroup(this)">
       ${totalInBracelet>0?`<div class="catalog-badge">${totalInBracelet}</div>`:''}
       ${mkDecoDot(rep)}
       <div class="catalog-name">${gName}</div>
