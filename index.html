@@ -728,6 +728,7 @@
         </div>
       </div>
       <div class="form-row"><input type="text" id="nDecoProp" placeholder="คุณสมบัติ / ความหมาย เช่น Luck - โชคลาภ โชคดี"></div>
+      <div class="form-row"><input type="text" id="nDecoGroup" placeholder="กลุ่ม sub-menu (ถ้ามี) เช่น จี้ Alphabet · จี้ ราศี" style="font-size:12px;"></div>
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:9px;cursor:pointer;font-size:13px;color:var(--text3);background:rgba(180,20,20,.1);border:1px solid rgba(200,40,40,.3);border-radius:8px;padding:8px 10px;">
         <input type="checkbox" id="nDecoPreorder" style="width:16px;height:16px;accent-color:#c83030;cursor:pointer;">
         <span>⏳ Pre-order <span style="color:#ff6060;font-weight:700;">7-14 วัน</span> (ไม่มีพร้อมส่ง)</span>
@@ -845,6 +846,9 @@
           <input type="number" id="editDecoTierPrice" placeholder="฿" min="0" style="width:60px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;color:var(--text);text-align:center;">
           <span>บาท/ชิ้น</span>
         </div>
+      </div>
+      <div style="margin-top:7px;">
+        <input type="text" id="editDecoGroup" placeholder="กลุ่ม sub-menu (ถ้ามี) เช่น จี้ Alphabet · จี้ ราศี" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 9px;font-size:12px;color:var(--text);box-sizing:border-box;">
       </div>
     </div>
     <div id="editStoneFields">
@@ -2764,9 +2768,10 @@ function addDeco(){
   if(!thai){showToast('⚠️ กรุณากรอกชื่อไทย');return;}
   if(!price){showToast('⚠️ กรุณากรอกราคา/ชิ้น');return;}
   const prop=document.getElementById('nDecoProp').value.trim();
+  const group=document.getElementById('nDecoGroup').value.trim()||undefined;
   const preorder=document.getElementById('nDecoPreorder').checked;
   const id=Math.max(...decos.map(d=>d.id),5000)+1;
-  const newDeco={id,name,thai,type:decoType,size,w,h,price,prop,img,img2,metal,preorder,hidden:false,gradient:[lighten(col,30),darken(col,20)]};
+  const newDeco={id,name,thai,type:decoType,size,w,h,price,prop,group,img,img2,metal,preorder,hidden:false,gradient:[lighten(col,30),darken(col,20)]};
   if(decoType==='spacer'||decoType==='logo'){
     newDeco.freeQty=parseInt(document.getElementById('nDecoFreeQty').value)||1;
     newDeco.tierPrice=parseInt(document.getElementById('nDecoTierPrice').value)||price;
@@ -2774,7 +2779,7 @@ function addDeco(){
   decos.push(newDeco);
   if(img) loadImg(id,img);
   if(img2){ dbPut('deco_'+id+'_2',img2).catch(()=>{}); }
-  ['nDecoName','nDecoThai','nDecoPrice','nDecoTierPrice','nDecoProp'].forEach(i=>document.getElementById(i).value='');
+  ['nDecoName','nDecoThai','nDecoPrice','nDecoTierPrice','nDecoProp','nDecoGroup'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('nDecoFreeQty').value='1';
   document.getElementById('nDecoPreorder').checked=false;
   document.getElementById('nDecoImgData').value='';
@@ -2836,6 +2841,7 @@ function openEdit(id, isStone){
       document.getElementById('editDecoFreeQty').value=item.freeQty!=null?item.freeQty:1;
       document.getElementById('editDecoTierPrice').value=item.tierPrice!=null?item.tierPrice:item.price;
     }
+    document.getElementById('editDecoGroup').value=item.group||'';
   }
   // preorder checkbox — show only for charm/pendant decos
   const showPre=!isStone&&(item.type==='charm'||item.type==='pendant');
@@ -2972,6 +2978,8 @@ function saveEdit(){
     const newType=document.getElementById('editDecoType').value||'charm';
     const isPre=(newType==='charm'||newType==='pendant');
     d.preorder=isPre&&document.getElementById('editPreorder').checked;
+    const grp=document.getElementById('editDecoGroup').value.trim();
+    d.group=grp||undefined;
     d.name=name;d.thai=thai;d.prop=prop;d.price=price;d.type=newType;d.size=(newType==='pendant')?1:Math.max(dw,dh);d.w=dw;d.h=dh;d.gradient=ng;d.metal=eMetal;
     if(newType==='spacer'||newType==='logo'){
       d.freeQty=parseInt(document.getElementById('editDecoFreeQty').value)||1;
@@ -3164,6 +3172,7 @@ function renderDecoPreview(){
 }
 let decoModalTab='pendant';
 let decoModalMetal=['all'];
+let decoSubGroup=null; // null = main grid, string = showing variants of this group
 let quickProps=['all']; // multi-select array
 let quickGrade='all';
 let quickSort='none'; // 'none' | 'asc' | 'desc'
@@ -3178,11 +3187,31 @@ function renderQuickSortChips(){
   document.getElementById('quickSortChips').innerHTML=chips.map(c=>`<div class="grade-chip${quickSort===c.id?' active':''}" onclick="setQuickSort('${c.id}')">${c.label}</div>`).join('');
 }
 function setQuickSort(v){quickSort=v;renderQuickSortChips();renderQuickGrid();}
-function switchDecoTab(tab){decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
+function switchDecoTab(tab){decoSubGroup=null;decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
 function switchDecoMetal(m){
+  decoSubGroup=null;
   decoModalMetal=[m]; // single-select filter
   ['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',x===m);});
   renderDecoModalGrid();
+}
+function _decoItemCard(d,{isSpacerTab,usedSpacers}={}){
+  const cnt=bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length;
+  return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
+    ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
+    ${mkDecoDot(d)}
+    <div class="catalog-name">${d.name}</div>
+    <div class="catalog-thai">${d.thai}</div>
+    ${d.prop?`<div class="catalog-prop">${d.prop}</div>`:''}
+    ${d.preorder?`<div style="font-size:10px;font-weight:700;color:#ff5555;margin:3px 0 2px;letter-spacing:.5px;">⏳ Pre-order 7-14 วัน</div>`:''}
+    <div class="catalog-price">฿${isSpacerTab?(usedSpacers>=2?100:0):d.price}/ชิ้น${isSpacerTab&&usedSpacers<2?' <span style="font-size:9px;color:var(--gold3)">(เหลือฟรี '+(2-usedSpacers)+' ชิ้น)</span>':''}</div>
+    ${cnt>0?
+      `<div style="display:flex;gap:5px;">
+        <button class="catalog-add" style="flex:1;background:var(--card2);border-color:var(--border2);color:var(--text2);" onclick="removeAllOfItem(${d.id},false);renderDecoModalGrid()">− ลด</button>
+        <button class="catalog-add" style="flex:1;" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>
+      </div>`
+      :`<button class="catalog-add" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>`
+    }
+  </div>`;
 }
 function renderDecoModalGrid(){
   const _metalOrder={silver:0,gold:1,rosegold:2};
@@ -3191,12 +3220,47 @@ function renderDecoModalGrid(){
   const isLogoTab=(decoModalTab==='logo');
   const isSpacerTab=(decoModalTab==='spacer');
   const usedSpacers=bracelet.filter(b=>b&&!b.isStone&&!b.locked&&decos.find(x=>x.id===b.itemId&&x.type==='spacer')).length;
-  const spacerEffPrice=usedSpacers>=2?100:0;
   const usedLogos=bracelet.filter(b=>b&&!b.isStone&&decos.find(x=>x.id===b.itemId&&x.type==='logo')).length;
-  document.getElementById('decoModalGrid').innerHTML=all.length?all.map(d=>{
-    const isActive=isLogoTab?(lockedLogoId===d.id||(lockedLogoId==null&&bracelet.length>0&&bracelet[0].locked&&bracelet[0].itemId===d.id)):false;
-    const cnt=bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length;
-    if(isLogoTab){
+  const grid=document.getElementById('decoModalGrid');
+
+  // ── SUB-GROUP VIEW ───────────────────────────────────────────────
+  if(decoSubGroup){
+    const groupItems=all.filter(d=>d.group===decoSubGroup);
+    const backBtn=`<div style="grid-column:span 2;display:flex;align-items:center;gap:8px;padding:4px 0 10px;border-bottom:1px solid var(--border);margin-bottom:6px;">
+      <button onclick="decoSubGroup=null;renderDecoModalGrid()" style="background:rgba(201,160,64,.15);border:1px solid var(--gold3);border-radius:20px;color:var(--gold3);font-size:12px;cursor:pointer;padding:5px 14px;flex-shrink:0;">← กลับ</button>
+      <span style="color:var(--text2);font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${decoSubGroup}</span>
+    </div>`;
+    grid.innerHTML=backBtn+(groupItems.length?groupItems.map(d=>_decoItemCard(d,{isSpacerTab,usedSpacers})).join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการในกลุ่มนี้</div>');
+    return;
+  }
+
+  // ── MAIN GRID VIEW ───────────────────────────────────────────────
+  // Separate grouped vs ungrouped items
+  const groupMap={};
+  const ungrouped=[];
+  for(const d of all){
+    if(d.group){(groupMap[d.group]=groupMap[d.group]||[]).push(d);}
+    else{ungrouped.push(d);}
+  }
+
+  // Build group parent cards
+  const groupCards=Object.entries(groupMap).map(([gName,items])=>{
+    const totalInBracelet=items.reduce((sum,d)=>sum+bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length,0);
+    const minPrice=Math.min(...items.map(d=>d.price));
+    const rep=items.find(d=>imgCache['d_'+d.id])||items[0];
+    return `<div class="catalog-card" style="cursor:pointer;" onclick="decoSubGroup=${JSON.stringify(gName)};renderDecoModalGrid()">
+      ${totalInBracelet>0?`<div class="catalog-badge">${totalInBracelet}</div>`:''}
+      ${mkDecoDot(rep)}
+      <div class="catalog-name">${gName}</div>
+      <div class="catalog-thai" style="font-size:10px;color:var(--text3);">${items.length} ตัวเลือก</div>
+      <div class="catalog-price">ตั้งแต่ ฿${minPrice}/ชิ้น</div>
+      <button class="catalog-add" style="background:rgba(201,160,64,.12);border-color:var(--gold3);color:var(--gold3);">เลือก →</button>
+    </div>`;
+  });
+
+  if(isLogoTab){
+    const logoCards=ungrouped.map(d=>{
+      const isActive=(lockedLogoId===d.id||(lockedLogoId==null&&bracelet.length>0&&bracelet[0].locked&&bracelet[0].itemId===d.id));
       return `<div class="catalog-card${isActive?' selected':''}" style="${isActive?'border-color:var(--gold);':''}">
         ${isActive?`<div class="catalog-badge">🔒</div>`:''}
         ${mkDecoDot(d)}
@@ -3206,24 +3270,15 @@ function renderDecoModalGrid(){
         <div class="catalog-price">฿${usedLogos>=1?500:0}/ชิ้น${usedLogos<1?'<span style="font-size:9px;color:var(--gold3)"> (ฟรี 1 ชิ้น)</span>':''}</div>
         <button class="catalog-add" style="${isActive?'background:var(--gold3);border-color:var(--gold);color:var(--bg);':''}" onclick="swapLockedLogo(${d.id})">${isActive?'✓ ใช้อยู่':'🔄 เลือก'}</button>
       </div>`;
-    }
-    return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
-      ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
-      ${mkDecoDot(d)}
-      <div class="catalog-name">${d.name}</div>
-      <div class="catalog-thai">${d.thai}</div>
-      ${d.prop?`<div class="catalog-prop">${d.prop}</div>`:''}
-      ${d.preorder?`<div style="font-size:10px;font-weight:700;color:#ff5555;margin:3px 0 2px;letter-spacing:.5px;">⏳ Pre-order 7-14 วัน</div>`:''}
-      <div class="catalog-price">฿${isSpacerTab?(usedSpacers>=2?100:0):d.price}/ชิ้น${isSpacerTab&&usedSpacers<2?' <span style="font-size:9px;color:var(--gold3)">(เหลือฟรี '+(2-usedSpacers)+' ชิ้น)</span>':''}</div>
-      ${cnt>0?
-        `<div style="display:flex;gap:5px;">
-          <button class="catalog-add" style="flex:1;background:var(--card2);border-color:var(--border2);color:var(--text2);" onclick="removeAllOfItem(${d.id},false);renderDecoModalGrid()">− ลด</button>
-          <button class="catalog-add" style="flex:1;" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>
-        </div>`
-        :`<button class="catalog-add" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>`
-      }
-    </div>`;
-  }).join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการ</div>';
+    });
+    const combined=[...groupCards,...logoCards];
+    grid.innerHTML=combined.length?combined.join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการ</div>';
+    return;
+  }
+
+  const ungroupedCards=ungrouped.map(d=>_decoItemCard(d,{isSpacerTab,usedSpacers}));
+  const combined=[...groupCards,...ungroupedCards];
+  grid.innerHTML=combined.length?combined.join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการ</div>';
 }
 function openDecoAll(typeFilter){
   if(typeFilter)decoModalTab=typeFilter;
