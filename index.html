@@ -3594,20 +3594,21 @@ function exportDesign(){
   roundRect(PAD-10, bY-10, bSize+20, bSize+20, 16, 'rgba(255,255,255,0.012)', BORDER, 1);
   c.drawImage(srcC, PAD, bY, bSize, bSize);
 
-  // wrist size pill — ใช้ save/restore ป้องกัน state pollution, textBaseline=middle
+  // wrist size pill — ASCII only (no Thai) → ป้องกัน iOS Canvas measureText bug
   c.save();
-  c.textAlign='center';
+  c.font='bold 13px "Trebuchet MS",Arial,sans-serif';
   c.textBaseline='middle';
-  c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
-  const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
+  const pillText=`✦  ${wristSize} cm  ✦`;
   const pillH=26;
   const pillCY=bY+bSize+16;
-  const pillW=260; // fixed width — ไม่พึ่ง measureText (iOS วัดผิด)
-  const pillX=(W-pillW)/2; // box centered at W/2
+  const tw=c.measureText(pillText).width; // ASCII only → measureText ถูกต้องทุก platform
+  const pillPad=20;
+  const pillW=Math.max(tw+pillPad*2, 140);
+  const pillX=(W-pillW)/2;
   roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID;
-  c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
-  c.fillText(pillText, W/2, pillCY); // text centered at W/2 เสมอ
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(pillText, W/2, pillCY);
   c.restore();
 
   // ── SECTION DIVIDER ───────────────────────────────────────────
