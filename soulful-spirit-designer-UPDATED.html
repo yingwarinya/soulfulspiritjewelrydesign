@@ -1008,7 +1008,7 @@ let stones = [
 ];
 let decos = [
   // Built-in default logo — always present even on fresh GitHub Pages session
-  {id:1, type:'logo', name:'Logo Charm Silver with Diamonds (6mm)', size:6, price:500, freeQty:1, metal:'silver', img:'', gradient:['#d8d8d8','#a0a0a0'], hidden:false}
+  {id:1, type:'logo', name:'Logo Charm Silver with Diamonds (6mm)', thai:'โลโก้ชาร์ม Silver', size:6, price:500, freeQty:1, metal:'silver', img:'', gradient:['#d8d8d8','#a0a0a0'], hidden:false}
 ];
 
 // ── BRACELET — ordered array of individual beads ──
@@ -1767,13 +1767,12 @@ let lockedLogoId = null; // decos id ของ logo ที่ล็อกอย�
 function getLockedLogoDeco(){
   if(lockedLogoId){
     const d=decos.find(x=>x.id===lockedLogoId&&x.type==='logo');
-    // Only use locked logo if it has an actual image — otherwise fall through to silver default
-    if(d&&d.img) return d;
+    if(d) return d; // respect user's explicit choice, even if no image yet
   }
-  // Prefer built-in id=1 silver logo, then name-match, then any logo
-  return decos.find(d=>d.type==='logo'&&d.id===1&&!d.hidden)
-      || decos.find(d=>d.type==='logo'&&d.name==='Logo Charm Silver with Diamonds (6mm)'&&!d.hidden)
+  // No explicit lock: prefer id=1 WITH image, else any logo with image, else id=1, else any logo
+  return decos.find(d=>d.type==='logo'&&d.id===1&&d.img&&!d.hidden)
       || decos.find(d=>d.type==='logo'&&d.img&&!d.hidden)
+      || decos.find(d=>d.type==='logo'&&d.id===1&&!d.hidden)
       || decos.find(d=>d.type==='logo'&&!d.hidden)
       || decos.find(d=>d.type==='logo')
       || null;
