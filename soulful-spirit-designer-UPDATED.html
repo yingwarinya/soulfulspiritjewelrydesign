@@ -1521,15 +1521,16 @@ function drawBracelet() {
         else{loadImg(cacheKey,useSrc);drawBeadGrad(ctx,bx,by,br,item.gradient[0],item.gradient[1]);}
       } else drawBeadGrad(ctx,bx,by,br,item.gradient[0],item.gradient[1]);
     } else {
-      // ของตกแต่ง (charm/spacer/logo)
+      // ของตกแต่ง (charm/spacer/logo) — ใช้ 'd_'+id เพื่อป้องกัน imgCache ชนกับ stone
       if(item.img){
-        const ci=imgCache[item.id];
+        const _dk='d_'+item.id;
+        const ci=imgCache[_dk];
         if(ci&&ci.complete&&ci.naturalWidth>0){
           const h=item.h||item.size, w=item.w||item.size;
           const hPx=2*Math.max((h/circumMM)*Math.PI*r,4)*sf, wPx=hPx*(w/h);
           if(b.locked){ctx.save();ctx.translate(bx,by);ctx.filter='drop-shadow(0 1px 3px rgba(0,0,0,0.6))';ctx.drawImage(ci,-wPx/2,-hPx/2,wPx,hPx);ctx.restore();}
           else drawCharmImg(ctx,bx,by,br,ci,wPx,hPx,angle);
-        } else {loadImg(item.id,item.img);drawBeadGrad(ctx,bx,by,br,item.gradient[0],item.gradient[1]);}
+        } else {loadImg(_dk,item.img);drawBeadGrad(ctx,bx,by,br,item.gradient[0],item.gradient[1]);}
       } else drawBeadGrad(ctx,bx,by,br,item.gradient[0],item.gradient[1]);
     }
   }
@@ -1549,19 +1550,20 @@ function drawBracelet() {
     const scale=beadR/8;
     const wPx=(item.w||8)*scale, hPx=(item.h||item.size||8)*scale;
     if(item.img){
-      const ci=imgCache[item.id];
+      const _dpk='d_'+item.id;
+      const ci=imgCache[_dpk];
       if(ci&&ci.complete&&ci.naturalWidth>0){
         if(item.img2){
-          if(!imgCache[item.id+'_b']) loadImg(item.id+'_b',item.img2);
+          if(!imgCache[_dpk+'_b']) loadImg(_dpk+'_b',item.img2);
           _initPendantFlip(item.id);
           const cosV=_getPendantFlipCos(item.id), absCos=Math.abs(cosV);
           if(absCos>0.02){
-            const ci2=imgCache[item.id+'_b'];
+            const ci2=imgCache[_dpk+'_b'];
             const useImg=(cosV<0&&ci2&&ci2.complete&&ci2.naturalWidth>0)?ci2:ci;
             drawPendantImg(ctx,bx,by,cx,cy,useImg,wPx*absCos,hPx,beadR);
           }
         } else drawPendantImg(ctx,bx,by,cx,cy,ci,wPx,hPx,beadR);
-      } else loadImg(item.id,item.img);
+      } else loadImg(_dpk,item.img);
     }
     else{ctx.save();ctx.translate(bx,by);ctx.rotate(Math.atan2(by-cy,bx-cx)-Math.PI/2);ctx.fillStyle=item.gradient[0];ctx.globalAlpha=.8;ctx.fillRect(-wPx/2,beadR,wPx,hPx);ctx.restore();}
   }
@@ -1781,7 +1783,7 @@ function ensureLockedLogo(){
   const deco=getLockedLogoDeco();
   if(!deco) return;
   if(lockedLogoId!==deco.id) lockedLogoId=deco.id;
-  if(deco.img) loadImg(deco.id,deco.img);
+  if(deco.img) loadImg('d_'+deco.id,deco.img);
   if(bracelet.length>0&&bracelet[0].locked){
     bracelet[0].itemId=deco.id;
   } else {
@@ -1867,9 +1869,10 @@ function addItem(itemId, isStone) {
   for(const k in deletedSlotSizes) delete deletedSlotSizes[k];
   const item = isStone ? stones.find(s=>s.id===itemId) : decos.find(d=>d.id===itemId);
   if (item) {
-    if(item.img) loadImg(item.id, item.img);
-    if(item.img2) loadImg(item.id+'_2', item.img2);
-    if(item.img3) loadImg(item.id+'_3', item.img3);
+    const _prefix = isStone ? '' : 'd_';
+    if(item.img) loadImg(_prefix+item.id, item.img);
+    if(item.img2) loadImg(_prefix+item.id+'_2', item.img2);
+    if(item.img3) loadImg(_prefix+item.id+'_3', item.img3);
   }
   refreshAll(); saveData();
 }
@@ -3922,18 +3925,18 @@ async function loadData(){
   _loadDataPromise=new Promise(r=>{_resolve=r;});
   try{
   // โหลด decos metadata จาก localStorage, รูปจาก IndexedDB
+  // สำรอง built-in ไว้ก่อน เพื่อ restore เสมอแม้จะมี exception
+  const _builtinDecosBak={};
+  decos.forEach(d=>{if(d.id<=105)_builtinDecosBak[d.id]=d;});
   try{
     const raw=localStorage.getItem(SK+'_decos');
     if(raw){
       const saved=JSON.parse(raw);
-      // เก็บ built-in decos (id<=105) ไว้ก่อน ห้ามโดนลบทิ้ง
-      const builtinDecos={};
-      decos.forEach(d=>{if(d.id<=105)builtinDecos[d.id]=d;});
       decos.length=0;
       for(const sd of saved){
         if(sd.id<=105){
           // คืน built-in เดิม แต่เก็บ hidden state ของผู้ใช้
-          const bi=builtinDecos[sd.id];
+          const bi=_builtinDecosBak[sd.id];
           if(bi){
             bi.hidden=sd.hidden||false;
             // load รูปจาก IndexedDB (admin อาจอัพโหลดรูปให้ built-in deco)
@@ -3947,12 +3950,12 @@ async function loadData(){
           decos.push(sd);
         }
       }
-      // ถ้ามี built-in ที่ไม่ได้อยู่ใน saved ให้เพิ่มกลับ
-      Object.values(builtinDecos).forEach(bi=>{
-        if(!decos.find(d=>d.id===bi.id))decos.push(bi);
-      });
     }
   } catch(e){}
+  // เพิ่ม built-in กลับเสมอ (แม้ข้างบน throw) — ป้องกัน logo หาย
+  Object.values(_builtinDecosBak).forEach(bi=>{
+    if(!decos.find(d=>d.id===bi.id))decos.push(bi);
+  });
   // โหลด stones metadata จาก localStorage, รูปจาก IndexedDB
   try{
     const raw=localStorage.getItem(SK+'_stones');
@@ -4377,7 +4380,7 @@ async function exportEmbeddedHTML(){
       const payload=btoa(unescape(encodeURIComponent(JSON.stringify({ls:lsData,idb:idbData,media:mediaImgData}))));
 
       // seed script runs after page load — non-blocking
-      const seedScript=`<script id="__ssEmbed__">window.addEventListener('load',function(){try{var raw=decodeURIComponent(escape(atob('${payload}')));var D=JSON.parse(raw);try{Object.entries(D.ls||{}).forEach(function(e){localStorage.setItem(e[0],e[1]);});}catch(ex){}var pending=0;function done(){if(--pending<=0){try{if(typeof loadData==='function'){Promise.resolve(loadData()).then(function(){if(typeof ensureLockedLogo==='function')ensureLockedLogo();if(typeof refreshAll==='function')refreshAll();});}}catch(ex){}}}if(D.idb&&Object.keys(D.idb).length){pending++;try{var req=indexedDB.open('soulful_imgs_v1',1);req.onupgradeneeded=function(e){if(!e.target.result.objectStoreNames.contains('imgs'))e.target.result.createObjectStore('imgs');};req.onsuccess=function(e){var db=e.target.result;try{var tx=db.transaction('imgs','readwrite');var st=tx.objectStore('imgs');Object.entries(D.idb).forEach(function(e){st.put(e[1],e[0]);});tx.oncomplete=function(){db.close();done();};}catch(ex){db.close();done();}};}catch(ex){done();}}if(D.media&&Object.keys(D.media).length){pending++;function b64toBlob(b64){var arr=b64.split(','),mime=arr[0].match(/:(.*?);/)[1],bstr=atob(arr[1]),n=bstr.length,u8=new Uint8Array(n);while(n--)u8[n]=bstr.charCodeAt(n);return new Blob([u8],{type:mime});}try{var req2=indexedDB.open('soulfulStoneMedia',1);req2.onupgradeneeded=function(e){if(!e.target.result.objectStoreNames.contains('media'))e.target.result.createObjectStore('media',{keyPath:'id'});};req2.onsuccess=function(e){var db=e.target.result;try{var tx=db.transaction('media','readwrite');var st=tx.objectStore('media');Object.entries(D.media).forEach(function(entry){var id=parseInt(entry[0]),m=entry[1];var gr=st.get(id);gr.onsuccess=function(){var rec=gr.result||{id:id};if(m.imgB64)rec.imgBlob=b64toBlob(m.imgB64);st.put(rec);};});tx.oncomplete=function(){db.close();done();};}catch(ex){db.close();done();}};}catch(ex){done();}}if(pending===0){try{if(typeof loadData==='function'){Promise.resolve(loadData()).then(function(){if(typeof ensureLockedLogo==='function')ensureLockedLogo();if(typeof refreshAll==='function')refreshAll();});}}catch(ex){}}}catch(ex){console.warn('ssEmbed error',ex);}});<\/script>`;
+      const seedScript=`<script id="__ssEmbed__">window.addEventListener('load',function(){try{var raw=decodeURIComponent(escape(atob('${payload}')));var D=JSON.parse(raw);try{Object.entries(D.ls||{}).forEach(function(e){localStorage.setItem(e[0],e[1]);});}catch(ex){}var pending=0;function done(){if(--pending<=0){try{if(typeof loadData==='function'){Promise.resolve(loadData()).then(function(){if(typeof ensureLockedLogo==='function')ensureLockedLogo();var _rf=function(){if(typeof refreshAll==='function')refreshAll();};if(typeof refreshMediaCache==='function'){refreshMediaCache().then(_rf);}else{_rf();}});}}catch(ex){}}}if(D.idb&&Object.keys(D.idb).length){pending++;try{var req=indexedDB.open('soulful_imgs_v1',1);req.onupgradeneeded=function(e){if(!e.target.result.objectStoreNames.contains('imgs'))e.target.result.createObjectStore('imgs');};req.onsuccess=function(e){var db=e.target.result;try{var tx=db.transaction('imgs','readwrite');var st=tx.objectStore('imgs');Object.entries(D.idb).forEach(function(e){st.put(e[1],e[0]);});tx.oncomplete=function(){db.close();done();};}catch(ex){db.close();done();}};}catch(ex){done();}}if(D.media&&Object.keys(D.media).length){pending++;function b64toBlob(b64){var arr=b64.split(','),mime=arr[0].match(/:(.*?);/)[1],bstr=atob(arr[1]),n=bstr.length,u8=new Uint8Array(n);while(n--)u8[n]=bstr.charCodeAt(n);return new Blob([u8],{type:mime});}try{var req2=indexedDB.open('soulfulStoneMedia',1);req2.onupgradeneeded=function(e){if(!e.target.result.objectStoreNames.contains('media'))e.target.result.createObjectStore('media',{keyPath:'id'});};req2.onsuccess=function(e){var db=e.target.result;try{var tx=db.transaction('media','readwrite');var st=tx.objectStore('media');Object.entries(D.media).forEach(function(entry){var id=parseInt(entry[0]),m=entry[1];var gr=st.get(id);gr.onsuccess=function(){var rec=gr.result||{id:id};if(m.imgB64)rec.imgBlob=b64toBlob(m.imgB64);st.put(rec);};});tx.oncomplete=function(){db.close();done();};}catch(ex){db.close();done();}};}catch(ex){done();}}if(pending===0){try{if(typeof loadData==='function'){Promise.resolve(loadData()).then(function(){if(typeof ensureLockedLogo==='function')ensureLockedLogo();var _rf=function(){if(typeof refreshAll==='function')refreshAll();};if(typeof refreshMediaCache==='function'){refreshMediaCache().then(_rf);}else{_rf();}});}}catch(ex){}}}catch(ex){console.warn('ssEmbed error',ex);}});<\/script>`;
 
       // 6. inject — replace existing or insert after <head>
       // NOTE: check for tag at start of line to avoid matching source code
@@ -5148,6 +5151,9 @@ function deleteStoneMedia(field){
     <button id="stoneMediaClose" onclick="closeStoneMedia()">✕</button>
     <div id="stoneMediaTitle"></div>
     <img id="stoneMediaImg" alt="">
+    <div style="background:rgba(201,169,110,.08);border:1px solid rgba(201,169,110,.25);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:rgba(240,216,176,.65);line-height:1.6;">
+      📌 <em>ภาพนี้เป็นเพียงตัวอย่างลายของหินชนิดนี้เท่านั้น ลายของหินแต่ละล็อตจะแตกต่างกันตามธรรมชาติ ไม่ได้มาจากเส้นนี้เป๊ะๆ</em>
+    </div>
     <div id="stoneMediaEmpty">ยังไม่มีภาพหรือวีดีโอสำหรับหินชนิดนี้</div>
     <div id="stoneMediaAdminTools" style="display:none;">
       <div class="stone-media-upload-row">
@@ -5249,57 +5255,19 @@ self.addEventListener('fetch',e=>{
   }
 })();
 
-// ── PULL-TO-REFRESH (ดึงลงจากบน หรือ ดึงขึ้นจากล่าง) ────────────────────────
+// ── ปุ่ม Reload ────────────────────────────────────────────────────────────────
 (function(){
-  const THRESHOLD = 75;
-  let startY = 0, dir = null, ptrEl = null;
-
-  function el(){
-    if(!ptrEl){
-      ptrEl = document.createElement('div');
-      ptrEl.id = 'ptrIndicator';
-      ptrEl.style.cssText = 'position:fixed;left:0;right:0;z-index:9999;display:flex;align-items:center;justify-content:center;height:0;overflow:hidden;transition:height 0.15s;background:rgba(18,4,8,0.92);color:#f5e080;font-size:13px;font-weight:700;letter-spacing:.5px;backdrop-filter:blur(4px);';
-      document.body.appendChild(ptrEl);
-    }
-    return ptrEl;
-  }
-
-  function scrollY(){ return window.scrollY || document.documentElement.scrollTop || 0; }
-  function atTop(){ return scrollY() <= 4; }
-  function atBottom(){ return window.innerHeight + scrollY() >= document.documentElement.scrollHeight - 4; }
-
-  document.addEventListener('touchstart', e => {
-    startY = e.touches[0].clientY;
-    dir = null;
-  }, {passive: true});
-
-  document.addEventListener('touchmove', e => {
-    const dy = e.touches[0].clientY - startY;
-    if(!dir){
-      if(dy > 8 && atTop()) dir = 'down';
-      else if(dy < -8 && atBottom()) dir = 'up';
-      else return;
-    }
-    const dist = Math.abs(dy);
-    const h = Math.min(dist * 0.5, 48);
-    const banner = el();
-    if(dir === 'down'){
-      banner.style.top = '0'; banner.style.bottom = '';
-      banner.style.borderBottom = '1px solid rgba(201,160,64,.3)'; banner.style.borderTop = '';
-    } else {
-      banner.style.bottom = '0'; banner.style.top = '';
-      banner.style.borderTop = '1px solid rgba(201,160,64,.3)'; banner.style.borderBottom = '';
-    }
-    banner.style.height = h + 'px';
-    banner.textContent = dist >= THRESHOLD ? '🔄 ปล่อยเพื่อ Reload' : (dir==='down' ? '↓ ดึงลงเพื่อ Reload' : '↑ ดึงขึ้นเพื่อ Reload');
-  }, {passive: true});
-
-  document.addEventListener('touchend', e => {
-    const dist = Math.abs(e.changedTouches[0].clientY - startY);
-    el().style.height = '0';
-    if(dir && dist >= THRESHOLD) setTimeout(() => location.reload(), 150);
-    dir = null;
-  });
+  const btn = document.createElement('button');
+  btn.id = 'reloadBtn';
+  btn.innerHTML = '🔄';
+  btn.title = 'Reload';
+  btn.style.cssText = 'position:fixed;bottom:22px;right:16px;z-index:9999;width:44px;height:44px;border-radius:50%;background:rgba(18,4,8,0.88);border:1.5px solid rgba(201,160,64,0.5);color:#f5e080;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.5);backdrop-filter:blur(6px);transition:opacity 0.2s,transform 0.15s;opacity:0.7;';
+  btn.addEventListener('touchstart', () => { btn.style.transform='scale(0.88)'; btn.style.opacity='1'; }, {passive:true});
+  btn.addEventListener('touchend', () => { btn.style.transform='scale(1)'; setTimeout(() => location.reload(), 120); });
+  btn.addEventListener('mouseenter', () => btn.style.opacity='1');
+  btn.addEventListener('mouseleave', () => btn.style.opacity='0.7');
+  btn.addEventListener('click', () => location.reload());
+  document.body.appendChild(btn);
 })();
 </script>
 </body>
