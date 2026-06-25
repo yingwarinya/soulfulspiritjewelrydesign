@@ -1392,12 +1392,19 @@ function drawBracelet() {
   const NOMINAL = 360; // ขนาด canvas พื้นฐาน → buffer 1080px (360×3)
   const total = bracelet.length || getBeadSlots();
   const nomBeadR = Math.min(Math.max((NOMINAL*.86)/(total/Math.PI)/2, 6), 19);
-  const nomR = NOMINAL/2 - nomBeadR - 5; // r คงที่เสมอ ไม่เปลี่ยนเมื่อเพิ่มจี้
-
-  // คำนวณขนาด canvas — กว้างคงที่, สูงเพิ่มเฉพาะส่วนล่างถ้ามีจี้
+  // คำนวณ maxPH ก่อน — ใช้หด r ถ้ามีจี้เพื่อไม่ให้ตกขอบ
   const pendantItems=bracelet.filter(b=>{if(!b)return false;const it=!b.isStone&&decos.find(d=>d.id===b.itemId);return it&&it.type==='pendant';});
   const maxPH=pendantItems.length?Math.max(...pendantItems.map(b=>{const it=decos.find(d=>d.id===b.itemId);return it?(it.h||it.size||8):8;})):0;
-  const extPx = maxPH > 0 ? Math.ceil(maxPH*(nomBeadR/8)) + 28 : 0;
+  const _cMMfit=(wristSize+0.5)*10;
+  const nomRBase=NOMINAL/2-nomBeadR-5;
+  // แก้สมการ: r + pendant_hPx ≤ NOMINAL/2 - margin
+  // pendant_hPx = maxPH * 2π/circumMM * r  →  r = avail / (1 + 2π*maxPH/circumMM)
+  const nomR = maxPH>0
+    ? Math.min(nomRBase, Math.max((NOMINAL/2-nomBeadR-12)/(1+2*Math.PI*maxPH/_cMMfit), nomRBase*0.5))
+    : nomRBase;
+  // คำนวณขนาด canvas — กว้างคงที่, สูงเพิ่มเฉพาะส่วนล่างถ้ามีจี้ (ใช้ nomR ที่ปรับแล้ว)
+  const pendantHpx=maxPH>0?maxPH*2*(1/_cMMfit)*Math.PI*nomR:0;
+  const extPx = maxPH > 0 ? Math.ceil(pendantHpx) + 28 : 0;
   // คำนวณ radius จริงของหินใหญ่สุด เพื่อป้องกันโดนตัดขอบ canvas
   const circumMM_cs=(wristSize+0.5)*10;
   let maxActualBr=nomBeadR;
