@@ -3602,13 +3602,12 @@ function exportDesign(){
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
   const pillH=26;
   const pillCY=bY+bSize+16;
-  const pillW=Math.max(c.measureText(pillText).width*1.4+48, 200);
-  const pillX=(W-pillW)/2; // center เหมือน logo
+  const pillW=260; // fixed width — ไม่พึ่ง measureText (iOS วัดผิด)
+  const pillX=(W-pillW)/2; // box centered at W/2
   roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID;
-  // draw text ตรงๆ ที่ W/2 — browser จัดการ Thai centering เอง ไม่ต้องพึ่ง measureText
   c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
-  c.fillText(pillText, W/2, pillCY);
+  c.fillText(pillText, W/2, pillCY); // text centered at W/2 เสมอ
   c.restore();
 
   // ── SECTION DIVIDER ───────────────────────────────────────────
