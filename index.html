@@ -1551,8 +1551,11 @@ function drawBracelet() {
     const b=bracelet[i]; if(!b||b.isStone)continue;
     const item=decos.find(d=>d.id===b.itemId);
     if(!item||item.type!=='pendant')continue;
-    const scale=beadR/8;
-    const wPx=(item.w||8)*scale, hPx=(item.h||item.size||8)*scale;
+    // ใช้ formula เดียวกับ charm — ผูกกับเส้นรอบวงกำไล ให้ mm เดียวกัน = ขนาดเดียวกัน
+    const _cMMp=(wristSize+0.5)*10;
+    const _pSc=2*((1/_cMMp)*Math.PI*r)*sf;
+    const _pH=item.h||item.size||8, _pW=item.w||_pH;
+    const hPx=_pH*_pSc, wPx=_pW*_pSc;
     if(item.img){
       const _dpk='d_'+item.id;
       const ci=imgCache[_dpk];
