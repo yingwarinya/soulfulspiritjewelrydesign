@@ -2484,8 +2484,26 @@ function renderAdmin(){
     const _firstMetal=d=>(d.metal||'gold').split(',')[0];
     const items=decos.filter(d=>d.type===adminDecoType&&(adminDecoMetal.includes('all')||(d.metal||'gold').split(',').some(m=>adminDecoMetal.includes(m))))
       .sort((a,b)=>({silver:0,gold:1,rosegold:2}[_firstMetal(a)]??1)-({silver:0,gold:1,rosegold:2}[_firstMetal(b)]??1));
-    decoList.innerHTML=items.length?items.map(decoItemHTML).join('')
-      :`<div class="empty" style="padding:16px;font-size:12px;">ยังไม่มีรายการในหมวดนี้</div>`;
+    // Group by group field
+    const _agMap={};const _agUng=[];
+    for(const d of items){if(d.group){(_agMap[d.group]=_agMap[d.group]||[]).push(d);}else{_agUng.push(d);}}
+    let _agHtml='';
+    for(const [gName,gItems] of Object.entries(_agMap)){
+      const anyHidden=gItems.some(d=>d.hidden);
+      _agHtml+=`<div style="border:1px solid var(--gold3);border-radius:10px;margin-bottom:8px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(201,160,64,.08);cursor:pointer;" onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.ag-chevron').textContent=b.style.display==='none'?'▶':'▼';">
+          <span style="font-size:16px;">📦</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--gold3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${gName}${anyHidden?' <span style="font-size:10px;color:var(--text3)">(มีซ่อน)</span>':''}</div>
+            <div style="font-size:11px;color:var(--text3);">${gItems.length} รายการ</div>
+          </div>
+          <span class="ag-chevron" style="color:var(--text3);font-size:11px;flex-shrink:0;">▼</span>
+        </div>
+        <div style="display:block;">${gItems.map(decoItemHTML).join('')}</div>
+      </div>`;
+    }
+    _agHtml+=_agUng.map(decoItemHTML).join('');
+    decoList.innerHTML=_agHtml||`<div class="empty" style="padding:16px;font-size:12px;">ยังไม่มีรายการในหมวดนี้</div>`;
   }
 }
 function toggleHideStone(id){const s=stones.find(x=>x.id===id);if(s){s.hidden=!s.hidden;renderAdmin();renderQuickGrid();renderCatalog();saveData();showToast(s.hidden?'ซ่อน '+s.name+' แล้ว':'แสดง '+s.name+' แล้ว');}}
