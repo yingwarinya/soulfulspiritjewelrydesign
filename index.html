@@ -3467,7 +3467,7 @@ function exportDesign(){
   const W = Math.min(640, _physW > 0 ? Math.floor(_physW / SCALE) : 640);
   const PAD = 28;
   const srcC = document.getElementById('braceletCanvas');
-  const bSize = Math.min(W - PAD*2, srcC.width);
+  const bSize = W - PAD*2; // วาด bracelet เต็มความกว้างเสมอ → ป้องกัน center เหลื่อม
 
   // ── BUILD SUMMARY ────────────────────────────────────────────
   const summary = [];
@@ -3600,7 +3600,7 @@ function exportDesign(){
   c.textBaseline='middle';
   c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
   const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
-  const pillCX=PAD + bSize/2; // กึ่งกลางของ bracelet canvas section
+  const pillCX=W/2; // กึ่งกลางของภาพ export
   const pillH=26;
   const pillCY=bY+bSize+16; // กึ่งกลาง pill — ต่ำกว่าวงกำไลเพื่อไม่ทับหิน
   // Thai fallback ทำให้ measureText underestimate — เพิ่ม 40% + minimum 200px
