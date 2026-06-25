@@ -3603,7 +3603,7 @@ function exportDesign(){
   const pillH=26;
   const pillCY=bY+bSize+16;
   const pillW=Math.max(c.measureText(pillText).width*1.4+48, 200);
-  const pillX=PAD; // ชิดซ้าย
+  const pillX=(W-pillW)/2; // center เหมือน logo
   roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID;
   c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
