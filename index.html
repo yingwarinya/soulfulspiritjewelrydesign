@@ -728,7 +728,7 @@
         </div>
       </div>
       <div class="form-row"><input type="text" id="nDecoProp" placeholder="คุณสมบัติ / ความหมาย เช่น Luck - โชคลาภ โชคดี"></div>
-      <div class="form-row"><input type="text" id="nDecoGroup" placeholder="กลุ่ม sub-menu (ถ้ามี) เช่น จี้ Alphabet · จี้ ราศี" style="font-size:12px;"></div>
+      <div class="form-row"><input type="text" id="nDecoGroup" placeholder="กลุ่ม (คั่นด้วยคอมมา ถ้ามีหลายกลุ่ม เช่น clover, infinity)" style="font-size:12px;"></div>
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:9px;cursor:pointer;font-size:13px;color:var(--text3);background:rgba(180,20,20,.1);border:1px solid rgba(200,40,40,.3);border-radius:8px;padding:8px 10px;">
         <input type="checkbox" id="nDecoPreorder" style="width:16px;height:16px;accent-color:#c83030;cursor:pointer;">
         <span>⏳ Pre-order <span style="color:#ff6060;font-weight:700;">7-14 วัน</span> (ไม่มีพร้อมส่ง)</span>
@@ -848,7 +848,7 @@
         </div>
       </div>
       <div style="margin-top:7px;">
-        <input type="text" id="editDecoGroup" placeholder="กลุ่ม sub-menu (ถ้ามี) เช่น จี้ Alphabet · จี้ ราศี" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 9px;font-size:12px;color:var(--text);box-sizing:border-box;">
+        <input type="text" id="editDecoGroup" placeholder="กลุ่ม (คั่นด้วยคอมมา เช่น clover, infinity)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 9px;font-size:12px;color:var(--text);box-sizing:border-box;">
       </div>
     </div>
     <div id="editStoneFields">
@@ -2486,7 +2486,7 @@ function renderAdmin(){
       .sort((a,b)=>({silver:0,gold:1,rosegold:2}[_firstMetal(a)]??1)-({silver:0,gold:1,rosegold:2}[_firstMetal(b)]??1));
     // Group by group field
     const _agMap={};const _agUng=[];
-    for(const d of items){if(d.group){(_agMap[d.group]=_agMap[d.group]||[]).push(d);}else{_agUng.push(d);}}
+    for(const d of items){const gs=_decoGroups(d);if(gs.length){gs.forEach(g=>{(_agMap[g]=_agMap[g]||[]).push(d);});}else{_agUng.push(d);}}
     let _agHtml='';
     for(const [gName,gItems] of Object.entries(_agMap)){
       const anyHidden=gItems.some(d=>d.hidden);
@@ -2786,7 +2786,7 @@ function addDeco(){
   if(!thai){showToast('⚠️ กรุณากรอกชื่อไทย');return;}
   if(!price){showToast('⚠️ กรุณากรอกราคา/ชิ้น');return;}
   const prop=document.getElementById('nDecoProp').value.trim();
-  const group=document.getElementById('nDecoGroup').value.trim()||undefined;
+  const group=_parseGroups(document.getElementById('nDecoGroup').value)||undefined;
   const preorder=document.getElementById('nDecoPreorder').checked;
   const id=Math.max(...decos.map(d=>d.id),5000)+1;
   const newDeco={id,name,thai,type:decoType,size,w,h,price,prop,group,img,img2,metal,preorder,hidden:false,gradient:[lighten(col,30),darken(col,20)]};
@@ -2859,7 +2859,7 @@ function openEdit(id, isStone){
       document.getElementById('editDecoFreeQty').value=item.freeQty!=null?item.freeQty:1;
       document.getElementById('editDecoTierPrice').value=item.tierPrice!=null?item.tierPrice:item.price;
     }
-    document.getElementById('editDecoGroup').value=item.group||'';
+    document.getElementById('editDecoGroup').value=_decoGroups(item).join(', ');
   }
   // preorder checkbox — show only for charm/pendant decos
   const showPre=!isStone&&(item.type==='charm'||item.type==='pendant');
@@ -2996,8 +2996,8 @@ function saveEdit(){
     const newType=document.getElementById('editDecoType').value||'charm';
     const isPre=(newType==='charm'||newType==='pendant');
     d.preorder=isPre&&document.getElementById('editPreorder').checked;
-    const grp=document.getElementById('editDecoGroup').value.trim();
-    d.group=grp||undefined;
+    const grp=_parseGroups(document.getElementById('editDecoGroup').value);
+    d.group=grp.length?grp:undefined;
     d.name=name;d.thai=thai;d.prop=prop;d.price=price;d.type=newType;d.size=(newType==='pendant')?1:Math.max(dw,dh);d.w=dw;d.h=dh;d.gradient=ng;d.metal=eMetal;
     if(newType==='spacer'||newType==='logo'){
       d.freeQty=parseInt(document.getElementById('editDecoFreeQty').value)||1;
@@ -3192,6 +3192,10 @@ let decoModalTab='pendant';
 let decoModalMetal=['all'];
 let decoSubGroup=null; // null = main grid, string = showing variants of this group
 function setDecoSubGroup(el){decoSubGroup=el.dataset.g;renderDecoModalGrid();}
+// normalize group field → always returns string[]
+function _decoGroups(d){const g=d.group;if(!g)return[];return Array.isArray(g)?g.filter(Boolean):[g].filter(Boolean);}
+// parse comma-separated admin input → string[]
+function _parseGroups(str){return str.split(',').map(s=>s.trim()).filter(Boolean);}
 let quickProps=['all']; // multi-select array
 let quickGrade='all';
 let quickSort='none'; // 'none' | 'asc' | 'desc'
@@ -3244,7 +3248,7 @@ function renderDecoModalGrid(){
 
   // ── SUB-GROUP VIEW ───────────────────────────────────────────────
   if(decoSubGroup){
-    const groupItems=all.filter(d=>d.group===decoSubGroup);
+    const groupItems=all.filter(d=>_decoGroups(d).includes(decoSubGroup));
     const backBtn=`<div style="grid-column:span 2;display:flex;align-items:center;gap:8px;padding:4px 0 10px;border-bottom:1px solid var(--border);margin-bottom:6px;">
       <button onclick="decoSubGroup=null;renderDecoModalGrid()" style="background:rgba(201,160,64,.15);border:1px solid var(--gold3);border-radius:20px;color:var(--gold3);font-size:12px;cursor:pointer;padding:5px 14px;flex-shrink:0;">← กลับ</button>
       <span style="color:var(--text2);font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${decoSubGroup}</span>
@@ -3258,7 +3262,8 @@ function renderDecoModalGrid(){
   const groupMap={};
   const ungrouped=[];
   for(const d of all){
-    if(d.group){(groupMap[d.group]=groupMap[d.group]||[]).push(d);}
+    const gs=_decoGroups(d);
+    if(gs.length){gs.forEach(g=>{(groupMap[g]=groupMap[g]||[]).push(d);});}
     else{ungrouped.push(d);}
   }
 
