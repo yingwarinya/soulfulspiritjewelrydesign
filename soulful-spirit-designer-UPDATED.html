@@ -728,6 +728,7 @@
         </div>
       </div>
       <div class="form-row"><input type="text" id="nDecoProp" placeholder="คุณสมบัติ / ความหมาย เช่น Luck - โชคลาภ โชคดี"></div>
+      <div class="form-row"><input type="text" id="nDecoGroup" placeholder="กลุ่ม (คั่นด้วยคอมมา ถ้ามีหลายกลุ่ม เช่น clover, infinity)" style="font-size:12px;"></div>
       <label style="display:flex;align-items:center;gap:8px;margin-bottom:9px;cursor:pointer;font-size:13px;color:var(--text3);background:rgba(180,20,20,.1);border:1px solid rgba(200,40,40,.3);border-radius:8px;padding:8px 10px;">
         <input type="checkbox" id="nDecoPreorder" style="width:16px;height:16px;accent-color:#c83030;cursor:pointer;">
         <span>⏳ Pre-order <span style="color:#ff6060;font-weight:700;">7-14 วัน</span> (ไม่มีพร้อมส่ง)</span>
@@ -845,6 +846,9 @@
           <input type="number" id="editDecoTierPrice" placeholder="฿" min="0" style="width:60px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:12px;color:var(--text);text-align:center;">
           <span>บาท/ชิ้น</span>
         </div>
+      </div>
+      <div style="margin-top:7px;">
+        <input type="text" id="editDecoGroup" placeholder="กลุ่ม (คั่นด้วยคอมมา เช่น clover, infinity)" style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:7px;padding:8px 9px;font-size:12px;color:var(--text);box-sizing:border-box;">
       </div>
     </div>
     <div id="editStoneFields">
@@ -1388,12 +1392,19 @@ function drawBracelet() {
   const NOMINAL = 360; // ขนาด canvas พื้นฐาน → buffer 1080px (360×3)
   const total = bracelet.length || getBeadSlots();
   const nomBeadR = Math.min(Math.max((NOMINAL*.86)/(total/Math.PI)/2, 6), 19);
-  const nomR = NOMINAL/2 - nomBeadR - 5; // r คงที่เสมอ ไม่เปลี่ยนเมื่อเพิ่มจี้
-
-  // คำนวณขนาด canvas — กว้างคงที่, สูงเพิ่มเฉพาะส่วนล่างถ้ามีจี้
+  // คำนวณ maxPH ก่อน — ใช้หด r ถ้ามีจี้เพื่อไม่ให้ตกขอบ
   const pendantItems=bracelet.filter(b=>{if(!b)return false;const it=!b.isStone&&decos.find(d=>d.id===b.itemId);return it&&it.type==='pendant';});
   const maxPH=pendantItems.length?Math.max(...pendantItems.map(b=>{const it=decos.find(d=>d.id===b.itemId);return it?(it.h||it.size||8):8;})):0;
-  const extPx = maxPH > 0 ? Math.ceil(maxPH*(nomBeadR/8)) + 28 : 0;
+  const _cMMfit=(wristSize+0.5)*10;
+  // nomR ไม่หด — ให้ canvas ขยายแทน
+  const nomR=NOMINAL/2-nomBeadR-5;
+  // pendant_hPx ตามสูตรเดียวกับ charm (ใช้ nomR เต็ม)
+  const pendantHpx=maxPH>0?maxPH*2*(1/_cMMfit)*Math.PI*nomR:0;
+  // extPx = จำนวน pixel ที่ต้องขยาย canvas ด้านข้าง (worst case จี้อยู่ฝั่ง)
+  // เพิ่ม nomBeadR เพราะจี้ห้อยจากขอบหิน ไม่ใช่จากศูนย์กลาง
+  // connectR = nomBeadR*0.28+2 (ตรงกับ drawPendantImg)
+  const connectR_ext = nomBeadR * 0.28 + 2;
+  const extPx = maxPH > 0 ? Math.ceil(pendantHpx + connectR_ext) + 16 : 0;
   // คำนวณ radius จริงของหินใหญ่สุด เพื่อป้องกันโดนตัดขอบ canvas
   const circumMM_cs=(wristSize+0.5)*10;
   let maxActualBr=nomBeadR;
@@ -1406,6 +1417,7 @@ function drawBracelet() {
   const base = Math.max(NOMINAL, minCanForBeads);
   // ไม่มีจี้ → canSize = base (วงเต็มขนาด)
   // มีจี้  → canSize = 2*(nomR + extPx) พอดีให้จี้ไม่ตกขอบ วงเล็กลงตามสัดส่วน
+  // canSize ขยายรวม nomR + extPx (ซึ่งรวม nomBeadR + pendantHpx + margin แล้ว)
   const canSize = extPx > 0 ? Math.max(base, Math.ceil(2*(nomR + extPx))) : base;
   const canW = canSize, canH = canSize; // square เสมอ
 
@@ -1547,8 +1559,11 @@ function drawBracelet() {
     const b=bracelet[i]; if(!b||b.isStone)continue;
     const item=decos.find(d=>d.id===b.itemId);
     if(!item||item.type!=='pendant')continue;
-    const scale=beadR/8;
-    const wPx=(item.w||8)*scale, hPx=(item.h||item.size||8)*scale;
+    // ใช้ formula เดียวกับ charm — ผูกกับเส้นรอบวงกำไล ให้ mm เดียวกัน = ขนาดเดียวกัน
+    const _cMMp=(wristSize+0.5)*10;
+    const _pSc=2*((1/_cMMp)*Math.PI*r)*sf;
+    const _pH=item.h||item.size||8, _pW=item.w||_pH;
+    const hPx=_pH*_pSc, wPx=_pW*_pSc;
     if(item.img){
       const _dpk='d_'+item.id;
       const ci=imgCache[_dpk];
@@ -1744,14 +1759,17 @@ function drawCharmImg(ctx,x,y,r,img,wPx,hPx,angle) {
 function drawPendantImg(ctx,bx,by,cx,cy,img,wPx,hPx,beadR) {
   const angle=Math.atan2(by-cy,bx-cx);
   const distFromCenter=Math.sqrt((bx-cx)**2+(by-cy)**2);
-  const startY = (beadR||0) - 2; // เริ่มที่ขอบหิน (beadR) ให้จี้ห้อยออกนอก ไม่ฝังในหิน
+  // เริ่มต่อจากขอบของ tiny connector dot (beadR*0.28) แทน beadR เต็ม
+  // เพื่อให้จี้ติดวงหินไม่มีช่องว่าง
+  const connectR = (beadR||0) * 0.28 + 2;
+  const startY = connectR;
   // scale ลงให้จี้พอดีกับ canvas ถ้าจำเป็น
   const available=canvas.width/2-distFromCenter-startY;
   if(hPx>available&&available>2){const s=available/hPx;wPx*=s;hPx=available;}
   ctx.save();
-  // จุดเชื่อมที่ขอบหิน
-  const dotX=bx+Math.cos(angle)*(beadR||0);
-  const dotY=by+Math.sin(angle)*(beadR||0);
+  // จุดเชื่อมที่ขอบ connector dot
+  const dotX=bx+Math.cos(angle)*connectR;
+  const dotY=by+Math.sin(angle)*connectR;
   ctx.beginPath();ctx.arc(dotX,dotY,2.5,0,2*Math.PI);
   ctx.fillStyle='#c9a040';ctx.shadowColor='rgba(201,160,64,.7)';ctx.shadowBlur=4;ctx.fill();
   ctx.restore();
@@ -2480,8 +2498,26 @@ function renderAdmin(){
     const _firstMetal=d=>(d.metal||'gold').split(',')[0];
     const items=decos.filter(d=>d.type===adminDecoType&&(adminDecoMetal.includes('all')||(d.metal||'gold').split(',').some(m=>adminDecoMetal.includes(m))))
       .sort((a,b)=>({silver:0,gold:1,rosegold:2}[_firstMetal(a)]??1)-({silver:0,gold:1,rosegold:2}[_firstMetal(b)]??1));
-    decoList.innerHTML=items.length?items.map(decoItemHTML).join('')
-      :`<div class="empty" style="padding:16px;font-size:12px;">ยังไม่มีรายการในหมวดนี้</div>`;
+    // Group by group field
+    const _agMap={};const _agUng=[];
+    for(const d of items){const gs=_decoGroups(d);if(gs.length){gs.forEach(g=>{(_agMap[g]=_agMap[g]||[]).push(d);});}else{_agUng.push(d);}}
+    let _agHtml='';
+    for(const [gName,gItems] of Object.entries(_agMap)){
+      const anyHidden=gItems.some(d=>d.hidden);
+      _agHtml+=`<div style="border:1px solid var(--gold3);border-radius:10px;margin-bottom:8px;overflow:hidden;">
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(201,160,64,.08);cursor:pointer;" onclick="const b=this.nextElementSibling;b.style.display=b.style.display==='none'?'block':'none';this.querySelector('.ag-chevron').textContent=b.style.display==='none'?'▶':'▼';">
+          <span style="font-size:16px;">📦</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:700;color:var(--gold3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${gName}${anyHidden?' <span style="font-size:10px;color:var(--text3)">(มีซ่อน)</span>':''}</div>
+            <div style="font-size:11px;color:var(--text3);">${gItems.length} รายการ</div>
+          </div>
+          <span class="ag-chevron" style="color:var(--text3);font-size:11px;flex-shrink:0;">▶</span>
+        </div>
+        <div style="display:none;">${gItems.map(decoItemHTML).join('')}</div>
+      </div>`;
+    }
+    _agHtml+=_agUng.map(decoItemHTML).join('');
+    decoList.innerHTML=_agHtml||`<div class="empty" style="padding:16px;font-size:12px;">ยังไม่มีรายการในหมวดนี้</div>`;
   }
 }
 function toggleHideStone(id){const s=stones.find(x=>x.id===id);if(s){s.hidden=!s.hidden;renderAdmin();renderQuickGrid();renderCatalog();saveData();showToast(s.hidden?'ซ่อน '+s.name+' แล้ว':'แสดง '+s.name+' แล้ว');}}
@@ -2764,9 +2800,10 @@ function addDeco(){
   if(!thai){showToast('⚠️ กรุณากรอกชื่อไทย');return;}
   if(!price){showToast('⚠️ กรุณากรอกราคา/ชิ้น');return;}
   const prop=document.getElementById('nDecoProp').value.trim();
+  const group=_parseGroups(document.getElementById('nDecoGroup').value)||undefined;
   const preorder=document.getElementById('nDecoPreorder').checked;
   const id=Math.max(...decos.map(d=>d.id),5000)+1;
-  const newDeco={id,name,thai,type:decoType,size,w,h,price,prop,img,img2,metal,preorder,hidden:false,gradient:[lighten(col,30),darken(col,20)]};
+  const newDeco={id,name,thai,type:decoType,size,w,h,price,prop,group,img,img2,metal,preorder,hidden:false,gradient:[lighten(col,30),darken(col,20)]};
   if(decoType==='spacer'||decoType==='logo'){
     newDeco.freeQty=parseInt(document.getElementById('nDecoFreeQty').value)||1;
     newDeco.tierPrice=parseInt(document.getElementById('nDecoTierPrice').value)||price;
@@ -2774,7 +2811,7 @@ function addDeco(){
   decos.push(newDeco);
   if(img) loadImg(id,img);
   if(img2){ dbPut('deco_'+id+'_2',img2).catch(()=>{}); }
-  ['nDecoName','nDecoThai','nDecoPrice','nDecoTierPrice','nDecoProp'].forEach(i=>document.getElementById(i).value='');
+  ['nDecoName','nDecoThai','nDecoPrice','nDecoTierPrice','nDecoProp','nDecoGroup'].forEach(i=>document.getElementById(i).value='');
   document.getElementById('nDecoFreeQty').value='1';
   document.getElementById('nDecoPreorder').checked=false;
   document.getElementById('nDecoImgData').value='';
@@ -2836,6 +2873,7 @@ function openEdit(id, isStone){
       document.getElementById('editDecoFreeQty').value=item.freeQty!=null?item.freeQty:1;
       document.getElementById('editDecoTierPrice').value=item.tierPrice!=null?item.tierPrice:item.price;
     }
+    document.getElementById('editDecoGroup').value=_decoGroups(item).join(', ');
   }
   // preorder checkbox — show only for charm/pendant decos
   const showPre=!isStone&&(item.type==='charm'||item.type==='pendant');
@@ -2972,6 +3010,8 @@ function saveEdit(){
     const newType=document.getElementById('editDecoType').value||'charm';
     const isPre=(newType==='charm'||newType==='pendant');
     d.preorder=isPre&&document.getElementById('editPreorder').checked;
+    const grp=_parseGroups(document.getElementById('editDecoGroup').value);
+    d.group=grp.length?grp:undefined;
     d.name=name;d.thai=thai;d.prop=prop;d.price=price;d.type=newType;d.size=(newType==='pendant')?1:Math.max(dw,dh);d.w=dw;d.h=dh;d.gradient=ng;d.metal=eMetal;
     if(newType==='spacer'||newType==='logo'){
       d.freeQty=parseInt(document.getElementById('editDecoFreeQty').value)||1;
@@ -3164,6 +3204,12 @@ function renderDecoPreview(){
 }
 let decoModalTab='pendant';
 let decoModalMetal=['all'];
+let decoSubGroup=null; // null = main grid, string = showing variants of this group
+function setDecoSubGroup(el){decoSubGroup=el.dataset.g;renderDecoModalGrid();}
+// normalize group field → always returns string[]
+function _decoGroups(d){const g=d.group;if(!g)return[];return Array.isArray(g)?g.filter(Boolean):[g].filter(Boolean);}
+// parse comma-separated admin input → string[]
+function _parseGroups(str){return str.split(',').map(s=>s.trim()).filter(Boolean);}
 let quickProps=['all']; // multi-select array
 let quickGrade='all';
 let quickSort='none'; // 'none' | 'asc' | 'desc'
@@ -3178,11 +3224,30 @@ function renderQuickSortChips(){
   document.getElementById('quickSortChips').innerHTML=chips.map(c=>`<div class="grade-chip${quickSort===c.id?' active':''}" onclick="setQuickSort('${c.id}')">${c.label}</div>`).join('');
 }
 function setQuickSort(v){quickSort=v;renderQuickSortChips();renderQuickGrid();}
-function switchDecoTab(tab){decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
+function switchDecoTab(tab){decoSubGroup=null;decoModalTab=tab;decoModalMetal=['all'];['pendant','charm','logo','spacer'].forEach(t=>{const el=document.getElementById('decoTab'+t.charAt(0).toUpperCase()+t.slice(1));if(el)el.classList.toggle('active',t===tab);});['all','silver','gold','rosegold'].forEach(m=>{const el=document.getElementById('decoMetal_'+m);if(el)el.classList.toggle('active',m==='all');});renderDecoModalGrid();}
 function switchDecoMetal(m){
   decoModalMetal=[m]; // single-select filter
   ['all','silver','gold','rosegold'].forEach(x=>{const el=document.getElementById('decoMetal_'+x);if(el)el.classList.toggle('active',x===m);});
   renderDecoModalGrid();
+}
+function _decoItemCard(d,{isSpacerTab,usedSpacers}={}){
+  const cnt=bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length;
+  return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
+    ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
+    ${mkDecoDot(d)}
+    <div class="catalog-name">${d.name}</div>
+    <div class="catalog-thai">${d.thai}</div>
+    ${d.prop?`<div class="catalog-prop">${d.prop}</div>`:''}
+    ${d.preorder?`<div style="font-size:10px;font-weight:700;color:#ff5555;margin:3px 0 2px;letter-spacing:.5px;">⏳ Pre-order 7-14 วัน</div>`:''}
+    <div class="catalog-price">฿${isSpacerTab?(usedSpacers>=2?100:0):d.price}/ชิ้น${isSpacerTab&&usedSpacers<2?' <span style="font-size:9px;color:var(--gold3)">(เหลือฟรี '+(2-usedSpacers)+' ชิ้น)</span>':''}</div>
+    ${cnt>0?
+      `<div style="display:flex;gap:5px;">
+        <button class="catalog-add" style="flex:1;background:var(--card2);border-color:var(--border2);color:var(--text2);" onclick="removeAllOfItem(${d.id},false);renderDecoModalGrid()">− ลด</button>
+        <button class="catalog-add" style="flex:1;" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>
+      </div>`
+      :`<button class="catalog-add" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>`
+    }
+  </div>`;
 }
 function renderDecoModalGrid(){
   const _metalOrder={silver:0,gold:1,rosegold:2};
@@ -3191,12 +3256,48 @@ function renderDecoModalGrid(){
   const isLogoTab=(decoModalTab==='logo');
   const isSpacerTab=(decoModalTab==='spacer');
   const usedSpacers=bracelet.filter(b=>b&&!b.isStone&&!b.locked&&decos.find(x=>x.id===b.itemId&&x.type==='spacer')).length;
-  const spacerEffPrice=usedSpacers>=2?100:0;
   const usedLogos=bracelet.filter(b=>b&&!b.isStone&&decos.find(x=>x.id===b.itemId&&x.type==='logo')).length;
-  document.getElementById('decoModalGrid').innerHTML=all.length?all.map(d=>{
-    const isActive=isLogoTab?(lockedLogoId===d.id||(lockedLogoId==null&&bracelet.length>0&&bracelet[0].locked&&bracelet[0].itemId===d.id)):false;
-    const cnt=bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length;
-    if(isLogoTab){
+  const grid=document.getElementById('decoModalGrid');
+
+  // ── SUB-GROUP VIEW ───────────────────────────────────────────────
+  if(decoSubGroup){
+    const groupItems=all.filter(d=>_decoGroups(d).includes(decoSubGroup));
+    const backBtn=`<div style="grid-column:span 2;display:flex;align-items:center;gap:8px;padding:4px 0 10px;border-bottom:1px solid var(--border);margin-bottom:6px;">
+      <button onclick="decoSubGroup=null;renderDecoModalGrid()" style="background:rgba(201,160,64,.15);border:1px solid var(--gold3);border-radius:20px;color:var(--gold3);font-size:12px;cursor:pointer;padding:5px 14px;flex-shrink:0;">← กลับ</button>
+      <span style="color:var(--text2);font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${decoSubGroup}</span>
+    </div>`;
+    grid.innerHTML=backBtn+(groupItems.length?groupItems.map(d=>_decoItemCard(d,{isSpacerTab,usedSpacers})).join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการในกลุ่มนี้</div>');
+    return;
+  }
+
+  // ── MAIN GRID VIEW ───────────────────────────────────────────────
+  // Separate grouped vs ungrouped items
+  const groupMap={};
+  const ungrouped=[];
+  for(const d of all){
+    const gs=_decoGroups(d);
+    if(gs.length){gs.forEach(g=>{(groupMap[g]=groupMap[g]||[]).push(d);});}
+    else{ungrouped.push(d);}
+  }
+
+  // Build group parent cards
+  const groupCards=Object.entries(groupMap).map(([gName,items])=>{
+    const totalInBracelet=items.reduce((sum,d)=>sum+bracelet.filter(b=>b&&!b.isStone&&b.itemId===d.id&&!b.locked).length,0);
+    const minPrice=Math.min(...items.map(d=>d.price));
+    const rep=items.find(d=>imgCache['d_'+d.id])||items[0];
+    return `<div class="catalog-card" style="cursor:pointer;" data-g="${gName.replace(/"/g,'&quot;')}" onclick="setDecoSubGroup(this)">
+      ${totalInBracelet>0?`<div class="catalog-badge">${totalInBracelet}</div>`:''}
+      ${mkDecoDot(rep)}
+      <div class="catalog-name">${gName}</div>
+      <div class="catalog-thai" style="font-size:10px;color:var(--text3);">${items.length} ตัวเลือก</div>
+      <div class="catalog-price">ตั้งแต่ ฿${minPrice}/ชิ้น</div>
+      <button class="catalog-add" style="background:rgba(201,160,64,.12);border-color:var(--gold3);color:var(--gold3);">เลือก →</button>
+    </div>`;
+  });
+
+  if(isLogoTab){
+    const logoCards=ungrouped.map(d=>{
+      const isActive=(lockedLogoId===d.id||(lockedLogoId==null&&bracelet.length>0&&bracelet[0].locked&&bracelet[0].itemId===d.id));
       return `<div class="catalog-card${isActive?' selected':''}" style="${isActive?'border-color:var(--gold);':''}">
         ${isActive?`<div class="catalog-badge">🔒</div>`:''}
         ${mkDecoDot(d)}
@@ -3206,24 +3307,15 @@ function renderDecoModalGrid(){
         <div class="catalog-price">฿${usedLogos>=1?500:0}/ชิ้น${usedLogos<1?'<span style="font-size:9px;color:var(--gold3)"> (ฟรี 1 ชิ้น)</span>':''}</div>
         <button class="catalog-add" style="${isActive?'background:var(--gold3);border-color:var(--gold);color:var(--bg);':''}" onclick="swapLockedLogo(${d.id})">${isActive?'✓ ใช้อยู่':'🔄 เลือก'}</button>
       </div>`;
-    }
-    return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
-      ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
-      ${mkDecoDot(d)}
-      <div class="catalog-name">${d.name}</div>
-      <div class="catalog-thai">${d.thai}</div>
-      ${d.prop?`<div class="catalog-prop">${d.prop}</div>`:''}
-      ${d.preorder?`<div style="font-size:10px;font-weight:700;color:#ff5555;margin:3px 0 2px;letter-spacing:.5px;">⏳ Pre-order 7-14 วัน</div>`:''}
-      <div class="catalog-price">฿${isSpacerTab?(usedSpacers>=2?100:0):d.price}/ชิ้น${isSpacerTab&&usedSpacers<2?' <span style="font-size:9px;color:var(--gold3)">(เหลือฟรี '+(2-usedSpacers)+' ชิ้น)</span>':''}</div>
-      ${cnt>0?
-        `<div style="display:flex;gap:5px;">
-          <button class="catalog-add" style="flex:1;background:var(--card2);border-color:var(--border2);color:var(--text2);" onclick="removeAllOfItem(${d.id},false);renderDecoModalGrid()">− ลด</button>
-          <button class="catalog-add" style="flex:1;" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>
-        </div>`
-        :`<button class="catalog-add" onclick="addItem(${d.id},false);renderDecoModalGrid();_triggerPendantFlip(${d.id})">+ เพิ่ม</button>`
-      }
-    </div>`;
-  }).join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการ</div>';
+    });
+    const combined=[...groupCards,...logoCards];
+    grid.innerHTML=combined.length?combined.join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการ</div>';
+    return;
+  }
+
+  const ungroupedCards=ungrouped.map(d=>_decoItemCard(d,{isSpacerTab,usedSpacers}));
+  const combined=[...groupCards,...ungroupedCards];
+  grid.innerHTML=combined.length?combined.join(''):'<div class="empty" style="grid-column:span 2;padding:20px 0">ยังไม่มีรายการ</div>';
 }
 function openDecoAll(typeFilter){
   if(typeFilter)decoModalTab=typeFilter;
@@ -3467,7 +3559,7 @@ function exportDesign(){
   const W = Math.min(640, _physW > 0 ? Math.floor(_physW / SCALE) : 640);
   const PAD = 28;
   const srcC = document.getElementById('braceletCanvas');
-  const bSize = Math.min(W - PAD*2, srcC.width);
+  const bSize = W - PAD*2; // วาด bracelet เต็มความกว้างเสมอ → ป้องกัน center เหลื่อม
 
   // ── BUILD SUMMARY ────────────────────────────────────────────
   const summary = [];
@@ -3594,23 +3686,21 @@ function exportDesign(){
   roundRect(PAD-10, bY-10, bSize+20, bSize+20, 16, 'rgba(255,255,255,0.012)', BORDER, 1);
   c.drawImage(srcC, PAD, bY, bSize, bSize);
 
-  // wrist size pill — ใช้ save/restore ป้องกัน state pollution, textBaseline=middle
+  // wrist size pill — ASCII only (no Thai) → ป้องกัน iOS Canvas measureText bug
   c.save();
-  c.textAlign='center';
+  c.font='bold 13px "Trebuchet MS",Arial,sans-serif';
   c.textBaseline='middle';
-  c.font='bold 12px "Trebuchet MS",Arial,sans-serif';
-  const pillText=`✦  ข้อมือ ${wristSize} cm  ✦`;
-  const pillCX=PAD + bSize/2; // กึ่งกลางของ bracelet canvas section
+  const pillText=`✦  ${wristSize} cm  ✦`;
   const pillH=26;
-  const pillCY=bY+bSize+16; // กึ่งกลาง pill — ต่ำกว่าวงกำไลเพื่อไม่ทับหิน
-  // Thai fallback ทำให้ measureText underestimate — เพิ่ม 40% + minimum 200px
-  const pillW=Math.max(c.measureText(pillText).width*1.4+48, 200);
-  const pillX=pillCX-pillW/2;
+  const pillCY=bY+bSize+16;
+  const tw=c.measureText(pillText).width; // ASCII only → measureText ถูกต้องทุก platform
+  const pillPad=20;
+  const pillW=Math.max(tw+pillPad*2, 140);
+  const pillX=(W-pillW)/2;
   roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID;
-  // Re-assert after roundRect to prevent iOS Safari canvas state drift
-  c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
-  c.fillText(pillText, pillX+pillW/2, pillCY);
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(pillText, W/2, pillCY);
   c.restore();
 
   // ── SECTION DIVIDER ───────────────────────────────────────────
