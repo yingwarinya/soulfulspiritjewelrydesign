@@ -3606,8 +3606,10 @@ function exportDesign(){
   const pillX=(W-pillW)/2; // center เหมือน logo
   roundRect(pillX, pillCY-pillH/2, pillW, pillH, 13, 'rgba(8,2,6,0.82)', 'rgba(201,160,64,0.45)', 1);
   c.fillStyle=GOLD_MID;
-  c.textAlign='center'; c.textBaseline='middle'; c.direction='ltr';
-  c.fillText(pillText, pillX+pillW/2, pillCY);
+  // textAlign='left' + offset manual ดีกว่า 'center' สำหรับ Thai text บน iOS Canvas
+  c.textAlign='left'; c.textBaseline='middle'; c.direction='ltr';
+  const _tw=c.measureText(pillText).width;
+  c.fillText(pillText, pillX+(pillW-_tw)/2, pillCY);
   c.restore();
 
   // ── SECTION DIVIDER ───────────────────────────────────────────
