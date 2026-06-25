@@ -2497,9 +2497,9 @@ function renderAdmin(){
             <div style="font-size:13px;font-weight:700;color:var(--gold3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${gName}${anyHidden?' <span style="font-size:10px;color:var(--text3)">(มีซ่อน)</span>':''}</div>
             <div style="font-size:11px;color:var(--text3);">${gItems.length} รายการ</div>
           </div>
-          <span class="ag-chevron" style="color:var(--text3);font-size:11px;flex-shrink:0;">▼</span>
+          <span class="ag-chevron" style="color:var(--text3);font-size:11px;flex-shrink:0;">▶</span>
         </div>
-        <div style="display:block;">${gItems.map(decoItemHTML).join('')}</div>
+        <div style="display:none;">${gItems.map(decoItemHTML).join('')}</div>
       </div>`;
     }
     _agHtml+=_agUng.map(decoItemHTML).join('');
