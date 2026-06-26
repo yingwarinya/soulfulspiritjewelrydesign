@@ -1363,7 +1363,7 @@ function getBeadSlots() {
     if (!b || b.isStone) continue;
     const d = decos.find(x=>x.id===b.itemId);
     if (!d) continue;
-    if (d.type==='pendant') { largeDecoMM += 0.05; continue; }
+    if (d.type==='pendant') { largeDecoMM += 1; continue; }
     if (d.type==='spacer')  { largeDecoMM += 2;    continue; }
     const dw = d.w || d.size;
     largeDecoMM += dw;
@@ -1383,7 +1383,30 @@ function getBeadSlots() {
   // จำนวนหินที่ใส่ได้ = ceil(พื้นที่/ขนาดหิน) + 1 logo
   return Math.max(1, Math.ceil(availMM / avgStoneMM));
 }
-const getRemainingSlots = () => Math.max(0, getBeadSlots() - bracelet.filter(b=>b&&b.isStone).length);
+// คำนวณ mm จริงที่ใช้ไปแล้วทั้งหมด (หิน + ของตกแต่ง)
+function getUsedMM() {
+  let mm = 0;
+  for (const b of bracelet) {
+    if (!b) continue;
+    if (b.isStone) {
+      const st = stones.find(s=>s.id===b.itemId);
+      mm += st ? st.size : 8;
+    } else {
+      const d = decos.find(x=>x.id===b.itemId);
+      if (!d) continue;
+      if (d.type==='pendant') { mm += 1; continue; }
+      if (d.type==='spacer')  { mm += 2; continue; }
+      if (d.type==='logo')    { continue; } // logo ไม่นับ mm
+      mm += (d.w || d.size || 8);
+    }
+  }
+  return mm;
+}
+// remaining = กี่ mm ยังว่างอยู่ หารด้วย 8mm (unit มาตรฐาน)
+const getRemainingSlots = () => {
+  const circumMM = (wristSize + 0.5) * 10;
+  return Math.max(0, Math.floor((circumMM - getUsedMM()) / 8));
+};
 
 // ── CANVAS ──
 const canvas = document.getElementById('braceletCanvas');
@@ -1850,9 +1873,14 @@ function redoBracelet() {
 function addItem(itemId, isStone) {
   // Logo type → swap the locked slot instead of adding
   if(!isStone){ const it=decos.find(d=>d.id===itemId); if(it&&it.type==='logo'){ swapLockedLogo(itemId); return; } }
-  const addingPendant = !isStone && (() => { const it=decos.find(d=>d.id===itemId); return it&&it.type==='pendant'; })();
-  if (!addingPendant && getRemainingSlots()<=0) { showToast('กำไลเต็ม! เพิ่มขนาดหรือลดหินออก'); return; }
-  if (isStone && getRemainingSlots()===1) {
+  // เช็คพื้นที่ mm จริง ไม่ใช่ slot เฉลี่ย
+  const _circumMM = (wristSize + 0.5) * 10;
+  const _usedMM = getUsedMM();
+  const _itemMM = isStone
+    ? (stones.find(s=>s.id===itemId)?.size || 8)
+    : (() => { const d=decos.find(x=>x.id===itemId); if(!d) return 8; if(d.type==='pendant') return 1; if(d.type==='spacer') return 2; if(d.type==='logo') return 0; return d.w||d.size||8; })();
+  if (_usedMM + _itemMM > _circumMM) { showToast('กำไลเต็ม! เพิ่มขนาดหรือลดหินออก'); return; }
+  if (isStone && (_circumMM - _usedMM - _itemMM < 8)) {
     const stoneIds=new Set(bracelet.filter(b=>b&&b.isStone).map(b=>b.itemId));
     if(stoneIds.size===1 && stoneIds.has(itemId)){
       showToast('❌ ต้องมีหินอย่างน้อย 2 ชนิด ก่อนเติมให้เต็มเส้น');return;
