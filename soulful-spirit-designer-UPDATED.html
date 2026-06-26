@@ -1508,10 +1508,10 @@ function drawBracelet() {
   const sfFull = (totalHalfArcs > 0)
     ? Math.max(0.1, (ringPerim - gapPx*npItems.length) / (2*totalHalfArcs))
     : 1;
-  // sfPos: ใช้คำนวณมุม — ถ้าหินน้อยกว่าวง ให้กระจายเต็มวง (ไม่มี gap)
-  const sfPos = sfFull;
-  // sfDraw: ใช้วาดขนาดหิน — cap ที่ 1.0 ขนาดหินไม่ขยายเกินจริง
-  const sf = Math.min(sfFull, 1.0);
+  // sfPos: ถ้าหินเกินวง (sfFull<1) → ย่อให้พอดี; ถ้าหินน้อยกว่าวง → ใช้ขนาดจริง (ไม่กระจาย)
+  const sfPos = Math.min(sfFull, 1.0);
+  // sf (sfDraw): เหมือน sfPos — ใช้วาดขนาดหิน
+  const sf = sfPos;
   const halfStep0 = (halfArcs[0]*sfPos + gapPx/2)/r;
   // เริ่ม layout ถอยหลัง halfStep0 เพื่อให้ center ของ item 0 (logo) อยู่ที่ -π/2 พอดี
   let curAng = -Math.PI/2 - halfStep0;
