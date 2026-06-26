@@ -1396,8 +1396,7 @@ function getUsedMM() {
       if (!d) continue;
       if (d.type==='pendant') { mm += 1; continue; }
       if (d.type==='spacer')  { mm += 2; continue; }
-      if (d.type==='logo')    { continue; } // logo ไม่นับ mm
-      mm += (d.w || d.size || 8);
+      mm += (d.w || d.size || 8); // logo, charm และอื่นๆ นับ mm จริง
     }
   }
   return mm;
