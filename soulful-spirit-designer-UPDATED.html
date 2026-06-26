@@ -1522,16 +1522,22 @@ function drawBracelet() {
     curAng += (halfArcs[k]*sfPos + gapPx/2)/r;
   }
 
-  // Pass B: pendants at midpoint between flanking neighbors
-  for(let i=0;i<bracelet.length;i++){
-    if(angles[i]!==null)continue;
+  // Pass B: pendants กระจายเท่ากันระหว่าง stone ข้างเคียง (ไม่กองซ้อน)
+  let pi2=0;
+  while(pi2<bracelet.length){
+    if(angles[pi2]!==null){pi2++;continue;}
+    // หา run ของ pendants ติดกัน
+    const runStart=pi2;
+    while(pi2<bracelet.length&&angles[pi2]===null)pi2++;
+    const runEnd=pi2-1;
+    const count=runEnd-runStart+1;
     let prev=null,next=null;
-    for(let j=i-1;j>=0;j--){if(angles[j]!==null){prev=angles[j];break;}}
-    for(let j=i+1;j<total;j++){if(angles[j]!==null){next=angles[j];break;}}
-    if(prev===null&&next===null){angles[i]=0;}
-    else if(prev===null){angles[i]=next-Math.PI/npTotal;}
-    else if(next===null){angles[i]=prev+Math.PI/npTotal;}
-    else{let d=next-prev;if(d<=0)d+=2*Math.PI;angles[i]=prev+d/2;}
+    for(let j=runStart-1;j>=0;j--){if(angles[j]!==null){prev=angles[j];break;}}
+    for(let j=runEnd+1;j<total;j++){if(angles[j]!==null){next=angles[j];break;}}
+    if(prev===null&&next===null){for(let k=0;k<count;k++)angles[runStart+k]=-Math.PI/2+(k/count)*2*Math.PI;}
+    else if(prev===null){for(let k=0;k<count;k++)angles[runStart+k]=next-(count-k)*Math.PI/npTotal;}
+    else if(next===null){for(let k=0;k<count;k++)angles[runStart+k]=prev+(k+1)*Math.PI/npTotal;}
+    else{let d=next-prev;if(d<=0)d+=2*Math.PI;for(let k=0;k<count;k++)angles[runStart+k]=prev+d*(k+1)/(count+1);}
   }
 
   ctx.save(); ctx.shadowColor='rgba(201,169,110,.25)'; ctx.shadowBlur=6;
