@@ -1411,7 +1411,7 @@ const getRemainingSlots = () => {
     const sum = stoneBeads.reduce((s,b)=>{ const st=stones.find(x=>x.id===b.itemId); return s+(st?st.size:8); }, 0);
     avgStoneMM = sum / stoneBeads.length;
   }
-  return Math.max(0, Math.floor(remainMM / avgStoneMM));
+  return Math.max(0, Math.ceil(remainMM / avgStoneMM));
 };
 
 // ── CANVAS ──
@@ -1879,14 +1879,9 @@ function redoBracelet() {
 function addItem(itemId, isStone) {
   // Logo type → swap the locked slot instead of adding
   if(!isStone){ const it=decos.find(d=>d.id===itemId); if(it&&it.type==='logo'){ swapLockedLogo(itemId); return; } }
-  // เช็คพื้นที่ mm จริง ไม่ใช่ slot เฉลี่ย
-  const _circumMM = (wristSize + 0.5) * 10;
-  const _usedMM = getUsedMM();
-  const _itemMM = isStone
-    ? (stones.find(s=>s.id===itemId)?.size || 8)
-    : (() => { const d=decos.find(x=>x.id===itemId); if(!d) return 8; if(d.type==='pendant') return 1; if(d.type==='spacer') return 2; if(d.type==='logo') return 0; return d.w||d.size||8; })();
-  if (_usedMM + _itemMM > _circumMM) { showToast('กำไลเต็ม! เพิ่มขนาดหรือลดหินออก'); return; }
-  if (isStone && (_circumMM - _usedMM - _itemMM < 8)) {
+  // เช็คพื้นที่ด้วย getRemainingSlots (ceil-based) ให้ display ตรงกับ action
+  if (getRemainingSlots() <= 0) { showToast('กำไลเต็ม! เพิ่มขนาดหรือลดหินออก'); return; }
+  if (isStone && getRemainingSlots() === 1) {
     const stoneIds=new Set(bracelet.filter(b=>b&&b.isStone).map(b=>b.itemId));
     if(stoneIds.size===1 && stoneIds.has(itemId)){
       showToast('❌ ต้องมีหินอย่างน้อย 2 ชนิด ก่อนเติมให้เต็มเส้น');return;
