@@ -1401,10 +1401,17 @@ function getUsedMM() {
   }
   return mm;
 }
-// remaining = กี่ mm ยังว่างอยู่ หารด้วย 8mm (unit มาตรฐาน)
+// remaining = กี่เม็ดยังใส่ได้ (ใช้ขนาดหินเฉลี่ยปัจจุบัน เพื่อให้ตรงกับ addItem check)
 const getRemainingSlots = () => {
   const circumMM = (wristSize + 0.5) * 10;
-  return Math.max(0, Math.floor((circumMM - getUsedMM()) / 8));
+  const remainMM = Math.max(0, circumMM - getUsedMM());
+  const stoneBeads = bracelet.filter(b=>b&&b.isStone);
+  let avgStoneMM = 8;
+  if (stoneBeads.length > 0) {
+    const sum = stoneBeads.reduce((s,b)=>{ const st=stones.find(x=>x.id===b.itemId); return s+(st?st.size:8); }, 0);
+    avgStoneMM = sum / stoneBeads.length;
+  }
+  return Math.max(0, Math.floor(remainMM / avgStoneMM));
 };
 
 // ── CANVAS ──
@@ -1679,7 +1686,7 @@ function drawBracelet() {
 
   const stonesUsed=bracelet.filter(b=>b&&b.isStone).length;
   const stonesTotal=getBeadSlots();
-  const rem=Math.max(0,stonesTotal-stonesUsed);
+  const rem=getRemainingSlots(); // ใช้ mm-based ให้ตรงกับ addItem check
   document.getElementById('beadInfoRow').textContent='ข้อมือ '+wristSize+' cm · '+stonesUsed+'/'+stonesTotal+' เม็ด · ว่างอีก '+rem+' เม็ด';
 }
 function drawBeadGrad(ctx,x,y,r,c1,c2) {
