@@ -4506,6 +4506,309 @@ function compressDataUrl(dataUrl, maxPx=120, quality=0.7){
 }
 
 
+
+function exitAdmin(){
+  isAdminMode=false;
+  document.getElementById('adminTab').style.display='none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelector('.tab').classList.add('active');
+  document.getElementById('tab-design').classList.add('active');
+  showToast('🔒 ออกจากโหมด Admin แล้ว');
+}
+function saveAccessCodes(){
+  const n=(document.getElementById('adminAccessNormal').value||'').trim();
+  const g=(document.getElementById('adminAccessGold').value||'').trim();
+  if(n) localStorage.setItem(AG_NORMAL_KEY,n); else localStorage.removeItem(AG_NORMAL_KEY);
+  if(g) localStorage.setItem(AG_GOLD_KEY,g); else localStorage.removeItem(AG_GOLD_KEY);
+  showToast('✅ บันทึกรหัส Access แล้ว');
+}
+function loadAccessCodeFields(){
+  const nEl=document.getElementById('adminAccessNormal');
+  const gEl=document.getElementById('adminAccessGold');
+  if(nEl) nEl.value=_getNormalCode();
+  if(gEl) gEl.value=_getGoldCode();
+  loadLineOAUrlField();
+}
+
+const AG_LINE_OA_KEY='soulful_line_oa_url';
+
+function saveLineOAUrl(){
+  const el=document.getElementById('adminLineOAUrl');
+  const url=(el?el.value:'').trim();
+  if(url) localStorage.setItem(AG_LINE_OA_KEY,url);
+  else localStorage.removeItem(AG_LINE_OA_KEY);
+  showToast('✅ บันทึกลิงก์ LINE แล้ว');
+}
+
+function loadLineOAUrlField(){
+  const el=document.getElementById('adminLineOAUrl');
+  if(el) el.value=localStorage.getItem(AG_LINE_OA_KEY)||'';
+}
+
+function openLineOA(){
+  const url=localStorage.getItem(AG_LINE_OA_KEY)||'';
+  if(!url){ showToast('⚠️ ยังไม่ได้ตั้งลิงก์จองคิวในหน้า Admin'); return; }
+  window.open(url,'_blank');
+}
+
+function updateVIPBox(){
+  // Static VIP box removed — now handled by popup modal
+}
+
+function openVIPPopup(){
+  if(isAdminMode) return;
+  const el=document.getElementById('vipPopupOverlay');
+  if(!el) return;
+  el.style.display='flex';
+}
+
+function closeVIPPopup(){
+  const el=document.getElementById('vipPopupOverlay');
+  if(el) el.style.display='none';
+}
+
+function exportDesignChecked(){
+  const rem=getRemainingSlots();
+  if(rem>0){
+    const el=document.getElementById('notFullOverlay');
+    const txt=document.getElementById('notFullRemText');
+    if(txt) txt.textContent='ยังขาดอีก '+rem+' เม็ด';
+    if(el) el.style.display='flex';
+    return;
+  }
+  // bracelet is full — show VIP popup (save button inside popup calls exportDesign directly)
+  if(!isAdminMode){
+    openVIPPopup();
+  } else {
+    exportDesign();
+  }
+}
+
+function closeNotFullModal(){
+  const el=document.getElementById('notFullOverlay');
+  if(el) el.style.display='none';
+}
+
+// ═══ MOCKUP FEATURE ═══
+const _MK_BOX_IMG='data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAsICAoIBwsKCQoNDAsNERwSEQ8PESIZGhQcKSQrKigkJyctMkA3LTA9MCcnOEw5PUNFSElIKzZPVU5GVEBHSEX/2wBDAQwNDREPESESEiFFLicuRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUVFRUX/wAARCAB4AFADASIAAhEBAxEB/8QAGwAAAgMBAQEAAAAAAAAAAAAAAgQAAQMFBgf/xAAzEAACAgEDAwIDBgUFAAAAAAABAgADEQQSITFBUQVhEyKBIzJxkaGxFBVCUmLB0eHw8f/EABgBAAMBAQAAAAAAAAAAAAAAAAECAwAE/8QAHhEBAQEBAQADAAMAAAAAAAAAAAERAiESMUEDE3H/2gAMAwEAAhEDEQA/APoeJMQsSwIDB2zNzngdIbtngdO5gbZleec9oNsm2abZnttQDBFgGc56+0JrV4IkMoXLnDAoR5/L94eIcTrMiARNwuZDWuM9PeDCGQsG4MtFhThgpImKfY7nGcg4PvGkdLU4/qGCPETTSY5dXqAPFyY/yX/aOIyWDNbBvwnLNLIdrAgjsYaqQcjIPtNK6uuZ+OntkxFa9VYvDjePfrGUvrs77T4aPKh1LFNUrNuYZMioFGB+M12ywsKdoAs5nqmsCo1SHgD5yO/tHtbqfgV7UP2jD8hPM62wn5F+sW0/HP7Xo2cLnPG7k47RWm/Z6ka1JwRkjxFNf6mtGKaftL2+uI36P6bYmdRqCTY/PMnPaOZPXZNaXIBYob/SLWaAg5qO4f2t1/ONNZXSubHVB/kcRO71nT15+GGsPtwI1bn5fjP4WG2sCreDKanjOInqPW7LgUUKAeyruP5zP0x9a+sts1FbCl1CrvOec/pAp/pxXtpPyMQPHaMprvlO+v5gOMdINylBllIH93UfnF7Nq1M3bEbU7JSmqtJLMxyzTnGvcYy7b2JMKqksekU3VdbRei6XQ/Mql7D1dzkmO2qXpZVYoSMAjtLMmCVPmMnL680lGq1VjADZgkEvycx2n0YNg3OXI7do4/2OpD4+W3hvZv8Av7RtTkZE0g99dayo0NNK4VAPpNyoAx2l54lEwpMS7VjHYTN9PRepG3bu67TjMYKbh9P0iit8O0puBAi4puzQ/wAtqX7ssaUL0jStmEeYS2rhLBljrMzHUUh1ZOm7ofBgaazcmDww4I940y7lnK1Gf4hxkgHHA7wbis5/sPPqK6+GcZ8Dkxd9Yf6E+rRBtRVUcFhnwOTNqFt1ZxUu1e7t2g+Vqs/h559q3uts+85x4HAmBuCMCDCu0lqWFbGLeD2MiaPjpNC93nMhqjUbhNzcVC4XdnwekVSgocCMcbgvjiMgaEuADLzMDVTOZr/TX1NzOtxVCPuDvOgDgZgNZnpBZqnFvN2OZpvR0Rs2fdHYdTOouEUKoAUdAIGZMwyYe237E2HGDAUAHB/9lGwbgByc4/5hHBHMxbNRkHURQgh+meY0GKnnkeYNtIuGVdq3HRlgJ9eUQMLMzBl5hKH44a5qjwynj3EKKaypiwtX26dppp9R8YbX4sH6zLT68MZwJmSXyMED3lsoYYMnTgdJhWFAORxCgwhMCTP4ipYEzz48THVa1KwyVtmz9onU5VizHLGbQs810sy8ySTIrz2PIMQ1VJqPxKycdiO0kkFV4vrbS6xdSpUkCxeo8+83zJJCerzON6l62qsdPpWy3Rn8fhJJNWk9Y6YYUMx5PmbbueJJIgdV/9k=';
+const _mkSlots=[
+  {name:'มุมข้างข้อมือ',mode:'arc', img:null,cx:50,cy:50,scale:1.0,angle:0,pers:0.28,sx:1.0,skX:0},
+  {name:'มุมบน+โลโก้',  mode:'full',img:null,cx:50,cy:50,scale:1.0,angle:0,pers:0.32,sx:1.0,skX:0},
+  {name:'ในกล่อง',      mode:'full',img:null,cx:50,cy:47,scale:0.65,angle:-8,pers:0.67,sx:1.0,skX:0},
+];
+let _mkActive=0, _mkDrag=false, _mkDragOx=0, _mkDragOy=0;
+
+function openMockup(){
+  document.getElementById('mockupOverlay').style.display='flex';
+  _mkSyncControls();
+  setTimeout(_mkRender,50);
+}
+function closeMockup(){
+  document.getElementById('mockupOverlay').style.display='none';
+}
+function mkSetTab(i){
+  _mkActive=i;
+  document.querySelectorAll('.mk-tab').forEach((b,j)=>{
+    b.style.borderColor=j===i?'#b080e0':'#4a1a0a';
+    b.style.color=j===i?'#e8b8ff':'#8a6a40';
+    b.style.background=j===i?'rgba(130,60,200,.25)':'transparent';
+  });
+  _mkSyncControls();
+  _mkRender();
+}
+function _mkSyncControls(){
+  const s=_mkSlots[_mkActive];
+  document.getElementById('mkScaleSlider').value=s.scale;
+  document.getElementById('mkScaleVal').textContent=s.scale.toFixed(2);
+  document.getElementById('mkPersSlider').value=s.pers;
+  document.getElementById('mkPersVal').textContent=s.pers.toFixed(2);
+  document.getElementById('mkRotSlider').value=Math.round(s.angle*180/Math.PI);
+  document.getElementById('mkRotVal').textContent=Math.round(s.angle*180/Math.PI)+'°';
+  const sx=s.sx||1;document.getElementById('mkSxSlider').value=sx;document.getElementById('mkSxVal').textContent=sx.toFixed(2);
+  const skX=s.skX||0;document.getElementById('mkSkXSlider').value=skX;document.getElementById('mkSkXVal').textContent=skX.toFixed(2);
+}
+function mkOnScale(v){_mkSlots[_mkActive].scale=+v;document.getElementById('mkScaleVal').textContent=(+v).toFixed(2);_mkRender();_mkSaveSettings();}
+function mkOnPers(v){_mkSlots[_mkActive].pers=+v;document.getElementById('mkPersVal').textContent=(+v).toFixed(2);_mkRender();_mkSaveSettings();}
+function mkOnRot(v){_mkSlots[_mkActive].angle=(+v)*Math.PI/180;document.getElementById('mkRotVal').textContent=v+'°';_mkRender();_mkSaveSettings();}
+function mkOnSx(v){_mkSlots[_mkActive].sx=+v;document.getElementById('mkSxVal').textContent=(+v).toFixed(2);_mkRender();_mkSaveSettings();}
+function mkOnSkX(v){_mkSlots[_mkActive].skX=+v;document.getElementById('mkSkXVal').textContent=(+v).toFixed(2);_mkRender();_mkSaveSettings();}
+
+function _mkSaveSettings(){
+  try{localStorage.setItem('soulful_mkSlots',JSON.stringify(_mkSlots.map(s=>({cx:s.cx,cy:s.cy,scale:s.scale,angle:s.angle,pers:s.pers,sx:s.sx||1,skX:s.skX||0}))));}catch(e){}
+}
+
+async function _mkLoadSaved(){
+  // โหลด settings จาก localStorage
+  try{
+    const raw=localStorage.getItem('soulful_mkSlots');
+    if(raw){const arr=JSON.parse(raw);arr.forEach((s,i)=>{if(_mkSlots[i])Object.assign(_mkSlots[i],{cx:s.cx,cy:s.cy,scale:s.scale,angle:s.angle,pers:s.pers,sx:s.sx||1,skX:s.skX||0});});}
+  }catch(e){}
+  // โหลดรูป template จาก IndexedDB
+  try{
+    const s2=await dbGet('mkTmpl_2');
+    if(!s2&&typeof _MK_BOX_IMG!=='undefined'){
+      const di=new Image();await new Promise(r=>{di.onload=r;di.src=_MK_BOX_IMG;});
+      _mkSlots[2].img=di;
+    }
+  }catch(e){}
+  for(let i=0;i<3;i++){
+    try{
+      const data=await dbGet('mkTmpl_'+i);
+      if(data){const img=new Image();await new Promise(r=>{img.onload=r;img.src=data;});_mkSlots[i].img=img;}
+    }catch(e){}
+  }
+}
+
+function mkUpload(){
+  const inp=document.getElementById('mkFileInput');
+  inp.onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      const dataUrl=ev.target.result;
+      const img=new Image();
+      img.onload=()=>{
+        _mkSlots[_mkActive].img=img;
+        _mkSlots[_mkActive].cx=50;_mkSlots[_mkActive].cy=50;
+        dbPut('mkTmpl_'+_mkActive,dataUrl).catch(()=>{});
+        _mkSaveSettings();
+        _mkRender();
+        showToast('✅ บันทึกรูปพื้นหลัง '+['มุมข้าง','มุมบน+โลโก้','ในกล่อง'][_mkActive]+' แล้ว');
+      };
+      img.src=dataUrl;
+    };
+    reader.readAsDataURL(f);
+  };
+  inp.click();
+}
+
+function mkRemoveTemplate(){
+  _mkSlots[_mkActive].img=null;
+  dbDel('mkTmpl_'+_mkActive).catch(()=>{});
+  _mkRender();
+  showToast('🗑️ ลบรูปพื้นหลังแล้ว');
+}
+
+function _mkRender(){
+  const s=_mkSlots[_mkActive];
+  const mc=document.getElementById('mockupCanvas');
+  const wrap=document.getElementById('mkCanvasWrap');
+  const ctx=mc.getContext('2d');
+  const src=document.getElementById('braceletCanvas');
+  const hint=document.getElementById('mkNoImgHint');
+
+  const wW=wrap.clientWidth||360, wH=wrap.clientHeight||380;
+
+  if(!s.img){
+    mc.width=wW;mc.height=wH;
+    ctx.fillStyle='#080402';ctx.fillRect(0,0,wW,wH);
+    hint.style.display='flex';
+    _mkDraw(ctx,src,wW/2,wH/2,s.scale,s.angle,s.pers,s.mode,wW,s.sx||1,s.skX||0);
+    return;
+  }
+  hint.style.display='none';
+  const ar=s.img.width/s.img.height;
+  let dw,dh;
+  if(wW/wH>ar){dh=wH;dw=dh*ar;}else{dw=wW;dh=dw/ar;}
+  mc.width=Math.round(dw);mc.height=Math.round(dh);
+  ctx.drawImage(s.img,0,0,dw,dh);
+  _mkDraw(ctx,src,(s.cx/100)*dw,(s.cy/100)*dh,s.scale,s.angle,s.pers,s.mode,dw,s.sx||1,s.skX||0);
+}
+
+function _mkDraw(ctx,src,cx,cy,scale,angle,pers,mode,dispW,sx,skX){
+  const drawR=(dispW*0.38)*scale;
+  const ratio=drawR/(src.width*0.5);
+  const dw=src.width*ratio, dh=src.height*ratio;
+  const _sx=sx||1;
+
+  // ── 1. Drop shadow (วาดก่อน bracelet) ──
+  ctx.save();
+  const shadowOffY=drawR*pers*0.72;
+  ctx.translate(cx,cy+shadowOffY);
+  ctx.rotate(angle);
+  if(skX)ctx.transform(1,0,skX,1,0,0);
+  ctx.scale(_sx,pers*0.22);
+  try{ctx.filter='blur('+Math.round(drawR*0.13)+'px)';}catch(e){}
+  const sg=ctx.createRadialGradient(0,0,0,0,0,dw*0.48);
+  sg.addColorStop(0,'rgba(0,0,0,0.55)');
+  sg.addColorStop(0.6,'rgba(0,0,0,0.28)');
+  sg.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=sg;
+  ctx.beginPath();ctx.ellipse(0,0,dw*0.48,dw*0.48,0,0,Math.PI*2);ctx.fill();
+  try{ctx.filter='none';}catch(e){}
+  ctx.restore();
+
+  // ── 2. Bracelet image ──
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(angle);
+  if(mode==='arc'){
+    ctx.beginPath();
+    ctx.rect(-dw*0.65,-dh*0.08,dw*1.3,dh*0.65);
+    ctx.clip();
+  }
+  if(skX)ctx.transform(1,0,skX,1,0,0);
+  ctx.scale(_sx,pers);
+  ctx.drawImage(src,-dw/2,-dh/2,dw,dh);
+  ctx.restore();
+
+  // ── 3. Specular highlight overlay (แสงจากซ้าย-บน) ──
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(angle);
+  if(mode==='arc'){
+    ctx.beginPath();
+    ctx.rect(-dw*0.65,-dh*0.08,dw*1.3,dh*0.65);
+    ctx.clip();
+  }
+  if(skX)ctx.transform(1,0,skX,1,0,0);
+  ctx.scale(_sx,pers);
+  // clip วงกลมแค่พื้นที่กำไล
+  ctx.beginPath();ctx.ellipse(0,0,dw*0.51,dh*0.51,0,0,Math.PI*2);ctx.clip();
+  // gradient แสง top-left → bottom-right
+  const hg=ctx.createRadialGradient(-dw*0.18,-dh*0.22,0,-dw*0.18,-dh*0.22,dw*0.7);
+  hg.addColorStop(0,'rgba(255,255,255,0.20)');
+  hg.addColorStop(0.35,'rgba(255,255,255,0.07)');
+  hg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=hg;
+  ctx.fillRect(-dw/2,-dh/2,dw,dh);
+  // rim shine: arc บาง ๆ ด้านบน-ซ้าย
+  ctx.beginPath();
+  ctx.arc(0,0,dw*0.38,Math.PI*1.1,Math.PI*1.7,false);
+  ctx.strokeStyle='rgba(255,255,255,0.18)';
+  ctx.lineWidth=dw*0.045;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function mkDownload(){
+  const s=_mkSlots[_mkActive];
+  if(!s.img){showToast('กรุณาอัพโหลดรูปพื้นหลังก่อน');return;}
+  const src=document.getElementById('braceletCanvas');
+  const off=document.createElement('canvas');
+  off.width=s.img.width;off.height=s.img.height;
+  const oc=off.getContext('2d');
+  oc.drawImage(s.img,0,0);
+  _mkDraw(oc,src,(s.cx/100)*s.img.width,(s.cy/100)*s.img.height,s.scale,s.angle,s.pers,s.mode,s.img.width,s.sx||1,s.skX||0);
+  const a=document.createElement('a');
+  a.href=off.toDataURL('image/jpeg',0.95);
+  a.download='soulful-mockup-'+['side','top','box'][_mkActive]+'.jpg';
+  a.click();
+}
+
+function _mkInitDrag(){
+  const mc=document.getElementById('mockupCanvas');
+  const getP=e=>{const r=mc.getBoundingClientRect();const cl=e.touches?e.touches[0]:e;return{x:(cl.clientX-r.left)/r.width*100,y:(cl.clientY-r.top)/r.height*100};};
+  mc.addEventListener('mousedown',e=>{_mkDrag=true;const p=getP(e);_mkDragOx=_mkSlots[_mkActive].cx-p.x;_mkDragOy=_mkSlots[_mkActive].cy-p.y;});
+  mc.addEventListener('mousemove',e=>{if(!_mkDrag)return;const p=getP(e);_mkSlots[_mkActive].cx=Math.max(5,Math.min(95,p.x+_mkDragOx));_mkSlots[_mkActive].cy=Math.max(5,Math.min(95,p.y+_mkDragOy));_mkRender();});
+  mc.addEventListener('mouseup',()=>{if(_mkDrag){_mkDrag=false;_mkSaveSettings();}});
+  mc.addEventListener('mouseleave',()=>{if(_mkDrag){_mkDrag=false;_mkSaveSettings();}});
+  mc.addEventListener('touchstart',e=>{e.preventDefault();_mkDrag=true;const p=getP(e);_mkDragOx=_mkSlots[_mkActive].cx-p.x;_mkDragOy=_mkSlots[_mkActive].cy-p.y;},{passive:false});
+  mc.addEventListener('touchmove',e=>{e.preventDefault();if(!_mkDrag)return;const p=getP(e);_mkSlots[_mkActive].cx=Math.max(5,Math.min(95,p.x+_mkDragOx));_mkSlots[_mkActive].cy=Math.max(5,Math.min(95,p.y+_mkDragOy));_mkRender();},{passive:false});
+  mc.addEventListener('touchend',()=>{_mkDrag=false;_mkSaveSettings();});
+}
+
 // ── INIT ──
 (async()=>{
   await loadData();
@@ -4522,6 +4825,327 @@ function compressDataUrl(dataUrl, maxPx=120, quality=0.7){
   setTimeout(()=>{ renderQuickGrid(); },50);
   checkAccessGate();
 })();
+
+
+// ── Pinch-to-zoom / pan / scroll-zoom on bracelet canvas ──
+(function(){
+  const wrap = document.getElementById('canvasZoomWrap');
+  const cvs  = document.getElementById('braceletCanvas');
+  if(!wrap||!cvs) return;
+  let scale=1, tx=0, ty=0;
+  let lastDist=0, lastMidX=0, lastMidY=0;
+  let isPinching=false, isPanning=false;
+  let panStartX=0, panStartY=0, panStartTx=0, panStartTy=0;
+  let lastTap=0;
+  const MIN_SCALE=1, MAX_SCALE=2;
+
+  const resetBtn = document.getElementById('zoomResetBtn');
+  function applyTransform(animate){
+    const ww=wrap.offsetWidth, wh=wrap.offsetHeight;
+    const cw=cvs.offsetWidth*scale, ch=cvs.offsetHeight*scale;
+    const maxTx=Math.max(0,(cw-ww)/2);
+    const maxTy=Math.max(0,(ch-wh)/2);
+    tx=Math.max(-maxTx,Math.min(maxTx,tx));
+    ty=Math.max(-maxTy,Math.min(maxTy,ty));
+    cvs.style.transition=animate?'transform 0.3s ease':'none';
+    cvs.style.transform=`translate(${tx}px,${ty}px) scale(${scale})`;
+    if(resetBtn) resetBtn.classList.toggle('visible', scale>1.05);
+    wrap.style.cursor=scale>1.05?'grab':'default';
+  }
+  window.resetZoom=function(){
+    scale=1; tx=0; ty=0;
+    applyTransform(true);
+  };
+  function dist(t1,t2){return Math.hypot(t2.clientX-t1.clientX,t2.clientY-t1.clientY);}
+  function midPt(t1,t2){return{x:(t1.clientX+t2.clientX)/2,y:(t1.clientY+t2.clientY)/2};}
+
+  wrap.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){
+      isPinching=true; isPanning=false;
+      lastDist=dist(e.touches[0],e.touches[1]);
+      const m=midPt(e.touches[0],e.touches[1]);
+      lastMidX=m.x; lastMidY=m.y;
+      e.preventDefault();
+    } else if(e.touches.length===1){
+      const now=Date.now();
+      if(now-lastTap<300){
+        if(scale>1.05){scale=1;tx=0;ty=0;}
+        else{
+          const rect=wrap.getBoundingClientRect();
+          const ww=wrap.offsetWidth, wh=wrap.offsetHeight;
+          const tapX=e.touches[0].clientX-rect.left-ww/2;
+          const tapY=e.touches[0].clientY-rect.top-wh/2;
+          scale=2.5;
+          tx=-tapX*(2.5-1); ty=-tapY*(2.5-1);
+        }
+        applyTransform(true); lastTap=0; return;
+      }
+      lastTap=now;
+      if(scale>1.05){
+        isPanning=true;
+        panStartX=e.touches[0].clientX; panStartY=e.touches[0].clientY;
+        panStartTx=tx; panStartTy=ty;
+        e.preventDefault();
+      }
+    }
+  },{passive:false});
+
+  wrap.addEventListener('touchmove',e=>{
+    if(isPinching&&e.touches.length===2){
+      const newDist=dist(e.touches[0],e.touches[1]);
+      const m=midPt(e.touches[0],e.touches[1]);
+      const rect=wrap.getBoundingClientRect();
+      const midX=m.x-rect.left-wrap.offsetWidth/2;
+      const midY=m.y-rect.top-wrap.offsetHeight/2;
+      const ratio=newDist/lastDist;
+      const newScale=Math.max(MIN_SCALE,Math.min(MAX_SCALE,scale*ratio));
+      tx=midX-(midX-tx)*(newScale/scale)+(m.x-lastMidX);
+      ty=midY-(midY-ty)*(newScale/scale)+(m.y-lastMidY);
+      scale=newScale; lastDist=newDist; lastMidX=m.x; lastMidY=m.y;
+      applyTransform(false); e.preventDefault();
+    } else if(isPanning&&e.touches.length===1){
+      tx=panStartTx+(e.touches[0].clientX-panStartX);
+      ty=panStartTy+(e.touches[0].clientY-panStartY);
+      applyTransform(false); e.preventDefault();
+    }
+  },{passive:false});
+
+  wrap.addEventListener('touchend',e=>{
+    if(e.touches.length<2) isPinching=false;
+    if(e.touches.length===0){
+      isPanning=false;
+      if(scale<1){scale=1;tx=0;ty=0;applyTransform(true);}
+    }
+  });
+
+  // Mouse drag (desktop pan)
+  let isMousePanning=false;
+  let mousePanStartX=0, mousePanStartY=0, mousePanStartTx=0, mousePanStartTy=0;
+
+  wrap.addEventListener('mousedown',e=>{
+    if(scale>1.05){
+      isMousePanning=true;
+      mousePanStartX=e.clientX; mousePanStartY=e.clientY;
+      mousePanStartTx=tx; mousePanStartTy=ty;
+      wrap.style.cursor='grabbing';
+      e.preventDefault();
+    }
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!isMousePanning) return;
+    tx=mousePanStartTx+(e.clientX-mousePanStartX);
+    ty=mousePanStartTy+(e.clientY-mousePanStartY);
+    applyTransform(false);
+  });
+  window.addEventListener('mouseup',()=>{
+    if(isMousePanning){
+      isMousePanning=false;
+      wrap.style.cursor=scale>1.05?'grab':'default';
+    }
+  });
+
+  wrap.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const rect=wrap.getBoundingClientRect();
+    const mouseX=e.clientX-rect.left-wrap.offsetWidth/2;
+    const mouseY=e.clientY-rect.top-wrap.offsetHeight/2;
+    const delta=e.deltaY>0?0.9:1.1;
+    const newScale=Math.max(MIN_SCALE,Math.min(MAX_SCALE,scale*delta));
+    tx=mouseX-(mouseX-tx)*(newScale/scale);
+    ty=mouseY-(mouseY-ty)*(newScale/scale);
+    scale=newScale;
+    applyTransform(false);
+  },{passive:false});
+})();
+
+// ── STONE MEDIA (IndexedDB) ──
+const MEDIA_DB_NAME = 'soulfulStoneMedia';
+const MEDIA_STORE   = 'media';
+let _mediaDB = null;
+
+function openMediaDB(){
+  if(_mediaDB) return Promise.resolve(_mediaDB);
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open(MEDIA_DB_NAME, 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(MEDIA_STORE,{keyPath:'id'});
+    req.onsuccess = e => { _mediaDB=e.target.result; res(_mediaDB); };
+    req.onerror = e => rej(e.target.error);
+  });
+}
+function saveMediaRecord(id, patch){
+  return openMediaDB().then(db => new Promise((res,rej)=>{
+    const tx = db.transaction(MEDIA_STORE,'readwrite');
+    const st = tx.objectStore(MEDIA_STORE);
+    const getReq = st.get(id);
+    getReq.onsuccess = ()=>{
+      const rec = getReq.result || {id};
+      Object.assign(rec, patch);
+      st.put(rec).onsuccess = res;
+    };
+    tx.onerror = e => rej(e.target.error);
+  }));
+}
+function getMediaRecord(id){
+  return openMediaDB().then(db => new Promise((res,rej)=>{
+    const tx = db.transaction(MEDIA_STORE,'readonly');
+    const req = tx.objectStore(MEDIA_STORE).get(id);
+    req.onsuccess = () => res(req.result || null);
+    req.onerror = e => rej(e.target.error);
+  }));
+}
+function deleteMediaField(id, field){
+  return openMediaDB().then(db => new Promise((res,rej)=>{
+    const tx = db.transaction(MEDIA_STORE,'readwrite');
+    const st = tx.objectStore(MEDIA_STORE);
+    const getReq = st.get(id);
+    getReq.onsuccess = ()=>{
+      const rec = getReq.result;
+      if(!rec){res();return;}
+      delete rec[field];
+      st.put(rec).onsuccess = res;
+    };
+    tx.onerror = e => rej(e.target.error);
+  }));
+}
+
+// Check which stones have media (for rendering button)
+const _mediaCache = {}; // id -> {hasImg, hasVid}
+function refreshMediaCache(){
+  return openMediaDB().then(db => new Promise(res=>{
+    const tx = db.transaction(MEDIA_STORE,'readonly');
+    const req = tx.objectStore(MEDIA_STORE).getAll();
+    req.onsuccess = ()=>{
+      req.result.forEach(r=>{ _mediaCache[r.id]={hasImg:!!r.imgBlob,hasVid:!!r.vidBlob}; });
+      res();
+    };
+  }));
+}
+refreshMediaCache().then(()=>renderBeadList&&renderBeadList());
+
+// Current open media item
+let _mediaCurrentId = null;
+
+function hasMedia(id){ return _mediaCache[id]&&_mediaCache[id].hasImg; }
+
+// ── SIZE PICKER ──
+function getSizeVariants(stoneId){
+  const s=stones.find(x=>x.id===stoneId&&!x.hidden);
+  if(!s) return [];
+  return stones.filter(x=>!x.hidden&&x.thai===s.thai&&x.grade===s.grade).sort((a,b)=>a.size-b.size);
+}
+function openSizePicker(stoneId){
+  const variants=getSizeVariants(stoneId);
+  if(variants.length<=1){
+    addItem(stoneId,true);
+    renderQuickGrid();
+    renderCatalog(document.getElementById('searchInput').value||'');
+    return;
+  }
+  closeSizePicker();
+  const html=`<div id="sizePickerOverlay" onclick="closeSizePicker()" style="position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:3000;display:flex;align-items:flex-end;justify-content:center;">
+    <div onclick="event.stopPropagation()" style="background:var(--card);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:16px 16px 32px;max-height:80vh;overflow-y:auto;">
+      <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;"></div>
+      <div style="font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:2px;">${variants[0].thai}</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">เลือกขนาดที่ต้องการ</div>
+      <div id="sizePickerRows" style="display:flex;flex-direction:column;gap:10px;"></div>
+    </div>
+  </div>`;
+  document.body.insertAdjacentHTML('beforeend',html);
+  _renderSizePickerRows(variants);
+}
+function _renderSizePickerRows(variants){
+  const container=document.getElementById('sizePickerRows');
+  if(!container) return;
+  const rows=variants.map(v=>{
+    const cnt=bracelet.filter(b=>b&&b.isStone&&b.itemId===v.id).length;
+    const gradeLabel=GRADE_LABELS[v.grade]||v.grade;
+    const gradeCss=GRADE_CSS[v.grade]||'';
+    const priceStr=Number.isInteger(v.price)?v.price:v.price.toFixed(1);
+    return `<div style="display:flex;align-items:center;gap:12px;background:var(--card2);border:1.5px solid ${cnt>0?'var(--gold3)':'var(--border)'};border-radius:12px;padding:10px 12px;">
+      <div style="flex-shrink:0;">${mkThumb(v,44)}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:700;color:var(--text);">${v.size}mm</div>
+        <div style="font-size:11px;color:var(--text3);">฿${priceStr}/เม็ด &nbsp;<span class="grade-badge ${gradeCss}" style="font-size:10px;padding:1px 5px;">${gradeLabel}</span></div>
+        ${hasMedia(v.id)?`<button class="bead-media-btn" style="font-size:11px;padding:3px 8px;margin-top:4px;" onclick="openStoneMedia(${v.id},'${v.name.replace(/'/g,"\\'")}')">📸 ดูเต็มเส้น</button>`:''}
+      </div>
+      <div style="display:flex;align-items:center;gap:0;flex-shrink:0;background:var(--card);border:1.5px solid var(--border2);border-radius:24px;overflow:hidden;">
+        <button onclick="_spMinus(${v.id})" style="background:none;border:none;color:var(--text);font-size:20px;width:40px;height:40px;cursor:pointer;line-height:1;${cnt===0?'opacity:.35;pointer-events:none;':''}">−</button>
+        <span id="spcnt_${v.id}" style="font-size:14px;font-weight:700;color:${cnt>0?'var(--gold2)':'var(--text3)'};min-width:24px;text-align:center;">${cnt}</span>
+        <button onclick="_spPlus(${v.id})" style="background:none;border:none;color:var(--gold2);font-size:20px;width:40px;height:40px;cursor:pointer;line-height:1;">+</button>
+      </div>
+    </div>`;
+  }).join('');
+  container.innerHTML=rows;
+}
+function _spPlus(id){
+  addItem(id,true);
+  _renderSizePickerRows(getSizeVariants(id));
+}
+function _spMinus(id){
+  removeAllOfItem(id,true);
+  _renderSizePickerRows(getSizeVariants(id));
+}
+function closeSizePicker(){
+  const el=document.getElementById('sizePickerOverlay');
+  if(el) el.remove();
+}
+
+function openStoneMedia(id, name){
+  _mediaCurrentId = id;
+  document.getElementById('stoneMediaTitle').textContent = '🪨 ' + name;
+  const img = document.getElementById('stoneMediaImg');
+  const empty = document.getElementById('stoneMediaEmpty');
+  const adminTools = document.getElementById('stoneMediaAdminTools');
+  // reset
+  img.style.display='none'; img.src='';
+  empty.style.display='none';
+  adminTools.style.display = isAdminMode ? 'block' : 'none';
+  document.getElementById('stoneMediaModal').classList.add('open');
+  getMediaRecord(id).then(rec=>{
+    let hasAny = false;
+    if(rec && rec.imgBlob){
+      img.src = URL.createObjectURL(rec.imgBlob);
+      img.style.display='block'; hasAny=true;
+    }
+    if(!hasAny) empty.style.display='block';
+    const delRow = document.getElementById('stoneMediaDelRow');
+    delRow.innerHTML = '';
+    if(isAdminMode && rec){
+      if(rec.imgBlob) delRow.innerHTML+=`<button class="stone-media-del-btn" onclick="deleteStoneMedia('imgBlob')">🗑 ลบภาพ</button>`;
+    }
+  });
+}
+function closeStoneMedia(){
+  document.getElementById('stoneMediaImg').src='';
+  document.getElementById('stoneMediaModal').classList.remove('open');
+  _mediaCurrentId=null;
+}
+function triggerStoneImgUpload(){
+  document.getElementById('stoneImgInput').click();
+}
+document.getElementById('stoneImgInput').addEventListener('change',function(){
+  if(!_mediaCurrentId||!this.files[0]) return;
+  const file=this.files[0];
+  saveMediaRecord(_mediaCurrentId,{imgBlob:file}).then(()=>{
+    _mediaCache[_mediaCurrentId]=_mediaCache[_mediaCurrentId]||{};
+    _mediaCache[_mediaCurrentId].hasImg=true;
+    renderBeadList();
+    openStoneMedia(_mediaCurrentId, document.getElementById('stoneMediaTitle').textContent.replace('🪨 ',''));
+    showToast('✅ บันทึกภาพแล้ว');
+  });
+  this.value='';
+});
+function deleteStoneMedia(field){
+  if(!_mediaCurrentId) return;
+  deleteMediaField(_mediaCurrentId, field).then(()=>{
+    if(field==='imgBlob') delete (_mediaCache[_mediaCurrentId]||{}).hasImg;
+    renderBeadList();
+    openStoneMedia(_mediaCurrentId, document.getElementById('stoneMediaTitle').textContent.replace('🪨 ',''));
+    showToast('🗑 ลบแล้ว');
+  });
+}
+
+
 
 </script>
 
