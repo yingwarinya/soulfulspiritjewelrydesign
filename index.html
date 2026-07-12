@@ -5123,17 +5123,22 @@ function closeStoneMedia(){
 function triggerStoneImgUpload(){
   document.getElementById('stoneImgInput').click();
 }
-document.getElementById('stoneImgInput').addEventListener('change',function(){
-  if(!_mediaCurrentId||!this.files[0]) return;
-  const file=this.files[0];
-  saveMediaRecord(_mediaCurrentId,{imgBlob:file}).then(()=>{
-    _mediaCache[_mediaCurrentId]=_mediaCache[_mediaCurrentId]||{};
-    _mediaCache[_mediaCurrentId].hasImg=true;
-    renderBeadList();
-    openStoneMedia(_mediaCurrentId, document.getElementById('stoneMediaTitle').textContent.replace('🪨 ',''));
-    showToast('✅ บันทึกภาพแล้ว');
+// stoneImgInput listener registered after DOM ready (element is after this script tag)
+document.addEventListener('DOMContentLoaded',function(){
+  const _sii=document.getElementById('stoneImgInput');
+  if(!_sii) return;
+  _sii.addEventListener('change',function(){
+    if(!_mediaCurrentId||!this.files[0]) return;
+    const file=this.files[0];
+    saveMediaRecord(_mediaCurrentId,{imgBlob:file}).then(()=>{
+      _mediaCache[_mediaCurrentId]=_mediaCache[_mediaCurrentId]||{};
+      _mediaCache[_mediaCurrentId].hasImg=true;
+      renderBeadList();
+      openStoneMedia(_mediaCurrentId, document.getElementById('stoneMediaTitle').textContent.replace('🪨 ',''));
+      showToast('✅ บันทึกภาพแล้ว');
+    });
+    this.value='';
   });
-  this.value='';
 });
 function deleteStoneMedia(field){
   if(!_mediaCurrentId) return;
