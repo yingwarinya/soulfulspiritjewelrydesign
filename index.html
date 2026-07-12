@@ -4505,6 +4505,24 @@ function compressDataUrl(dataUrl, maxPx=120, quality=0.7){
   });
 }
 
+
+// ── INIT ──
+(async()=>{
+  await loadData();
+  const sd=document.getElementById('sizeDisplay');
+  if(sd) sd.textContent=wristSize.toFixed(1)+' cm';
+  ensureLockedLogo();
+  if(stones&&stones.length) loadImg(1, stones[0].img);
+  renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickSortChips();
+  drawBracelet();renderBeadList();calcPrice();
+  // ซ่อน loader ทันทีที่ถาดหินพร้อม
+  const loader=document.getElementById('appLoader');
+  if(loader){loader.style.transition='opacity .3s';loader.style.opacity='0';setTimeout(()=>loader.remove(),350);}
+  // defer งานที่เหลือ
+  setTimeout(()=>{ renderQuickGrid(); },50);
+  checkAccessGate();
+})();
+
 async function exportEmbeddedHTML(){
   // ต้องเลือกไฟล์ HTML ต้นฉบับ เพราะ fetch(file://) ไม่ทำงานใน browser
   const fileInput=document.createElement('input');
