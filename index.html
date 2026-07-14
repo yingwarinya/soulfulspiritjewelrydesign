@@ -104,8 +104,12 @@
   .grade-row::-webkit-scrollbar{display:none;}
   .grade-chip{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border);cursor:pointer;background:var(--card);color:var(--text3);white-space:nowrap;}
   .grade-chip.active{background:var(--red);border-color:var(--red2);color:var(--gold2);font-weight:700;}
-  /* Design Mode Tabs */
-  .design-mode-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;}
+  /* Design Mode Picker */
+  .dmt-pill{display:flex;align-items:center;justify-content:space-between;background:var(--card);border:1.5px solid var(--gold3);border-radius:12px;padding:8px 14px;cursor:pointer;margin-bottom:6px;}
+  .dmt-pill-label{font-size:13px;font-weight:700;color:var(--gold2);}
+  .dmt-pill-arrow{font-size:11px;color:var(--gold3);transition:transform .2s;}
+  .dmt-pill-arrow.open{transform:rotate(180deg);}
+  .design-mode-tabs{display:flex;gap:6px;margin-bottom:8px;overflow-x:auto;padding-bottom:2px;}
   .design-mode-tab{flex:1;min-width:0;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:9px 6px;text-align:center;cursor:pointer;transition:all .15s;color:var(--text3);font-size:11px;font-weight:600;line-height:1.35;white-space:normal;}
   .design-mode-tab.active{background:rgba(201,160,64,.13);border-color:var(--gold3);color:var(--gold2);}
   .design-mode-tab .dmt-icon{font-size:18px;display:block;margin-bottom:3px;}
@@ -463,16 +467,22 @@
 
 <!-- DESIGN TAB -->
 <div id="tab-design" class="section active">
-  <!-- ── Design Mode Tabs ── -->
-  <div class="design-mode-tabs">
-    <div id="dmt_bracelet" class="design-mode-tab active" onclick="setDesignMode('bracelet')">
-      <span class="dmt-icon">🔮</span>ถาดหิน<br>เต็มเส้น
+  <!-- ── Design Mode Picker (collapsible) ── -->
+  <div id="designModePicker">
+    <div class="dmt-pill" onclick="toggleDesignModeTabs()">
+      <span id="dmtPillLabel" class="dmt-pill-label">🔮 ถาดหินเต็มเส้น</span>
+      <span id="dmtPillArrow" class="dmt-pill-arrow">▾</span>
     </div>
-    <div id="dmt_necklace5" class="design-mode-tab" onclick="setDesignMode('necklace5')">
-      <span class="dmt-icon">📿</span>สร้อย / กำไล<br>สูงสุด 5 เม็ด
-    </div>
-    <div id="dmt_necklace2pendant" class="design-mode-tab" onclick="setDesignMode('necklace2pendant')">
-      <span class="dmt-icon">💎</span>สร้อยคอ<br>2 เม็ด + จี้
+    <div id="designModeTabsExpanded" class="design-mode-tabs" style="display:none;">
+      <div id="dmt_bracelet" class="design-mode-tab active" onclick="setDesignMode('bracelet')">
+        <span class="dmt-icon">🔮</span>ถาดหิน<br>เต็มเส้น
+      </div>
+      <div id="dmt_necklace5" class="design-mode-tab" onclick="setDesignMode('necklace5')">
+        <span class="dmt-icon">📿</span>สร้อย / กำไล<br>สูงสุด 5 เม็ด
+      </div>
+      <div id="dmt_necklace2pendant" class="design-mode-tab" onclick="setDesignMode('necklace2pendant')">
+        <span class="dmt-icon">💎</span>สร้อยคอ<br>2 เม็ด + จี้
+      </div>
     </div>
   </div>
   <!-- ── Mode Content Panels ── -->
@@ -1057,6 +1067,14 @@ let decos = [{"id":150,"name":"Logo Charm Gold with Diamonds (6mm)","thai":"Logo
 let bracelet = [];
 // ── DESIGN MODE ──
 let designMode = 'bracelet'; // 'bracelet' | 'necklace5' | 'necklace2pendant'
+const _dmtLabels = {bracelet:'🔮 ถาดหินเต็มเส้น', necklace5:'📿 สร้อย / กำไล สูงสุด 5 เม็ด', necklace2pendant:'💎 สร้อยคอ 2 เม็ด + จี้'};
+function toggleDesignModeTabs(){
+  const exp = document.getElementById('designModeTabsExpanded');
+  const arrow = document.getElementById('dmtPillArrow');
+  const open = exp.style.display !== 'none';
+  exp.style.display = open ? 'none' : 'flex';
+  if(arrow) arrow.classList.toggle('open', !open);
+}
 function setDesignMode(mode){
   designMode = mode;
   ['bracelet','necklace5','necklace2pendant'].forEach(m=>{
@@ -1065,6 +1083,13 @@ function setDesignMode(mode){
     if(tab) tab.classList.toggle('active', m===mode);
     if(panel) panel.style.display = m===mode ? '' : 'none';
   });
+  // update pill label and collapse
+  const lbl = document.getElementById('dmtPillLabel');
+  if(lbl) lbl.textContent = _dmtLabels[mode]||mode;
+  const exp = document.getElementById('designModeTabsExpanded');
+  const arrow = document.getElementById('dmtPillArrow');
+  if(exp) exp.style.display = 'none';
+  if(arrow) arrow.classList.remove('open');
 }
 // ── DELETED SLOT SIZES — เก็บขนาด(mm) ของหินที่ถูกลบ เพื่อให้ null slot ไม่เลื่อนหินอื่น ──
 const deletedSlotSizes = {};
@@ -2555,15 +2580,16 @@ function renderCatalog(search=''){
     return ms&&mc&&mg&&mp;
   });
 
-  // ── Group by name — one card per stone type ──
+  // ── Group by name+grade — one card per name+grade combination ──
   const groups=[];
-  const seenNames=new Set();
+  const seenKeys=new Set();
   for(const item of filtered){
-    if(seenNames.has(item.name)) continue;
-    seenNames.add(item.name);
-    // all variants of this stone (across all grades/sizes, not just filtered)
-    const allVariants=stones.filter(x=>!x.hidden&&x.name===item.name)
-      .sort((a,b)=>(GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9)||a.size-b.size);
+    const key=item.name+'|'+item.grade;
+    if(seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    // variants = same name AND same grade, sorted by size
+    const allVariants=stones.filter(x=>!x.hidden&&x.name===item.name&&x.grade===item.grade)
+      .sort((a,b)=>a.size-b.size);
     groups.push({rep:item, variants:allVariants});
   }
 
@@ -5256,8 +5282,8 @@ function hasMedia(id){ return _mediaCache[id]&&_mediaCache[id].hasImg; }
 function getSizeVariants(stoneId){
   const s=stones.find(x=>x.id===stoneId&&!x.hidden);
   if(!s) return [];
-  return stones.filter(x=>!x.hidden&&x.name===s.name)
-    .sort((a,b)=>(GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9)||a.size-b.size);
+  return stones.filter(x=>!x.hidden&&x.name===s.name&&x.grade===s.grade)
+    .sort((a,b)=>a.size-b.size);
 }
 function openSizePicker(stoneId){
   const variants=getSizeVariants(stoneId);
