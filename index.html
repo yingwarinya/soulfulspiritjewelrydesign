@@ -104,6 +104,11 @@
   .grade-row::-webkit-scrollbar{display:none;}
   .grade-chip{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:12px;border:1px solid var(--border);cursor:pointer;background:var(--card);color:var(--text3);white-space:nowrap;}
   .grade-chip.active{background:var(--red);border-color:var(--red2);color:var(--gold2);font-weight:700;}
+  /* Design Mode Tabs */
+  .design-mode-tabs{display:flex;gap:6px;margin-bottom:10px;overflow-x:auto;padding-bottom:2px;}
+  .design-mode-tab{flex:1;min-width:0;background:var(--card);border:1.5px solid var(--border);border-radius:12px;padding:9px 6px;text-align:center;cursor:pointer;transition:all .15s;color:var(--text3);font-size:11px;font-weight:600;line-height:1.35;white-space:normal;}
+  .design-mode-tab.active{background:rgba(201,160,64,.13);border-color:var(--gold3);color:var(--gold2);}
+  .design-mode-tab .dmt-icon{font-size:18px;display:block;margin-bottom:3px;}
   /* Catalog grid */
   .catalog-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
   .catalog-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px 9px 10px;text-align:center;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.3);}
@@ -458,6 +463,20 @@
 
 <!-- DESIGN TAB -->
 <div id="tab-design" class="section active">
+  <!-- ── Design Mode Tabs ── -->
+  <div class="design-mode-tabs">
+    <div id="dmt_bracelet" class="design-mode-tab active" onclick="setDesignMode('bracelet')">
+      <span class="dmt-icon">🔮</span>ถาดหิน<br>เต็มเส้น
+    </div>
+    <div id="dmt_necklace5" class="design-mode-tab" onclick="setDesignMode('necklace5')">
+      <span class="dmt-icon">📿</span>สร้อย / กำไล<br>สูงสุด 5 เม็ด
+    </div>
+    <div id="dmt_necklace2pendant" class="design-mode-tab" onclick="setDesignMode('necklace2pendant')">
+      <span class="dmt-icon">💎</span>สร้อยคอ<br>2 เม็ด + จี้
+    </div>
+  </div>
+  <!-- ── Mode Content Panels ── -->
+  <div id="designPanel_bracelet">
   <div class="preview-card" style="position:relative;">
     <div style="position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:10px;">
       <button id="undoBtn" onclick="undoBracelet()" disabled style="position:absolute;left:0;opacity:0.35;background:rgba(80,40,10,0.85);border:1px solid rgba(201,160,64,0.4);color:rgba(240,208,96,0.9);border-radius:14px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;">↩ Undo</button>
@@ -532,6 +551,26 @@
   <div class="section-divider"></div>
   <div class="list-label">✨ ความหมายของหินในกำไล</div>
   <div id="stoneMeanings"></div>
+  </div><!-- /designPanel_bracelet -->
+
+  <!-- ── Mode: สร้อย/กำไล max 5 เม็ด ── -->
+  <div id="designPanel_necklace5" style="display:none;">
+    <div class="preview-card" style="text-align:center;padding:32px 16px;">
+      <div style="font-size:36px;margin-bottom:12px;">📿</div>
+      <div style="font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:6px;">สร้อยคอ / สร้อยข้อมือ สูงสุด 5 เม็ด</div>
+      <div style="font-size:12px;color:var(--text3);">กำลังพัฒนา — เดี๋ยวมาเร็วๆ นี้</div>
+    </div>
+  </div>
+
+  <!-- ── Mode: สร้อยคอ 2 เม็ด + จี้ ── -->
+  <div id="designPanel_necklace2pendant" style="display:none;">
+    <div class="preview-card" style="text-align:center;padding:32px 16px;">
+      <div style="font-size:36px;margin-bottom:12px;">💎</div>
+      <div style="font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:6px;">สร้อยคอ 2 เม็ด + จี้</div>
+      <div style="font-size:12px;color:var(--text3);">กำลังพัฒนา — เดี๋ยวมาเร็วๆ นี้</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- CATALOG TAB -->
@@ -1016,6 +1055,17 @@ let decos = [{"id":150,"name":"Logo Charm Gold with Diamonds (6mm)","thai":"Logo
 // ── BRACELET — ordered array of individual beads ──
 // [{uid, itemId, isStone, imgVar}]  imgVar = 0/1/2 index ภาพที่ใช้
 let bracelet = [];
+// ── DESIGN MODE ──
+let designMode = 'bracelet'; // 'bracelet' | 'necklace5' | 'necklace2pendant'
+function setDesignMode(mode){
+  designMode = mode;
+  ['bracelet','necklace5','necklace2pendant'].forEach(m=>{
+    const tab = document.getElementById('dmt_'+m);
+    const panel = document.getElementById('designPanel_'+m);
+    if(tab) tab.classList.toggle('active', m===mode);
+    if(panel) panel.style.display = m===mode ? '' : 'none';
+  });
+}
 // ── DELETED SLOT SIZES — เก็บขนาด(mm) ของหินที่ถูกลบ เพื่อให้ null slot ไม่เลื่อนหินอื่น ──
 const deletedSlotSizes = {};
 // ── IMG ROTATION — นับว่าหินแต่ละ id ต่อมาจะใช้รูปไหน ──
