@@ -547,6 +547,7 @@
 <div id="tab-admin" class="section">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:8px;">
     <button onclick="saveAllImages()" style="background:rgba(201,160,64,.12);border:1px solid var(--border2);color:var(--gold);border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;">💾 บันทึกรูปทั้งหมด</button>
+    <label style="background:rgba(80,160,80,.12);border:1px solid rgba(80,200,80,.35);color:#7dbb7d;border-radius:20px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;" title="Import ข้อมูล+รูปจากไฟล์ soulful_export.json">📥 Import Data<input type="file" accept=".json" style="display:none" onchange="importDataFromJSON(this)"></label>
     <button class="header-btn" onclick="exitAdmin()" style="font-size:11px;padding:5px 14px;color:#ff8080;border-color:#8b2020;">🔒 ออกจากโหมด Admin</button>
   </div>
   <!-- 🔑 Access Code Settings -->
@@ -4533,6 +4534,47 @@ function compressDataUrl(dataUrl, maxPx=120, quality=0.7){
 }
 
 
+
+async function importDataFromJSON(input){
+  if(!input.files[0]) return;
+  const file = input.files[0];
+  input.value = '';
+  showToast('⏳ กำลัง import... (อาจใช้เวลา 1-2 นาที)');
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const imgs = data.imgs || {};
+    const expDecos = data.decos || [];
+    const expStones = data.stones || [];
+
+    // ── Save metadata to localStorage ──
+    if(expDecos.length){
+      const toSave = expDecos.map(d=>{const x={...d};delete x.img;delete x.img2;return x;});
+      localStorage.setItem(SK+'_decos', JSON.stringify(toSave));
+    }
+    if(expStones.length){
+      const toSave = expStones.map(s=>{const x={...s};delete x.img;delete x.img2;delete x.img3;return x;});
+      localStorage.setItem(SK+'_stones', JSON.stringify(toSave));
+    }
+
+    // ── Save images to IndexedDB ──
+    let count = 0;
+    const total = Object.keys(imgs).length;
+    const puts = [];
+    for(const [rawKey, val] of Object.entries(imgs)){
+      // rawKey format: "imgs::deco_5001" or "imgs::stone_201" or "imgs::deco_5001_2"
+      if(typeof val !== 'string' || val.length < 100) continue;
+      const keyPart = rawKey.split('::')[1]; // e.g. "deco_5001" or "stone_201_2"
+      if(!keyPart) continue;
+      puts.push(dbPut(keyPart, val).then(()=>{ count++; }).catch(()=>{}));
+    }
+    await Promise.all(puts);
+    showToast(`✅ Import สำเร็จ! รูป ${count}/${total} | ชาร์ม ${expDecos.length} | หิน ${expStones.length} — กำลัง reload...`);
+    setTimeout(()=>location.reload(), 2000);
+  } catch(e){
+    showToast('❌ Import ล้มเหลว: ' + e.message);
+  }
+}
 
 function exitAdmin(){
   isAdminMode=false;
