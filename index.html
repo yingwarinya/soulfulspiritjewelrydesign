@@ -4382,6 +4382,59 @@ function selectAdminDecoMetal(metal){
   renderAdmin();
 }
 
+async function exportBackup(){
+  showToast('⏳ กำลัง export... อาจใช้เวลาสักครู่');
+  try{
+    // 1. Metadata (no images)
+    const expDecos=decos.map(d=>{const x={...d};delete x.img;delete x.img2;return x;});
+    const expStones=stones.map(s=>{const x={...s};delete x.img;delete x.img2;delete x.img3;return x;});
+
+    // 2. Get all images from IndexedDB
+    const imgs={};
+    const db=await _openIDB();
+    const allKeys=await new Promise((res,rej)=>{
+      const tx=db.transaction('imgs','readonly');
+      const r=tx.objectStore('imgs').getAllKeys();
+      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+    });
+    const allVals=await new Promise((res,rej)=>{
+      const tx=db.transaction('imgs','readonly');
+      const r=tx.objectStore('imgs').getAll();
+      r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);
+    });
+    const idbKeys=new Set(allKeys);
+    allKeys.forEach((k,i)=>{
+      if(typeof allVals[i]==='string'&&allVals[i].length>100) imgs['imgs::'+k]=allVals[i];
+    });
+
+    // 3. Fill missing images from in-memory seed arrays
+    decos.forEach(d=>{
+      if(d.img&&!idbKeys.has('deco_'+d.id)) imgs['imgs::deco_'+d.id]=d.img;
+      if(d.img2&&!idbKeys.has('deco_'+d.id+'_2')) imgs['imgs::deco_'+d.id+'_2']=d.img2;
+    });
+    stones.forEach(s=>{
+      if(s.img&&!idbKeys.has('stone_'+s.id)) imgs['imgs::stone_'+s.id]=s.img;
+      if(s.img2&&!idbKeys.has('stone_'+s.id+'_2')) imgs['imgs::stone_'+s.id+'_2']=s.img2;
+      if(s.img3&&!idbKeys.has('stone_'+s.id+'_3')) imgs['imgs::stone_'+s.id+'_3']=s.img3;
+    });
+
+    // 4. Download
+    const payload={decos:expDecos,stones:expStones,imgs};
+    const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='soulful_backup_'+new Date().toISOString().slice(0,10)+'.json';
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('✅ Export สำเร็จ! ชาร์ม '+expDecos.length+' | หิน '+expStones.length+' | รูป '+Object.keys(imgs).length);
+  }catch(e){showToast('❌ Export ล้มเหลว: '+e.message);}
+}
+
+function exportEmbeddedHTML(){
+  showToast('💡 ใช้ Export Backup (.json) แทนได้เลย — แล้ว Import กลับได้ทุกเมื่อ');
+}
+
 function openDataModal(){
   const m=document.getElementById('dataModal');
   m.style.display='flex';
