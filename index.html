@@ -4162,9 +4162,9 @@ async function loadData(){
   try{
   // โหลด decos metadata จาก localStorage, รูปจาก IndexedDB
   // สำรอง built-in ไว้ก่อน เพื่อ restore เสมอแม้จะมี exception
-  // ── SEED FULL BACKUP (สำรอง seed ทั้งหมดก่อน decos/stones.length=0) ──
-  const _seedDecosAll=decos.map(d=>({...d,img:undefined,img2:undefined}));
-  const _seedStonesAll=stones.map(s=>({...s,img:undefined,img2:undefined,img3:undefined}));
+  // ── SEED FULL BACKUP (สำรอง seed ทั้งหมดก่อน decos/stones.length=0) ── รวมรูปด้วย
+  const _seedDecosAll=decos.slice();
+  const _seedStonesAll=stones.slice();
   const _builtinDecosBak={};
   decos.forEach(d=>{if(d.id<=105)_builtinDecosBak[d.id]=d;});
   try{
@@ -4258,6 +4258,15 @@ async function loadData(){
     const raw=localStorage.getItem(SK+'_uidc');
     if(raw){ const v=parseInt(raw); if(v>uidCounter) uidCounter=v; }
   } catch(e){}
+  // ── SEED IMAGE MERGE: ใส่รูปจาก seed ให้ items ที่ไม่มีรูป (user เก่าที่ localStorage ไม่มีรูป) ──
+  try{
+    const _sdMap={};_seedDecosAll.forEach(d=>{_sdMap[d.id]=d;});
+    decos.forEach(d=>{const sd=_sdMap[d.id];if(sd){if(!d.img&&sd.img)d.img=sd.img;if(!d.img2&&sd.img2)d.img2=sd.img2;}});
+  }catch(e){}
+  try{
+    const _ssMap={};_seedStonesAll.forEach(s=>{_ssMap[s.id]=s;});
+    stones.forEach(s=>{const ss=_ssMap[s.id];if(ss){if(!s.img&&ss.img)s.img=ss.img;if(!s.img2&&ss.img2)s.img2=ss.img2;if(!s.img3&&ss.img3)s.img3=ss.img3;}});
+  }catch(e){}
   // ── SEED MIGRATION: เพิ่ม deco/stone ใหม่จาก seed ที่ยังไม่มีใน localStorage ──
   // ป้องกันกรณี user เคยเปิดเว็บแล้วมี localStorage เก่า ทำให้ไม่เห็น charm/stone ใหม่
   try{
