@@ -2489,7 +2489,7 @@ function setCatGrade(v){catGrade=v;renderGradeChips();renderCatalog(document.get
 function renderCatalog(search=''){
   const q=search.toLowerCase();
   const cacheKey=_catalogKey(q);
-  if(cacheKey===_catalogCacheKey)return; // nothing changed, skip re-render
+  if(cacheKey===_catalogCacheKey)return;
   _catalogCacheKey=cacheKey;
   const allItems=sortByGrade(stones.filter(s=>!s.hidden)).map(s=>({...s,isStone:true}));
   const filtered=allItems.filter(item=>{
@@ -2498,27 +2498,46 @@ function renderCatalog(search=''){
     const mc=catChakra==='all'||itemC.includes(catChakra);
     const mg=catGrade==='all'||item.grade===catGrade;
     const itemTags=Array.isArray(item.tags)?item.tags:(item.tags?[item.tags]:[]);
-    // wealth รวม finance ไว้ด้วย
     const mpMatches=(t)=>t==='wealth'?itemTags.includes('wealth')||itemTags.includes('finance'):itemTags.includes(t);
     const mp=catProp==='all'||mpMatches(catProp);
     return ms&&mc&&mg&&mp;
   });
+
+  // ── Group by name — one card per stone type ──
+  const groups=[];
+  const seenNames=new Set();
+  for(const item of filtered){
+    if(seenNames.has(item.name)) continue;
+    seenNames.add(item.name);
+    // all variants of this stone (across all grades/sizes, not just filtered)
+    const allVariants=stones.filter(x=>!x.hidden&&x.name===item.name)
+      .sort((a,b)=>(GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9)||a.size-b.size);
+    groups.push({rep:item, variants:allVariants});
+  }
+
   const grid=document.getElementById('catalogGrid');
-  if(!filtered.length){grid.innerHTML='<div class="empty" style="grid-column:span 2"><div class="empty-icon">🔍</div>ไม่พบหินที่ค้นหา</div>';return;}
-  grid.innerHTML=filtered.map(item=>{
-    const cnt=bracelet.filter(b=>b&&b.isStone===item.isStone&&b.itemId===item.id).length;
+  if(!groups.length){grid.innerHTML='<div class="empty" style="grid-column:span 2"><div class="empty-icon">🔍</div>ไม่พบหินที่ค้นหา</div>';return;}
+  grid.innerHTML=groups.map(({rep:item, variants})=>{
+    const cnt=variants.reduce((sum,v)=>sum+bracelet.filter(b=>b&&b.isStone&&b.itemId===v.id).length,0);
     const ch=CHAKRAS.find(c=>c.id===item.chakra);
+    const hasMulti=variants.length>1;
+    const sizes=[...new Set(variants.map(v=>v.size))].sort((a,b)=>a-b);
+    const minPrice=Math.min(...variants.map(v=>v.price));
+    const priceStr=hasMulti&&variants.some(v=>v.price!==minPrice)?`ราคาเริ่ม ฿${Number.isInteger(minPrice)?minPrice:minPrice.toFixed(1)}/เม็ด`:`฿${Number.isInteger(item.price)?item.price:item.price.toFixed(1)}/เม็ด`;
+    const sizeDisplay=sizes.length>1?`${sizes[0]}–${sizes[sizes.length-1]}mm`:item.size+'mm';
+    const variantNote=hasMulti?`<div style="font-size:10px;color:var(--gold3);margin:2px 0 4px;text-align:center;letter-spacing:.3px;">📐 มีให้เลือก ${variants.length} ตัวเลือก</div>`:'';
     return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
       ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
-      ${item.isStone?`<div class="grade-badge ${GRADE_CSS[item.grade]}">${GRADE_LABELS[item.grade]}</div>`:''}
+      <div class="grade-badge ${GRADE_CSS[item.grade]}">${GRADE_LABELS[item.grade]}</div>
       ${mkCatalogDot(item)}
       <div class="catalog-name">${item.name}</div>
       <div class="catalog-thai">${item.thai}</div>
-      <div class="catalog-size">${item.size}mm${ch&&item.isStone?'  <span style="color:'+ch.color+'">'+ch.label+'</span>':''}</div>
+      <div class="catalog-size">${sizeDisplay}${ch?'  <span style="color:'+ch.color+'">'+ch.label+'</span>':''}</div>
       ${item.prop?`<div class="catalog-prop">${item.prop}</div>`:''}
-      <div class="catalog-price">฿${item.price}/เม็ด</div>
-      ${item.isStone&&hasMedia(item.id)?`<button class="bead-media-btn" style="width:100%;margin-bottom:4px;" onclick="openStoneMedia(${item.id},'${item.name.replace(/'/g,"\\'")}');event.stopPropagation()">📸 ดูภาพหินเต็มเส้น</button>`:''}
-      <button class="catalog-add" onclick="${item.isStone?`openSizePicker(${item.id})`:`addItem(${item.id},false);renderCatalog(document.getElementById('searchInput').value||'')`}">+ เพิ่ม</button>
+      <div class="catalog-price">${priceStr}</div>
+      ${variantNote}
+      ${hasMedia(item.id)?`<button class="bead-media-btn" style="width:100%;margin-bottom:4px;" onclick="openStoneMedia(${item.id},'${item.name.replace(/'/g,"\\'")}');event.stopPropagation()">📸 ดูภาพหินเต็มเส้น</button>`:''}
+      <button class="catalog-add" onclick="openSizePicker(${item.id})">+ เพิ่ม</button>
     </div>`;
   }).join('');
   initLazyLoad();
@@ -5162,7 +5181,8 @@ function hasMedia(id){ return _mediaCache[id]&&_mediaCache[id].hasImg; }
 function getSizeVariants(stoneId){
   const s=stones.find(x=>x.id===stoneId&&!x.hidden);
   if(!s) return [];
-  return stones.filter(x=>!x.hidden&&x.thai===s.thai&&x.grade===s.grade).sort((a,b)=>a.size-b.size);
+  return stones.filter(x=>!x.hidden&&x.name===s.name)
+    .sort((a,b)=>(GRADE_ORDER[a.grade]??9)-(GRADE_ORDER[b.grade]??9)||a.size-b.size);
 }
 function openSizePicker(stoneId){
   const variants=getSizeVariants(stoneId);
@@ -5177,7 +5197,7 @@ function openSizePicker(stoneId){
     <div onclick="event.stopPropagation()" style="background:var(--card);width:100%;max-width:480px;border-radius:20px 20px 0 0;padding:16px 16px 32px;max-height:80vh;overflow-y:auto;">
       <div style="width:40px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 14px;"></div>
       <div style="font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:2px;">${variants[0].thai}</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">เลือกขนาดที่ต้องการ</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;">เลือกขนาดและเกรดที่ต้องการ</div>
       <div id="sizePickerRows" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
   </div>`;
