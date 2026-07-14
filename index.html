@@ -2537,7 +2537,7 @@ function renderCatalog(search=''){
     const minPrice=Math.min(...variants.map(v=>v.price));
     const priceStr=hasMulti&&variants.some(v=>v.price!==minPrice)?`ราคาเริ่ม ฿${Number.isInteger(minPrice)?minPrice:minPrice.toFixed(1)}/เม็ด`:`฿${Number.isInteger(item.price)?item.price:item.price.toFixed(1)}/เม็ด`;
     const sizeDisplay=sizes.length>1?`${sizes[0]}–${sizes[sizes.length-1]}mm`:item.size+'mm';
-    const variantNote=hasMulti?`<div style="font-size:10px;color:var(--gold3);margin:2px 0 4px;text-align:center;letter-spacing:.3px;">📐 มีให้เลือก ${variants.length} ตัวเลือก</div>`:'';
+    const variantNote=hasMulti?`<div style="font-size:10px;color:var(--gold3);margin:2px 0 4px;text-align:center;letter-spacing:.3px;">📐 มีให้เลือกขนาดหิน</div>`:'';
     return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
       ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
       <div class="grade-badge ${GRADE_CSS[item.grade]}">${GRADE_LABELS[item.grade]}</div>
