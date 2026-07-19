@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#0d0502">
+<title>Soulful Spirit — ส่งลิงค์ให้ลูกค้า</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    background:#0d0502;
+    min-height:100dvh;
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:0 0 48px;
+    color:#f0deb4;
+  }
+
+  .header{
+    width:100%;max-width:480px;
+    padding:40px 24px 28px;
+    text-align:center;
+  }
+  .logo-circle{
+    width:80px;height:80px;border-radius:50%;
+    border:2px solid rgba(201,160,64,.5);
+    background:linear-gradient(135deg,#3a1a06,#1a0a02);
+    display:flex;align-items:center;justify-content:center;
+    font-size:38px;margin:0 auto 16px;
+    box-shadow:0 0 32px rgba(201,160,64,.2);
+  }
+  .brand-name{
+    font-size:20px;font-weight:800;
+    background:linear-gradient(135deg,#f0cc60,#e8a830,#f0cc60);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+    letter-spacing:1.5px;margin-bottom:4px;
+  }
+  .brand-sub{font-size:11px;color:rgba(240,210,140,.4);letter-spacing:2px;text-transform:uppercase;}
+
+  .gold-line{
+    width:100px;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,160,64,.55),transparent);
+    margin:18px auto 24px;
+  }
+
+  .section-label{
+    font-size:10px;color:rgba(240,210,140,.4);
+    letter-spacing:2.5px;text-transform:uppercase;
+    text-align:center;margin-bottom:14px;
+  }
+
+  /* ── Cards ── */
+  .cards{width:100%;max-width:480px;padding:0 14px;display:flex;flex-direction:column;gap:10px;}
+
+  .mode-card{
+    background:linear-gradient(135deg,rgba(58,26,6,.92),rgba(20,8,2,.96));
+    border:1px solid rgba(201,160,64,.22);
+    border-radius:18px;overflow:hidden;
+    position:relative;
+  }
+  .mode-card::before{
+    content:'';position:absolute;inset:0;
+    background:linear-gradient(135deg,rgba(201,160,64,.05),transparent 55%);
+    pointer-events:none;
+  }
+  .mode-card.featured{border-color:rgba(201,160,64,.4);}
+  .mode-card.featured::before{background:linear-gradient(135deg,rgba(201,160,64,.1),transparent 55%);}
+
+  /* Top row: icon + info + open button */
+  .card-top{
+    display:flex;align-items:center;gap:14px;
+    padding:16px 16px 12px;
+  }
+  .mode-icon{
+    font-size:30px;flex-shrink:0;
+    width:50px;height:50px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(201,160,64,.08);
+    border:1px solid rgba(201,160,64,.18);
+    border-radius:12px;
+  }
+  .featured .mode-icon{background:rgba(201,160,64,.14);border-color:rgba(201,160,64,.38);}
+  .mode-info{flex:1;min-width:0;}
+  .mode-title{font-size:14px;font-weight:700;color:#f0cc60;margin-bottom:3px;}
+  .mode-desc{font-size:11px;color:rgba(240,210,140,.5);line-height:1.5;}
+
+  .open-btn{
+    flex-shrink:0;
+    padding:7px 14px;
+    border-radius:20px;
+    border:1px solid rgba(201,160,64,.3);
+    background:rgba(201,160,64,.08);
+    color:rgba(240,208,96,.8);
+    font-size:11px;font-weight:700;
+    cursor:pointer;text-decoration:none;
+    transition:all .15s;
+    white-space:nowrap;
+  }
+  .open-btn:active{background:rgba(201,160,64,.2);}
+
+  /* Bottom row: URL + copy button */
+  .card-bottom{
+    display:flex;align-items:center;gap:8px;
+    padding:10px 14px 14px;
+    border-top:1px solid rgba(201,160,64,.1);
+    background:rgba(0,0,0,.25);
+  }
+  .url-text{
+    flex:1;min-width:0;
+    font-size:10px;
+    color:rgba(240,210,140,.38);
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    font-family:monospace;
+    letter-spacing:0.3px;
+  }
+  .copy-btn{
+    flex-shrink:0;
+    padding:7px 14px;
+    border-radius:20px;
+    border:1px solid rgba(74,222,128,.35);
+    background:rgba(74,222,128,.1);
+    color:#4ade80;
+    font-size:11px;font-weight:700;
+    cursor:pointer;
+    transition:all .15s;
+    white-space:nowrap;
+  }
+  .copy-btn:active{background:rgba(74,222,128,.25);}
+  .copy-btn.copied{
+    border-color:rgba(74,222,128,.6);
+    background:rgba(74,222,128,.2);
+    color:#86efac;
+  }
+
+  /* ── Toast ── */
+  #toast{
+    position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:rgba(10,40,20,.92);
+    border:1px solid rgba(74,222,128,.4);
+    color:#4ade80;
+    padding:10px 20px;border-radius:20px;
+    font-size:13px;font-weight:700;
+    pointer-events:none;opacity:0;
+    transition:opacity .2s,transform .2s;
+    white-space:nowrap;z-index:999;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .footer{
+    margin-top:36px;text-align:center;
+    font-size:10px;color:rgba(240,210,140,.2);letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-circle">🔮</div>
+  <div class="brand-name">SOULFUL SPIRIT</div>
+  <div class="brand-sub">Jewelry Design Studio</div>
+</div>
+
+<div class="gold-line"></div>
+<div class="section-label">ลิงค์ส่งลูกค้าแยกตามประเภท</div>
+
+<div class="cards">
+
+  <!-- Bracelet full -->
+  <div class="mode-card featured">
+    <div class="card-top">
+      <div class="mode-icon">🔮</div>
+      <div class="mode-info">
+        <div class="mode-title">ถาดหินเต็มเส้น</div>
+        <div class="mode-desc">กำไลหินแบบเต็มเส้น เลือกหินได้อิสระ พร้อมราคา real-time</div>
+      </div>
+      <a class="open-btn" href="https://yingwarinya.github.io/soulfulspiritjewelrydesign/?mode=bracelet" target="_blank">เปิด ›</a>
+    </div>
+    <div class="card-bottom">
+      <div class="url-text" id="url0">https://yingwarinya.github.io/soulfulspiritjewelrydesign/https://yingwarinya.github.io/soulfulspiritjewelrydesign/?mode=bracelet</div>
+      <button class="copy-btn" id="copy0" onclick="copyLink(0)">📋 คัดลอก</button>
+    </div>
+  </div>
+
+  <!-- Necklace / bracelet max 5 -->
+  <div class="mode-card">
+    <div class="card-top">
+      <div class="mode-icon">📿</div>
+      <div class="mode-info">
+        <div class="mode-title">สร้อย / กำไล สูงสุด 5 เม็ด</div>
+        <div class="mode-desc">เลือกหินได้สูงสุด 5 เม็ด เรียงตำแหน่งได้เอง</div>
+      </div>
+      <a class="open-btn" href="https://yingwarinya.github.io/soulfulspiritjewelrydesign/?mode=necklace5" target="_blank">เปิด ›</a>
+    </div>
+    <div class="card-bottom">
+      <div class="url-text" id="url1">https://yingwarinya.github.io/soulfulspiritjewelrydesign/https://yingwarinya.github.io/soulfulspiritjewelrydesign/?mode=necklace5</div>
+      <button class="copy-btn" id="copy1" onclick="copyLink(1)">📋 คัดลอก</button>
+    </div>
+  </div>
+
+  <!-- Necklace 2 beads + pendant -->
+  <div class="mode-card">
+    <div class="card-top">
+      <div class="mode-icon">💎</div>
+      <div class="mode-info">
+        <div class="mode-title">สร้อยคอ 2 เม็ด + จี้</div>
+        <div class="mode-desc">เลือกหิน 2 เม็ด + จี้ พร้อม preview สร้อยคอ 3D</div>
+      </div>
+      <a class="open-btn" href="https://yingwarinya.github.io/soulfulspiritjewelrydesign/?mode=necklace2" target="_blank">เปิด ›</a>
+    </div>
+    <div class="card-bottom">
+      <div class="url-text" id="url2">https://yingwarinya.github.io/soulfulspiritjewelrydesign/https://yingwarinya.github.io/soulfulspiritjewelrydesign/?mode=necklace2</div>
+      <button class="copy-btn" id="copy2" onclick="copyLink(2)">📋 คัดลอก</button>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">© Soulful Spirit · Handcrafted with ✦</div>
+
+<div id="toast"></div>
+
+<script>
+function copyLink(idx){
+  const url = document.getElementById('url'+idx).textContent.trim();
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn = document.getElementById('copy'+idx);
+    btn.textContent = '✅ คัดลอกแล้ว!';
+    btn.classList.add('copied');
+    showToast('✅ คัดลอกลิงค์แล้ว!');
+    setTimeout(()=>{ btn.textContent='📋 คัดลอก'; btn.classList.remove('copied'); }, 2200);
+  }).catch(()=>{
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = url; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('✅ คัดลอกลิงค์แล้ว!');
+  });
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
