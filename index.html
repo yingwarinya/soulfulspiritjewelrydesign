@@ -203,6 +203,8 @@
   #tray-toast{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(40,10,0,0.92);border:1px solid var(--gold3);color:var(--gold2);padding:10px 18px;border-radius:16px;font-size:12px;font-weight:600;z-index:99;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;box-shadow:0 4px 20px rgba(0,0,0,.7);text-align:center;}
   #tray-toast.show{opacity:1;}
   .section-divider{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:12px 0;}
+  .summary-mode-hdr{font-size:13px;font-weight:700;color:var(--gold2);letter-spacing:1px;padding:6px 0 10px;border-bottom:1px solid var(--border);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+  .summary-mode-divider{height:2px;background:linear-gradient(90deg,transparent,var(--gold3),transparent);margin:18px 0 16px;}
   input[type=color]{-webkit-appearance:none;border:none;background:none;padding:0;}
 
   @keyframes logoShimmer{0%,38%,100%{filter:grayscale(1) sepia(1) saturate(1.9) brightness(0.78) drop-shadow(0 0 5px rgba(201,160,64,.35));}46%{filter:grayscale(1) sepia(1) saturate(2.1) brightness(0.96) drop-shadow(0 0 9px rgba(230,190,70,.55));}50%{filter:grayscale(1) sepia(1) saturate(2.5) brightness(1.22) drop-shadow(0 0 16px rgba(255,225,90,.8));}54%{filter:grayscale(1) sepia(1) saturate(2.1) brightness(0.96) drop-shadow(0 0 9px rgba(230,190,70,.55));}62%{filter:grayscale(1) sepia(1) saturate(1.9) brightness(0.78) drop-shadow(0 0 5px rgba(201,160,64,.35));}}
@@ -459,9 +461,9 @@
 <div class="gold-line"></div>
 
 <div class="tabs">
-  <div class="tab active" onclick="showTab('design',this)">🪨 ออกแบบ</div>
-  <div class="tab" onclick="showTab('catalog',this)">💎 หินทั้งหมด</div>
-  <div class="tab" onclick="showTab('summary',this)">📋 สรุป</div>
+  <div id="tabDesign" class="tab active" onclick="showTab('design',this)">🪨 ออกแบบ</div>
+  <div id="tabCatalog" class="tab" onclick="showTab('catalog',this)">💎 หินทั้งหมด</div>
+  <div id="tabSummary" class="tab" onclick="showTab('summary',this)">📋 สรุป</div>
   <div class="tab" id="adminTab" onclick="showTab('admin',this)" style="display:none">⚙️ จัดการ</div>
 </div>
 
@@ -545,43 +547,141 @@
   <div class="quick-grid" id="quickGrid"></div>
 </div>
 
-<!-- SUMMARY TAB -->
-<div id="tab-summary" class="section">
-  <div class="price-card">
-    <div class="price-row"><span>จำนวนเม็ดในเส้น</span><span id="totalBeads">— เม็ด</span></div>
-    <div class="price-row"><span>ราคาหิน</span><span id="stonePrice">฿0</span></div>
-    <div class="price-row"><span>ของตกแต่ง</span><span id="decoPrice">฿0</span></div>
-    <div class="price-total"><span>ราคารวม</span><span id="totalPrice">฿0</span></div>
-  </div>
-<button onclick="exportDesignChecked()" style="width:100%;background:linear-gradient(135deg,rgba(140,20,20,.7),rgba(100,10,10,.7));border:1px solid var(--gold3);color:var(--gold2);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;letter-spacing:1px;">📥 บันทึกภาพกำไล</button>
-  <div class="list-label">💎 หินในเส้น · ลากเพื่อเรียงตำแหน่ง</div>
-  <div class="bead-list-wrap" id="beadListWrap">
-    <div id="beadList"><div class="empty"><div class="empty-icon">💎</div>ยังไม่มีหินในเส้น<br>เลือกหินในแท็บออกแบบ</div></div>
-  </div>
-  <div class="section-divider"></div>
-  <div class="list-label">✨ ความหมายของหินในกำไล</div>
-  <div id="stoneMeanings"></div>
-  </div><!-- /designPanel_bracelet -->
 
   <!-- ── Mode: สร้อย/กำไล max 5 เม็ด ── -->
+  <!-- ── Mode: สร้อย/กำไล max 5 เม็ด ── -->
   <div id="designPanel_necklace5" style="display:none;">
-    <div class="preview-card" style="text-align:center;padding:32px 16px;">
-      <div style="font-size:36px;margin-bottom:12px;">📿</div>
-      <div style="font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:6px;">สร้อยคอ / สร้อยข้อมือ สูงสุด 5 เม็ด</div>
-      <div style="font-size:12px;color:var(--text3);">กำลังพัฒนา — เดี๋ยวมาเร็วๆ นี้</div>
+    <!-- Canvas preview -->
+    <div class="preview-card" style="padding:14px 8px 12px;margin-bottom:8px;">
+      <div class="preview-label" style="margin-bottom:10px;">✦ ตัวอย่างสร้อย / กำไล ✦</div>
+      <div style="border-radius:10px;overflow:hidden;">
+        <canvas id="n5Canvas" width="340" height="200" style="width:100%;display:block;"></canvas>
+      </div>
     </div>
+    <!-- Slot row: 5 stone circles + drag-to-reorder -->
+    <div style="display:flex;gap:6px;justify-content:center;align-items:flex-end;margin:0 0 8px;padding:4px;overflow-x:auto;" id="n5SlotRow"></div>
+    <!-- Clear button -->
+    <button onclick="n5ClearAll()" style="width:100%;margin-bottom:12px;padding:8px;border-radius:10px;border:1px solid rgba(200,60,60,.4);background:rgba(200,60,60,.1);color:#e07070;font-size:12px;font-weight:600;cursor:pointer;">🗑 ล้างทั้งหมด</button>
+    <!-- Stone grid -->
+    <div class="list-label">💎 เลือกหิน (สูงสุด 5 เม็ด)</div>
+    <input class="search-bar" type="text" id="n5SearchInput" placeholder="🔍 ค้นหาชื่อหิน / ชื่อไทย..." oninput="renderN5StoneGrid()" style="margin-bottom:6px;">
+    <div class="chakra-row" id="n5AuraChips" style="margin-bottom:4px;"></div>
+    <div class="grade-row" id="n5GradeChips" style="margin-bottom:4px;"></div>
+    <div class="grade-row" id="n5PropChips" style="margin-bottom:4px;"></div>
+    <div class="grade-row" id="n5SortChips" style="margin-bottom:6px;"></div>
+    <div id="n5StoneGrid" class="catalog-grid" style="margin:0;"></div>
   </div>
 
   <!-- ── Mode: สร้อยคอ 2 เม็ด + จี้ ── -->
   <div id="designPanel_necklace2pendant" style="display:none;">
-    <div class="preview-card" style="text-align:center;padding:32px 16px;">
-      <div style="font-size:36px;margin-bottom:12px;">💎</div>
-      <div style="font-size:15px;font-weight:700;color:var(--gold2);margin-bottom:6px;">สร้อยคอ 2 เม็ด + จี้</div>
-      <div style="font-size:12px;color:var(--text3);">กำลังพัฒนา — เดี๋ยวมาเร็วๆ นี้</div>
+    <!-- Canvas preview (always visible) -->
+    <div class="preview-card" style="padding:14px 8px 12px;margin-bottom:8px;">
+      <div class="preview-label" style="margin-bottom:10px;">✦ ตัวอย่างสร้อยคอ ✦</div>
+      <div style="border-radius:10px;overflow:hidden;">
+      <canvas id="n2Canvas" width="340" height="260" style="width:100%;display:block;touch-action:none;cursor:grab;"
+        ontouchstart="_n2DragStart(event)" ontouchmove="_n2DragMove(event)" ontouchend="_n2DragEnd(event)"
+        onmousedown="_n2DragStart(event)" onmousemove="_n2DragMove(event)" onmouseup="_n2DragEnd(event)" onmouseleave="_n2DragEnd(event)"></canvas>
+      </div>
+      <!-- Chain color picker -->
+      <div style="display:flex;justify-content:center;gap:8px;margin-top:10px;" id="n2ChainColorRow">
+        <div id="n2CC_silver" onclick="setN2ChainColor('silver')" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;cursor:pointer;border:2px solid #c0c0d8;background:rgba(200,200,220,.15);font-size:11px;font-weight:700;color:#d0d0e8;">⚪ เงิน</div>
+        <div id="n2CC_gold" onclick="setN2ChainColor('gold')" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;cursor:pointer;border:2px solid rgba(210,170,50,.35);background:rgba(210,170,50,.08);font-size:11px;font-weight:600;color:#c8a030;">🟡 ทอง</div>
+        <div id="n2CC_rosegold" onclick="setN2ChainColor('rosegold')" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;cursor:pointer;border:2px solid rgba(210,140,110,.35);background:rgba(210,140,110,.08);font-size:11px;font-weight:600;color:#d08878;">🌸 โรสโกล</div>
+      </div>
+    </div>
+    <!-- Hidden slot state holders (ไม่แสดง UI แต่ JS ยังใช้ ID เหล่านี้) -->
+    <div style="display:none;">
+      <div id="n2Slot1Btn"></div><div id="n2Slot1Img"></div><div id="n2Slot1Plus"></div><div id="n2Slot1Name"></div>
+      <div id="n2Slot2Btn"></div><div id="n2Slot2Img"></div><div id="n2Slot2Plus"></div><div id="n2Slot2Name"></div>
+      <div id="n2SlotPBtn"></div><div id="n2SlotPImg"></div><div id="n2SlotPPlus"></div><div id="n2SlotPName"></div>
+    </div>
+    <!-- Quick-add tabs (2 tabs — สรุปอยู่ที่ main tab บนขวา) -->
+    <div style="display:flex;gap:4px;margin:10px 0 2px;background:rgba(0,0,0,.45);border:1px solid var(--border);border-radius:12px;padding:4px;">
+      <div id="n2TabStone" onclick="switchN2Tab('stone')" style="flex:1;font-size:11px;font-weight:700;padding:9px 4px;text-align:center;border-radius:9px;cursor:pointer;background:var(--gold3);color:#1a0a00;transition:all .2s;">💎 ตัวเลือกหิน</div>
+      <div id="n2TabPendant" onclick="switchN2Tab('pendant')" style="flex:1;font-size:11px;font-weight:600;padding:9px 4px;text-align:center;border-radius:9px;cursor:pointer;background:transparent;color:var(--text3);transition:all .2s;">📿 เลือกจี้</div>
+    </div>
+    <!-- Stone full grid (เหมือน quick grid เป๊ะๆ) -->
+    <div id="n2StoneSection">
+      <input id="n2QSearchInput" class="search-bar" type="text" placeholder="🔍 ค้นหาชื่อหิน / ชื่อไทย..." oninput="setN2Search(this.value)" style="margin:6px 0 2px;">
+      <div class="chakra-row" id="n2AuraChips"></div>
+      <div class="grade-row" id="n2GradeChips"></div>
+      <div class="grade-row" id="n2PropChips"></div>
+      <div class="grade-row" id="n2SortChips"></div>
+      <div id="n2QuickStoneGrid" class="catalog-grid" style="margin:0;"></div>
+    </div>
+    <!-- Pendant grid -->
+    <div id="n2PendantSection" style="display:none;">
+      <input id="n2QPendantSearch" class="search-bar" type="text" placeholder="🔍 ค้นหาจี้..." oninput="renderN2QuickPendant(this.value)" style="margin:6px 0 4px;">
+      <div id="n2QuickPendantGrid" style="display:flex;flex-direction:column;gap:8px;margin:0;"></div>
     </div>
   </div>
 
 </div>
+
+<!-- SUMMARY TAB -->
+<div id="tab-summary" class="section">
+
+  <!-- Empty state -->
+  <div id="summaryEmptyState" style="text-align:center;padding:48px 16px 32px;">
+    <div style="font-size:40px;margin-bottom:12px;">🛒</div>
+    <div style="font-size:14px;color:var(--text3);line-height:1.7;">ยังไม่มีสินค้า<br>เริ่มออกแบบจากแท็บ ออกแบบ</div>
+  </div>
+
+  <!-- ── Grand total card (shown when any mode has items) ── -->
+  <div id="summaryGrandTotal" style="display:none;margin-bottom:12px;">
+    <div class="price-card" style="margin-bottom:0;">
+      <div class="price-total" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);background:rgba(30,120,60,0.15);border-radius:10px;padding:10px 12px;margin:-2px -2px 10px;">
+        <span style="font-size:14px;color:#7defa0;">💰 ยอดรวมสุทธิ</span>
+        <span id="gtTotal" style="font-size:22px;color:#4ade80;font-weight:800;text-shadow:0 0 12px rgba(74,222,128,0.4);">฿0</span>
+      </div>
+      <div id="gtBraceletRow" class="price-row" style="display:none;font-size:12px;">
+        <span style="color:var(--text3);">🔮 ถาดหินเต็มเส้น</span><span id="gtBraceletAmt">฿0</span>
+      </div>
+      <div id="gtN2Row" class="price-row" style="display:none;font-size:12px;">
+        <span style="color:var(--text3);">💎 สร้อยคอ 2 เม็ด + จี้</span><span id="gtN2Amt">฿0</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Bracelet section ── -->
+  <div id="summaryBraceletSection" style="display:none;">
+    <div class="summary-mode-hdr">🔮 ถาดหินเต็มเส้น</div>
+    <div style="position:relative;">
+      <img id="summaryBraceletPreview" style="width:100%;border-radius:10px;display:block;" src="" alt="">
+      <button onclick="savePreviewImg('summaryBraceletPreview','bracelet')" style="position:absolute;bottom:10px;right:10px;background:rgba(10,5,2,0.75);border:1px solid var(--gold3);color:var(--gold2);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);">📸 บันทึก</button>
+    </div>
+    <div class="price-card" id="braceletPriceCard" style="margin-top:10px;">
+      <div class="price-row"><span>จำนวนเม็ดในเส้น</span><span id="totalBeads">— เม็ด</span></div>
+      <div class="price-row"><span>ราคาหิน</span><span id="stonePrice">฿0</span></div>
+      <div class="price-row"><span>ของตกแต่ง</span><span id="decoPrice">฿0</span></div>
+      <div class="price-total"><span>ราคารวม</span><span id="totalPrice">฿0</span></div>
+    </div>
+    <button id="braceletSaveBtn" onclick="exportDesignChecked()" style="width:100%;background:linear-gradient(135deg,rgba(140,20,20,.7),rgba(100,10,10,.7));border:1px solid var(--gold3);color:var(--gold2);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;letter-spacing:1px;">📥 บันทึกภาพกำไลแบบเต็ม</button>
+    <div class="list-label">💎 หินในเส้น · ลากเพื่อเรียงตำแหน่ง</div>
+    <div class="bead-list-wrap" id="beadListWrap">
+      <div id="beadList"><div class="empty"><div class="empty-icon">💎</div>ยังไม่มีหินในเส้น<br>เลือกหินในแท็บออกแบบ</div></div>
+    </div>
+    <div class="section-divider"></div>
+    <div class="list-label">✨ ความหมายของหินในกำไล</div>
+    <div id="stoneMeanings"></div>
+  </div>
+
+  <!-- Divider between mode sections -->
+  <div id="summaryModeDivider" class="summary-mode-divider" style="display:none;"></div>
+
+  <!-- ── Necklace 2+pendant section ── -->
+  <div id="n2SummarySection" style="display:none;">
+    <div class="summary-mode-hdr">💎 สร้อยคอ 2 เม็ด + จี้</div>
+    <div style="position:relative;">
+      <img id="summaryN2Preview" style="width:100%;border-radius:10px;display:block;" src="" alt="">
+      <button onclick="savePreviewImg('summaryN2Preview','necklace')" style="position:absolute;bottom:10px;right:10px;background:rgba(10,5,2,0.75);border:1px solid var(--gold3);color:var(--gold2);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);">📸 บันทึก</button>
+    </div>
+    <div id="n2PriceBox" class="preview-card" style="padding:10px 14px 8px;margin:10px 0 8px;font-size:12px;min-height:60px;"></div>
+    <div id="n2ItemList" style="margin-bottom:10px;"></div>
+    <button id="n2SaveBtn" onclick="saveN2Image()" style="width:100%;background:linear-gradient(135deg,rgba(140,20,20,.7),rgba(100,10,10,.7));border:1px solid var(--gold3);color:var(--gold2);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:1px;opacity:.4;pointer-events:none;">📥 บันทึกภาพสร้อยคอแบบเต็ม</button>
+  </div>
+
+</div><!-- /tab-summary -->
 
 <!-- CATALOG TAB -->
 <div id="tab-catalog" class="section">
@@ -1017,6 +1117,34 @@
   </div>
 </div>
 
+<!-- N2 STONE PICKER MODAL -->
+<div class="modal-overlay" id="n2StoneOverlay" onclick="closeN2StonePicker()"></div>
+<div class="modal-sheet" id="n2StoneSheet">
+  <div class="modal-handle"></div>
+  <div class="modal-header">
+    <div id="n2StoneTitle" class="modal-title">🪨 เลือกหิน</div>
+    <button class="modal-close" onclick="closeN2StonePicker()">✕</button>
+  </div>
+  <div style="padding:8px 14px 4px;">
+    <input id="n2StoneSearch" class="search-bar" type="text" placeholder="🔍 ค้นหาหิน..." oninput="renderN2StonePicker(this.value)" style="margin:0;">
+  </div>
+  <div id="n2StoneGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 14px 32px;overflow-y:auto;"></div>
+</div>
+
+<!-- N2 PENDANT PICKER MODAL -->
+<div class="modal-overlay" id="n2PendantOverlay" onclick="closeN2PendantPicker()"></div>
+<div class="modal-sheet" id="n2PendantSheet">
+  <div class="modal-handle"></div>
+  <div class="modal-header">
+    <div class="modal-title">📿 เลือกจี้สำหรับสร้อยคอ</div>
+    <button class="modal-close" onclick="closeN2PendantPicker()">✕</button>
+  </div>
+  <div style="padding:8px 14px 4px;">
+    <input id="n2PendantSearch" class="search-bar" type="text" placeholder="🔍 ค้นหาจี้..." oninput="renderN2PendantPicker(this.value)" style="margin:0;">
+  </div>
+  <div id="n2PendantGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 14px 32px;overflow-y:auto;"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -1068,6 +1196,919 @@ let bracelet = [];
 // ── DESIGN MODE ──
 let designMode = 'bracelet'; // 'bracelet' | 'necklace5' | 'necklace2pendant'
 const _dmtLabels = {bracelet:'🔮 ถาดหินเต็มเส้น', necklace5:'📿 สร้อย / กำไล สูงสุด 5 เม็ด', necklace2pendant:'💎 สร้อยคอ 2 เม็ด + จี้'};
+
+// ── NECKLACE 2+PENDANT STATE ──
+let n2Stone1 = null; // stoneObj
+let n2Stone2 = null; // stoneObj
+let n2Pendant = null; // decoObj
+
+// ── NECKLACE-5 STATE ──
+let n5Stones = [null, null, null, null, null];
+let _n5Search = '', _n5Auras = [], _n5Grade = 'all', _n5Props = ['all'], _n5Sort = 'none';
+let _n5DragFrom = -1;
+let _n2PickSlot = 0; // 1=stone1 2=stone2
+const N2_CHAIN_PRICE = 1000;
+let n2ChainColor = 'silver'; // 'silver' | 'gold' | 'rosegold'
+const N2_CHAIN_COLORS = {
+  silver:  {hi:'#f0f0ff', main:'#d4d4e8', mid:'#9898b0', dark:'#505068', ball:'#e8e8f8'},
+  gold:    {hi:'#fff8c8', main:'#f0d870', mid:'#c09828', dark:'#704808', ball:'#fff0a0'},
+  rosegold:{hi:'#ffe8e0', main:'#f0c8b0', mid:'#c88868', dark:'#804838', ball:'#ffddd0'},
+};
+function setN2ChainColor(c){
+  n2ChainColor=c;
+  ['silver','gold','rosegold'].forEach(k=>{
+    const el=document.getElementById('n2CC_'+k);
+    if(!el) return;
+    const cc=N2_CHAIN_COLORS[k];
+    if(k===c){
+      el.style.borderColor=cc.main;
+      el.style.background='rgba(255,255,255,.12)';
+      el.style.fontWeight='800';
+    } else {
+      el.style.borderColor=k==='silver'?'rgba(180,180,210,.4)':k==='gold'?'rgba(200,160,40,.3)':'rgba(200,130,100,.3)';
+      el.style.background='transparent';
+      el.style.fontWeight='600';
+    }
+  });
+  drawN2Canvas();
+}
+
+// ── N2 CANVAS DRAG ──
+let _n2Drag = null; // {slot:1|2, curX, curY}
+function _n2CanvasXY(e){
+  const cvs=document.getElementById('n2Canvas');
+  if(!cvs) return {x:0,y:0};
+  const r=cvs.getBoundingClientRect();
+  const sx=340/r.width, sy=260/r.height;
+  const src=e.touches?e.touches[0]:e;
+  return {x:(src.clientX-r.left)*sx, y:(src.clientY-r.top)*sy};
+}
+function _n2DragStart(e){
+  const {x,y}=_n2CanvasXY(e);
+  const cx=170, chainY=109, SR=40;
+  const s1x=cx-SR-1, s2x=cx+SR+1;
+  let slot=0;
+  if(Math.hypot(x-s1x,y-chainY)<=SR+8) slot=1;
+  else if(Math.hypot(x-s2x,y-chainY)<=SR+8) slot=2;
+  if(!slot) return;
+  const stone=slot===1?n2Stone1:n2Stone2;
+  if(!stone) return; // empty slot → open picker instead
+  e.preventDefault();
+  _n2Drag={slot,curX:x,curY:y};
+  document.getElementById('n2Canvas').style.cursor='grabbing';
+  drawN2Canvas();
+}
+function _n2DragMove(e){
+  if(!_n2Drag) return;
+  e.preventDefault();
+  const {x,y}=_n2CanvasXY(e);
+  _n2Drag.curX=x; _n2Drag.curY=y;
+  drawN2Canvas();
+}
+function _n2DragEnd(e){
+  if(!_n2Drag) return;
+  const {slot,curX,curY}=_n2Drag;
+  _n2Drag=null;
+  document.getElementById('n2Canvas').style.cursor='grab';
+  const cx=170, chainY=109, SR=40, H=260;
+  const s1x=cx-SR-1, s2x=cx+SR+1;
+  const otherX=slot===1?s2x:s1x;
+  // Trash zone
+  if(curY>H-44){
+    if(slot===1) n2Stone1=null; else n2Stone2=null;
+    showToast('🗑 ลบหินออกแล้ว');
+    updateN2Panel(); return;
+  }
+  // Swap
+  if(Math.hypot(curX-otherX,curY-chainY)<=SR+18){
+    const tmp=n2Stone1; n2Stone1=n2Stone2; n2Stone2=tmp;
+    showToast('🔄 สลับตำแหน่งหินแล้ว');
+    updateN2Panel(); return;
+  }
+  drawN2Canvas(); // snap back
+}
+
+function openN2StonePicker(slot){
+  _n2PickSlot = slot;
+  document.getElementById('n2StoneTitle').textContent = '🪨 เลือกหิน ตำแหน่งที่ ' + slot;
+  document.getElementById('n2StoneSearch').value = '';
+  renderN2StonePicker('');
+  document.getElementById('n2StoneOverlay').classList.add('open');
+  document.getElementById('n2StoneSheet').classList.add('open');
+}
+function closeN2StonePicker(){
+  document.getElementById('n2StoneOverlay').classList.remove('open');
+  document.getElementById('n2StoneSheet').classList.remove('open');
+  _n2PickSlot = 0;
+}
+function renderN2StonePicker(search){
+  const q = (search||'').toLowerCase();
+  const filtered = stones.filter(s => !s.hidden && (!q || s.name.toLowerCase().includes(q) || (s.thai||'').toLowerCase().includes(q)));
+  const groups = []; const seen = new Set();
+  for(const s of filtered){
+    const key = s.name+'|'+s.grade;
+    if(seen.has(key)) continue; seen.add(key);
+    const variants = stones.filter(x=>!x.hidden&&x.name===s.name&&x.grade===s.grade).sort((a,b)=>a.size-b.size);
+    groups.push({rep:s, variants});
+  }
+  const grid = document.getElementById('n2StoneGrid');
+  if(!grid) return;
+  grid.innerHTML = groups.map(({rep,variants}) => {
+    const hasMulti = variants.length > 1;
+    return `<div onclick="pickN2Stone(${rep.id})" style="background:var(--card);border-radius:10px;overflow:hidden;cursor:pointer;border:1.5px solid var(--border);active:opacity:.8;">
+      <div style="width:100%;aspect-ratio:1;background:#1a0a00;">
+        <img src="${rep.img||''}" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+      <div style="padding:5px 5px 7px;text-align:center;">
+        <div style="font-size:10px;font-weight:700;color:var(--text1);line-height:1.3;">${rep.name}</div>
+        ${rep.grade?`<div style="font-size:9px;color:var(--gold3);">${rep.grade}</div>`:''}
+        ${hasMulti?`<div style="font-size:9px;color:var(--text3);">📐 หลายขนาด</div>`:`<div style="font-size:9px;color:var(--text3);">${rep.size}mm</div>`}
+        <div style="font-size:10px;color:var(--gold2);margin-top:1px;">฿${rep.price}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function pickN2Stone(stoneId){
+  const variants = getSizeVariants(stoneId);
+  if(variants.length > 1){
+    // Show size sub-picker inline
+    const grid = document.getElementById('n2StoneGrid');
+    if(grid) grid.innerHTML = `<div style="grid-column:1/-1;">
+      <button onclick="renderN2StonePicker(document.getElementById('n2StoneSearch').value)" style="background:none;border:none;color:var(--gold3);font-size:12px;cursor:pointer;padding:0 0 8px;">← กลับ</button>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">เลือกขนาด</div>
+      ${variants.map(v=>`<div onclick="pickN2StoneConfirm(${v.id})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;">
+        <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:#1a0a00;flex-shrink:0;"><img src="${v.img||''}" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div><div style="font-size:13px;font-weight:700;color:var(--text1);">${v.size} mm</div><div style="font-size:12px;color:var(--gold2);">฿${v.price}/เม็ด</div></div>
+      </div>`).join('')}
+    </div>`;
+    return;
+  }
+  pickN2StoneConfirm(stoneId);
+}
+function pickN2StoneConfirm(stoneId){
+  const s = stones.find(x=>x.id===stoneId);
+  if(!s) return;
+  if(_n2PickSlot===1) n2Stone1=s;
+  if(_n2PickSlot===2) n2Stone2=s;
+  closeN2StonePicker();
+  updateN2Panel();
+}
+
+function openN2PendantPicker(){
+  document.getElementById('n2PendantSearch').value='';
+  renderN2PendantPicker('');
+  document.getElementById('n2PendantOverlay').classList.add('open');
+  document.getElementById('n2PendantSheet').classList.add('open');
+}
+function closeN2PendantPicker(){
+  document.getElementById('n2PendantOverlay').classList.remove('open');
+  document.getElementById('n2PendantSheet').classList.remove('open');
+}
+function renderN2PendantPicker(search){
+  const q=(search||'').toLowerCase();
+  const pendants=decos.filter(d=>!d.hidden&&d.type==='pendant'&&(!q||d.name.toLowerCase().includes(q)||(d.thai||'').toLowerCase().includes(q)));
+  const grid=document.getElementById('n2PendantGrid');
+  if(!grid) return;
+  grid.innerHTML=pendants.map(d=>`<div onclick="pickN2Pendant(${d.id})" style="background:var(--card);border-radius:10px;overflow:hidden;cursor:pointer;border:1.5px solid var(--border);">
+    <div style="width:100%;aspect-ratio:1;background:#1a0a00;display:flex;align-items:center;justify-content:center;padding:8px;">
+      ${d.img?`<img src="${d.img}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;">`:`<div style="font-size:28px;">📿</div>`}
+    </div>
+    <div style="padding:5px 5px 7px;text-align:center;">
+      <div style="font-size:10px;font-weight:700;color:var(--text1);line-height:1.3;">${d.name}</div>
+      ${d.thai?`<div style="font-size:9px;color:var(--text3);">${d.thai}</div>`:''}
+      <div style="font-size:10px;color:var(--gold2);margin-top:1px;">฿${d.price}</div>
+    </div>
+  </div>`).join('');
+}
+function pickN2Pendant(decoId){
+  const d=decos.find(x=>x.id===decoId);
+  if(!d) return;
+  n2Pendant=d;
+  closeN2PendantPicker();
+  updateN2Panel();
+}
+
+function updateN2Panel(){
+  // Slot 1
+  const s1img=document.getElementById('n2Slot1Img'), s1plus=document.getElementById('n2Slot1Plus'), s1name=document.getElementById('n2Slot1Name');
+  const s1btn=document.getElementById('n2Slot1Btn');
+  if(n2Stone1){
+    if(s1img){s1img.innerHTML=`<img src="${n2Stone1.img||''}" style="width:100%;height:100%;object-fit:cover;">`;s1img.style.display='';}
+    if(s1plus) s1plus.style.display='none';
+    if(s1name){s1name.textContent=n2Stone1.name+(n2Stone1.size?' '+n2Stone1.size+'mm':'');s1name.style.display='';}
+    if(s1btn){s1btn.style.borderStyle='solid';s1btn.style.borderColor='var(--gold2)';}
+  }
+  // Slot 2
+  const s2img=document.getElementById('n2Slot2Img'), s2plus=document.getElementById('n2Slot2Plus'), s2name=document.getElementById('n2Slot2Name');
+  const s2btn=document.getElementById('n2Slot2Btn');
+  if(n2Stone2){
+    if(s2img){s2img.innerHTML=`<img src="${n2Stone2.img||''}" style="width:100%;height:100%;object-fit:cover;">`;s2img.style.display='';}
+    if(s2plus) s2plus.style.display='none';
+    if(s2name){s2name.textContent=n2Stone2.name+(n2Stone2.size?' '+n2Stone2.size+'mm':'');s2name.style.display='';}
+    if(s2btn){s2btn.style.borderStyle='solid';s2btn.style.borderColor='var(--gold2)';}
+  }
+  // Pendant slot
+  const pimg=document.getElementById('n2SlotPImg'), pplus=document.getElementById('n2SlotPPlus'), pname=document.getElementById('n2SlotPName');
+  const pbtn=document.getElementById('n2SlotPBtn');
+  if(n2Pendant){
+    if(pimg){pimg.innerHTML=`<img src="${n2Pendant.img||''}" style="width:100%;height:100%;object-fit:contain;">`;pimg.style.display='';}
+    if(pplus) pplus.style.display='none';
+    if(pname){pname.textContent=n2Pendant.name;pname.style.display='';}
+    if(pbtn){pbtn.style.borderStyle='solid';pbtn.style.borderColor='var(--gold2)';}
+  }
+  // Price box
+  const s1p=n2Stone1?n2Stone1.price:null, s2p=n2Stone2?n2Stone2.price:null, pp=n2Pendant?n2Pendant.price:null;
+  const total=N2_CHAIN_PRICE+(s1p||0)+(s2p||0)+(pp||0);
+  const box=document.getElementById('n2PriceBox');
+  if(box){
+    box.innerHTML=[
+      `<div style="display:flex;justify-content:space-between;padding-bottom:5px;margin-bottom:5px;border-bottom:1px solid var(--border);">`,
+      `<span style="color:var(--text3);">⛓ ค่าสายสร้อย</span><span style="color:var(--text2);">฿${N2_CHAIN_PRICE.toLocaleString()}</span></div>`,
+      n2Stone1?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">🪨 หิน 1 — ${n2Stone1.name} ${n2Stone1.size||''}mm</span><span style="color:var(--text2);">฿${s1p}</span></div>`
+              :`<div style="padding:2px 0;color:var(--text3);opacity:.5;">🪨 หิน 1 — ยังไม่ได้เลือก</div>`,
+      n2Stone2?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">🪨 หิน 2 — ${n2Stone2.name} ${n2Stone2.size||''}mm</span><span style="color:var(--text2);">฿${s2p}</span></div>`
+              :`<div style="padding:2px 0;color:var(--text3);opacity:.5;">🪨 หิน 2 — ยังไม่ได้เลือก</div>`,
+      n2Pendant?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">📿 จี้ — ${n2Pendant.name}</span><span style="color:var(--text2);">฿${pp}</span></div>`
+               :`<div style="padding:2px 0;color:var(--text3);opacity:.5;">📿 จี้ — ยังไม่ได้เลือก</div>`,
+      `<div style="display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;border-top:1px solid var(--border);">`,
+      `<span style="font-size:13px;font-weight:700;color:var(--text1);">รวมทั้งหมด</span>`,
+      `<span style="font-size:14px;font-weight:700;color:var(--gold2);">฿${total.toLocaleString()}</span></div>`,
+    ].join('');
+  }
+  // Save button state
+  const saveBtn=document.getElementById('n2SaveBtn');
+  const ready=!!(n2Stone1&&n2Stone2&&n2Pendant);
+  if(saveBtn){saveBtn.style.opacity=ready?'1':'.4';saveBtn.style.pointerEvents=ready?'auto':'none';}
+  // Init stone grid chips + grid (always refresh to show selection badges)
+  renderN2AuraChips();renderN2GradeChips();renderN2PropChips();renderN2SortChips();renderN2StoneFullGrid();
+  // Refresh pendant grid if visible
+  if(_n2QuickTab==='pendant') renderN2QuickPendant(document.getElementById('n2QPendantSearch')?.value||'');
+  // Redraw canvas
+  drawN2Canvas();
+}
+
+// ── NECKLACE CANVAS DRAW ──
+function drawN2Canvas(){
+  const cvs=document.getElementById('n2Canvas');
+  if(!cvs) return;
+  const ctx=cvs.getContext('2d');
+  const W=340, H=260;
+  const SCALE=Math.min(window.devicePixelRatio||2,3);
+  cvs.width=W*SCALE; cvs.height=H*SCALE;
+  cvs.style.width='100%'; cvs.style.height='';
+  cvs.style.aspectRatio=W+'/'+H;
+  ctx.setTransform(SCALE,0,0,SCALE,0,0);
+
+  // ── Background (same warm brown as app --card: #1c0e0a → #241410) ──
+  const bgGrad=ctx.createLinearGradient(0,0,W,H);
+  bgGrad.addColorStop(0,'#1c0e0a'); bgGrad.addColorStop(1,'#241410');
+  ctx.fillStyle=bgGrad; ctx.fillRect(0,0,W,H);
+  // subtle centre vignette
+  const vig=ctx.createRadialGradient(W/2,H*.4,20,W/2,H*.4,W*.7);
+  vig.addColorStop(0,'rgba(50,28,16,0.15)'); vig.addColorStop(1,'rgba(0,0,0,0.35)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,W,H);
+
+  const cc=N2_CHAIN_COLORS[n2ChainColor]||N2_CHAIN_COLORS.silver;
+  const cx=W/2;
+  const chainY=Math.round(H*0.42);  // ~109 — vertically centered with pendant below
+  const SR=40;  // bigger stones
+  const s1x=cx-SR-1, s2x=cx+SR+1; // touching stones
+  const BR=9;
+  const b1x=s1x-SR-BR-2, b2x=s2x+SR+BR+2; // metal balls
+  const diagLen=170; // diagonal chain length (enough to exit canvas top)
+
+  // ── Diagonal chains — 45° upward from each ball ──
+  ctx.save();
+  ctx.translate(b1x-BR, chainY);
+  ctx.rotate(-3*Math.PI/4); // up-left
+  _n2ChainLinks(ctx, 0, diagLen, 0, cc);
+  ctx.restore();
+
+  ctx.save();
+  ctx.translate(b2x+BR, chainY);
+  ctx.rotate(-Math.PI/4); // up-right
+  _n2ChainLinks(ctx, 0, diagLen, 0, cc);
+  ctx.restore();
+
+  // ── SS Watermark logo — drawn BEFORE stones so it appears behind them ──
+  const _wmLogo = document.querySelector('.logo-gold-wrap img');
+  if(_wmLogo && _wmLogo.complete && _wmLogo.naturalWidth>0){
+    const _wmSz = H * 0.52;
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    ctx.filter = 'grayscale(1) sepia(1) saturate(1.5) brightness(1.2)';
+    ctx.drawImage(_wmLogo, cx-_wmSz/2, H/2-_wmSz/2, _wmSz, _wmSz);
+    ctx.restore();
+  }
+
+  // ── Metal balls ──
+  _n2Ball(ctx, b1x, chainY, BR, cc);
+  _n2Ball(ctx, b2x, chainY, BR, cc);
+
+  // ── Stones — hide dragged stone at origin, show placeholder instead ──
+  const _ds = _n2Drag ? _n2Drag.slot : 0;
+  _n2Stone(ctx, s1x, chainY, SR, _ds===1 ? null : n2Stone1);
+  _n2Stone(ctx, s2x, chainY, SR, _ds===2 ? null : n2Stone2);
+
+  // ── Pendant — directly below stones (no gap, no bail) ──
+  const pendCY = chainY + SR + 28;
+  _n2Pendant(ctx, cx, pendCY);
+
+  // ── Drag overlay ──
+  if(_n2Drag){
+    // Dragged stone follows finger
+    ctx.save(); ctx.globalAlpha=0.88;
+    ctx.shadowColor='rgba(0,0,0,0.6)'; ctx.shadowBlur=16;
+    _n2Stone(ctx, _n2Drag.curX, _n2Drag.curY, SR, _ds===1?n2Stone1:n2Stone2);
+    ctx.restore();
+    // Trash zone at bottom
+    const inTrash=_n2Drag.curY > H-44;
+    ctx.save();
+    ctx.fillStyle=inTrash?'rgba(180,30,30,0.55)':'rgba(80,10,10,0.4)';
+    ctx.fillRect(0,H-40,W,40);
+    ctx.fillStyle=inTrash?'#ff9999':'rgba(255,160,160,0.7)';
+    ctx.font=`${inTrash?'bold ':''}12px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🗑 ปล่อยที่นี่เพื่อลบหิน',W/2,H-20);
+    ctx.restore();
+  }
+
+  // ── Helper text ──
+  if(!n2Stone1&&!n2Stone2&&!n2Pendant&&!_n2Drag){
+    ctx.fillStyle='rgba(201,160,64,0.3)';
+    ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('เลือกหินและจี้จากแท็บด้านล่าง', cx, H-13);
+  }
+}
+function _n2ChainLinks(ctx,x1,x2,y,cc){
+  if(x1>=x2-1) return;
+  if(!cc) cc=N2_CHAIN_COLORS[n2ChainColor]||N2_CHAIN_COLORS.silver;
+  ctx.save();
+  // Box/venetian chain: tight square boxes with 3D shading like photo
+  const B=2.8, GAP=0.7, step=B+GAP;
+  for(let x=x1; x<x2; x+=step){
+    const w=Math.min(B, x2-x);
+    if(w<1) break;
+    // Face gradient (top-light, bottom-dark = 3D cube look)
+    const fg=ctx.createLinearGradient(x, y-B/2, x, y+B/2);
+    fg.addColorStop(0, cc.hi);
+    fg.addColorStop(0.25, cc.main);
+    fg.addColorStop(0.65, cc.mid);
+    fg.addColorStop(1, cc.dark+'cc');
+    ctx.fillStyle=fg;
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(x, y-B/2, w, B, 0.4);
+    else ctx.rect(x, y-B/2, w, B);
+    ctx.fill();
+    // Top highlight edge
+    ctx.strokeStyle=cc.hi+'90'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(x, y-B/2+0.4); ctx.lineTo(x+w, y-B/2+0.4); ctx.stroke();
+    // Bottom shadow edge
+    ctx.strokeStyle=cc.dark+'99'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(x, y+B/2-0.4); ctx.lineTo(x+w, y+B/2-0.4); ctx.stroke();
+    // Left/right side lines (thin vertical separators)
+    ctx.strokeStyle=cc.dark+'44'; ctx.lineWidth=0.4;
+    ctx.beginPath(); ctx.moveTo(x, y-B/2); ctx.lineTo(x, y+B/2); ctx.stroke();
+  }
+  ctx.restore();
+}
+function _n2Ball(ctx,x,y,r,cc){
+  if(!cc) cc=N2_CHAIN_COLORS[n2ChainColor]||N2_CHAIN_COLORS.silver;
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.6)'; ctx.shadowBlur=6; ctx.shadowOffsetY=2;
+  const g=ctx.createRadialGradient(x-r*.3,y-r*.3,r*.04,x,y,r);
+  g.addColorStop(0,cc.hi); g.addColorStop(.35,cc.main); g.addColorStop(.75,cc.mid); g.addColorStop(1,cc.dark);
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+  // Specular dot
+  const sg=ctx.createRadialGradient(x-r*.28,y-r*.3,0,x-r*.28,y-r*.3,r*.45);
+  sg.addColorStop(0,'rgba(255,255,255,.8)'); sg.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=sg; ctx.fill();
+}
+function _n2Stone(ctx,x,y,r,sObj){
+  // Shadow
+  ctx.save(); ctx.shadowColor='rgba(0,0,0,0.6)'; ctx.shadowBlur=r*.8; ctx.shadowOffsetY=r*.3;
+  ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle='rgba(0,0,0,.01)'; ctx.fill(); ctx.restore();
+  if(sObj){
+    const ci=imgCache[sObj.id];
+    if(ci&&ci.complete&&ci.naturalWidth>0){
+      ctx.save(); ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.clip();
+      ctx.filter='contrast(1.1) saturate(1.05)';
+      ctx.drawImage(ci,x-r*1.1,y-r*1.1,r*2.2,r*2.2); ctx.filter='none'; ctx.restore();
+    } else {
+      if(sObj.img) loadImg(sObj.id,sObj.img);
+      const gd=sObj.gradient||['#333','#111'];
+      const g=ctx.createLinearGradient(x-r,y-r,x+r,y+r);
+      g.addColorStop(0,gd[0]); g.addColorStop(1,gd[1]);
+      ctx.save(); ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.clip();
+      ctx.fillStyle=g; ctx.fillRect(x-r,y-r,r*2,r*2); ctx.restore();
+    }
+    // Gloss
+    const eg=ctx.createRadialGradient(x,y,r*.28,x,y,r);
+    eg.addColorStop(0,'rgba(0,0,0,0)'); eg.addColorStop(.55,'rgba(0,0,0,.06)'); eg.addColorStop(.82,'rgba(0,0,0,.22)'); eg.addColorStop(1,'rgba(0,0,0,.5)');
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=eg; ctx.fill();
+    const hg=ctx.createRadialGradient(x-r*.22,y-r*.28,0,x-r*.22,y-r*.28,r*.7);
+    hg.addColorStop(0,'rgba(255,255,255,.40)'); hg.addColorStop(.18,'rgba(255,255,255,.18)'); hg.addColorStop(.45,'rgba(255,255,255,.05)'); hg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fillStyle=hg; ctx.fill();
+    const dg=ctx.createRadialGradient(x-r*.26,y-r*.30,0,x-r*.26,y-r*.30,r*.14);
+    dg.addColorStop(0,'rgba(255,255,255,.80)'); dg.addColorStop(.4,'rgba(255,255,255,.30)'); dg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.beginPath(); ctx.arc(x-r*.26,y-r*.30,r*.14,0,Math.PI*2); ctx.fillStyle=dg; ctx.fill();
+  } else {
+    // Empty placeholder
+    ctx.save(); ctx.setLineDash([5,4]);
+    ctx.strokeStyle='rgba(201,160,64,0.4)'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(201,160,64,0.4)'; ctx.font=`bold ${Math.round(r*.38)}px sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('+ หิน',x,y); ctx.restore();
+  }
+}
+function _n2Pendant(ctx,cx,cy){
+  const SIZE=66;
+  if(n2Pendant){
+    const ck='d_'+n2Pendant.id;
+    const ci=imgCache[ck];
+    if(ci&&ci.complete&&ci.naturalWidth>0){
+      ctx.save(); ctx.filter='drop-shadow(0 2px 8px rgba(0,0,0,0.8))';
+      ctx.drawImage(ci,cx-SIZE/2,cy-SIZE/2,SIZE,SIZE); ctx.filter='none'; ctx.restore();
+    } else {
+      if(n2Pendant.img) loadImg(ck,n2Pendant.img);
+      ctx.save(); ctx.strokeStyle='rgba(201,160,64,0.5)'; ctx.lineWidth=1.5;
+      const pw=50,ph=56;
+      ctx.roundRect?ctx.roundRect(cx-pw/2,cy-ph/2,pw,ph,8):ctx.rect(cx-pw/2,cy-ph/2,pw,ph);
+      ctx.stroke(); ctx.fillStyle='rgba(201,160,64,0.4)'; ctx.font='11px sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('โหลด...',cx,cy); ctx.restore();
+    }
+  } else {
+    ctx.save();
+    ctx.fillStyle='rgba(201,160,64,0.35)'; ctx.font='bold 11px sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('+ จี้',cx,cy); ctx.restore();
+  }
+}
+
+async function saveN2Image(){
+  if(!n2Stone1||!n2Stone2||!n2Pendant){showToast('⚠️ กรุณาเลือกหินและจี้ก่อน');return;}
+  showToast('⏳ กำลังสร้างภาพ...');
+  // Pre-load images
+  const toLoad=[
+    {key:n2Stone1.id,src:n2Stone1.img||''},
+    {key:n2Stone2.id,src:n2Stone2.img||''},
+    {key:'d_'+n2Pendant.id,src:n2Pendant.img||''},
+  ];
+  await Promise.all(toLoad.map(({key,src})=>new Promise(res=>{
+    if(!src){res();return;}
+    const ci=imgCache[key];
+    if(ci&&ci.complete&&ci.naturalWidth>0){res();return;}
+    const img=new Image(); img.onload=()=>{imgCache[key]=img;res();}; img.onerror=res; img.src=src;
+  })));
+  drawN2Canvas();
+  const cvs=document.getElementById('n2Canvas');
+  if(!cvs){showToast('❌ ไม่พบ canvas');return;}
+  const url=cvs.toDataURL('image/png');
+  const a=document.createElement('a'); a.href=url; a.download='soulful_necklace_'+new Date().toISOString().slice(0,10)+'.png'; a.click();
+  showToast('✅ บันทึกภาพสร้อยคอแล้ว!');
+}
+
+// ── N2 QUICK-ADD TABS ──
+let _n2QuickTab = 'stone';
+let _n2ChoosePending = null;
+
+function switchN2Tab(tab){
+  _n2QuickTab = tab;
+  const _n2TabMap = {stone:'n2TabStone', pendant:'n2TabPendant'};
+  Object.entries(_n2TabMap).forEach(([t,id])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    if(t===tab){el.style.background='var(--gold3)';el.style.color='#1a0a00';el.style.fontWeight='700';}
+    else{el.style.background='transparent';el.style.color='var(--text3)';el.style.fontWeight='600';}
+  });
+  const ss=document.getElementById('n2StoneSection');
+  const ps=document.getElementById('n2PendantSection');
+  if(ss) ss.style.display = tab==='stone' ? '' : 'none';
+  if(ps) ps.style.display = tab==='pendant' ? '' : 'none';
+  if(tab==='stone'){ renderN2AuraChips();renderN2GradeChips();renderN2PropChips();renderN2SortChips();renderN2StoneFullGrid(); }
+  if(tab==='pendant') renderN2QuickPendant('');
+}
+
+// ── N2 STONE FULL GRID STATE ──
+let _n2Auras=[],_n2Grade='all',_n2Props=['all'],_n2Sort='none',_n2Search='';
+function setN2Search(v){_n2Search=v;renderN2StoneFullGrid();}
+function toggleN2Aura(id){
+  const i=_n2Auras.indexOf(id);
+  if(i>=0){_n2Auras.splice(i,1);}else{if(_n2Auras.length>=3)_n2Auras.shift();_n2Auras.push(id);}
+  renderN2AuraChips();renderN2GradeChips();renderN2PropChips();renderN2SortChips();renderN2StoneFullGrid();
+}
+function setN2Grade(v){_n2Grade=v;renderN2GradeChips();renderN2StoneFullGrid();}
+function setN2Prop(v){
+  if(v==='all'){_n2Props=['all'];}
+  else{_n2Props=_n2Props.filter(x=>x!=='all');const i=_n2Props.indexOf(v);if(i>=0)_n2Props.splice(i,1);else _n2Props.push(v);if(!_n2Props.length)_n2Props=['all'];}
+  renderN2PropChips();renderN2StoneFullGrid();
+}
+function setN2Sort(v){_n2Sort=v;renderN2SortChips();renderN2StoneFullGrid();}
+function renderN2AuraChips(){
+  const el=document.getElementById('n2AuraChips');if(!el)return;
+  el.innerHTML=CHAKRAS.filter(c=>c.id!=='all'&&c.id!=='deco').map(c=>`<div class="chakra-chip${_n2Auras.includes(c.id)?' active':''}"
+    style="${_n2Auras.includes(c.id)?'background:'+c.bg+';border-color:'+c.border+';color:'+c.color+';font-weight:700;':''}"
+    onclick="toggleN2Aura('${c.id}')">${c.label}</div>`).join('');
+}
+function renderN2GradeChips(){
+  const el=document.getElementById('n2GradeChips');if(!el)return;
+  el.innerHTML=[{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'}]
+    .map(g=>`<div class="grade-chip${_n2Grade===g.id?' active':''}" onclick="setN2Grade('${g.id}')">${g.label}</div>`).join('');
+}
+function renderN2PropChips(){
+  const el=document.getElementById('n2PropChips');if(!el)return;
+  el.innerHTML=[{id:'all',label:'✦ ทั้งหมด'},...PROP_TAGS].map(p=>`<div class="grade-chip${_n2Props.includes(p.id)?' active':''}" onclick="setN2Prop('${p.id}')">${p.label}</div>`).join('');
+}
+function renderN2SortChips(){
+  const el=document.getElementById('n2SortChips');if(!el)return;
+  el.innerHTML=[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก → แพง'},{id:'desc',label:'฿ แพง → ถูก'}]
+    .map(c=>`<div class="grade-chip${_n2Sort===c.id?' active':''}" onclick="setN2Sort('${c.id}')">${c.label}</div>`).join('');
+}
+function renderN2StoneFullGrid(){
+  let visible=sortByGrade(stones.filter(s=>!s.hidden).filter(s=>{
+    const cOk=!_n2Auras.length||(()=>{const sc=Array.isArray(s.chakra)?s.chakra:[s.chakra];return _n2Auras.some(a=>sc.includes(a));})();
+    const sTags=Array.isArray(s.tags)?s.tags:(s.tags?[s.tags]:[]);
+    const pOk=_n2Props.includes('all')||_n2Props.some(p=>p==='wealth'?(sTags.includes('wealth')||sTags.includes('finance')):sTags.includes(p));
+    const gOk=_n2Grade==='all'||s.grade===_n2Grade;
+    const qOk=!_n2Search||(s.name+' '+s.thai+' '+(s.prop||'')).toLowerCase().includes(_n2Search.toLowerCase());
+    return cOk&&pOk&&gOk&&qOk;
+  }));
+  if(_n2Sort==='asc') visible.sort((a,b)=>(a.price||0)-(b.price||0));
+  else if(_n2Sort==='desc') visible.sort((a,b)=>(b.price||0)-(a.price||0));
+  else visible.sort((a,b)=>a.name.localeCompare(b.name,'en')); // ปกติ = A-Z
+  // Group by name+grade
+  const groups=[];const seen=new Set();
+  for(const s of visible){
+    const key=s.name+'|'+s.grade;
+    if(seen.has(key)) continue; seen.add(key);
+    const variants=stones.filter(x=>!x.hidden&&x.name===s.name&&x.grade===s.grade).sort((a,b)=>a.size-b.size);
+    groups.push({rep:s,variants});
+  }
+  const grid=document.getElementById('n2QuickStoneGrid');if(!grid)return;
+  grid.innerHTML=groups.map(({rep,variants})=>{
+    const hasMulti=variants.length>1;
+    const isS1=n2Stone1&&n2Stone1.name===rep.name&&n2Stone1.grade===rep.grade;
+    const isS2=n2Stone2&&n2Stone2.name===rep.name&&n2Stone2.grade===rep.grade;
+    const cnt=(isS1?1:0)+(isS2?1:0);
+    const priceStr=hasMulti?(variants[0].price===variants[variants.length-1].price?`฿${variants[0].price}`:`฿${variants[0].price}–${variants[variants.length-1].price}`)+'/เม็ด':`฿${Number.isInteger(rep.price)?rep.price:rep.price.toFixed(1)}/เม็ด`;
+    return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
+      ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
+      <div class="grade-badge ${GRADE_CSS[rep.grade]}">${GRADE_LABELS[rep.grade]}</div>
+      ${mkCatalogDot(rep)}
+      <div class="catalog-name">${rep.name}</div>
+      <div class="catalog-thai">${rep.thai}</div>
+      <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
+      ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
+      <div class="catalog-price">${priceStr}</div>
+      <button class="catalog-add" onclick="quickAddN2Stone(${rep.id})">+ เพิ่ม</button>
+    </div>`;
+  }).join('');
+  initLazyLoad();
+}
+
+function renderN2QuickPendant(search){
+  const q=(search||'').toLowerCase();
+  const grid=document.getElementById('n2QuickPendantGrid');if(!grid)return;
+  const pendants=decos.filter(d=>!d.hidden&&d.type==='pendant'&&(!q||d.name.toLowerCase().includes(q)||(d.thai||'').toLowerCase().includes(q)));
+  grid.innerHTML=pendants.map(d=>{
+    const isSel=n2Pendant&&n2Pendant.id===d.id;
+    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--card);border-radius:12px;border:2px solid ${isSel?'var(--gold3)':'var(--border)'};cursor:pointer;" onclick="quickAddN2Pendant(${d.id})">
+      <div style="width:56px;height:56px;border-radius:10px;background:#1a0a00;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+        ${d.img?`<img src="${d.img}" style="max-width:100%;max-height:100%;object-fit:contain;">`:'<span style="font-size:24px;">📿</span>'}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--text1);">${d.name}</div>
+        ${d.thai?`<div style="font-size:11px;color:var(--text3);">${d.thai}</div>`:''}
+        ${d.metal?`<div style="font-size:11px;color:var(--text3);">${d.metal}</div>`:''}
+        ${d.prop?`<div style="font-size:11px;color:var(--text2);margin-top:2px;">${d.prop}</div>`:''}
+        <div style="font-size:13px;font-weight:700;color:var(--gold2);margin-top:2px;">฿${d.price}/ชิ้น</div>
+      </div>
+      <button style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid ${isSel?'var(--gold3)':'rgba(201,160,64,.35)'};background:${isSel?'var(--gold3)':'rgba(201,160,64,.12)'};color:${isSel?'#1a0a00':'var(--gold2)'};font-size:12px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();quickAddN2Pendant(${d.id})">${isSel?'✓ เลือกแล้ว':'+ เลือก'}</button>
+    </div>`;
+  }).join('');
+}
+
+
+// ══════════════════════════════════════════════════════
+// ── NECKLACE-5 FUNCTIONS ──
+// ══════════════════════════════════════════════════════
+
+function n5AddStone(stone){
+  if(!stone) return;
+  const filled = n5Stones.filter(s=>s!==null).length;
+  if(filled>=5){ showToast('⚠️ เลือกได้สูงสุด 5 เม็ด'); return; }
+  // Find first empty slot
+  let idx = n5Stones.findIndex(s=>s===null);
+  if(idx<0) idx=4;
+  n5Stones[idx] = {...stone};
+  renderN5Slots();
+  drawN5Canvas();
+  updateSummaryTab();
+  showToast('✅ เพิ่ม '+(stone.nameTH||stone.thai||stone.name)+' เม็ดที่'+(idx+1));
+}
+
+function n5RemoveStone(idx){
+  n5Stones[idx]=null;
+  // Compact: shift non-null to front
+  const filled = n5Stones.filter(s=>s!==null);
+  while(filled.length<5) filled.push(null);
+  n5Stones = filled;
+  renderN5Slots();
+  drawN5Canvas();
+  updateSummaryTab();
+}
+
+function n5ClearAll(){
+  n5Stones=[null,null,null,null,null];
+  renderN5Slots();
+  drawN5Canvas();
+  updateSummaryTab();
+  showToast('🗑 ล้างหินทั้งหมดแล้ว');
+}
+
+function n5SwapSlots(a,b){
+  if(a===b||a<0||b<0||a>4||b>4) return;
+  const tmp=n5Stones[a]; n5Stones[a]=n5Stones[b]; n5Stones[b]=tmp;
+  renderN5Slots();
+  drawN5Canvas();
+}
+
+function renderN5Slots(){
+  const row=document.getElementById('n5SlotRow');
+  if(!row) return;
+  row.innerHTML='';
+  n5Stones.forEach((stone,i)=>{
+    const wrap=document.createElement('div');
+    wrap.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;user-select:none;flex-shrink:0;';
+    if(stone){
+      wrap.draggable=true;
+      wrap.addEventListener('dragstart',e=>{_n5DragFrom=i;e.dataTransfer.effectAllowed='move';wrap.style.opacity='0.5';});
+      wrap.addEventListener('dragend',()=>{wrap.style.opacity='';});
+      wrap.addEventListener('dragover',e=>{e.preventDefault();wrap.style.outline='2px solid var(--gold3)';});
+      wrap.addEventListener('dragleave',()=>{wrap.style.outline='';});
+      wrap.addEventListener('drop',e=>{e.preventDefault();wrap.style.outline='';n5SwapSlots(_n5DragFrom,i);_n5DragFrom=-1;});
+      const imgSrc = stone.img||'';
+      wrap.innerHTML=`
+        <div style="position:relative;width:52px;height:52px;">
+          <img src="${imgSrc}" loading="lazy" style="width:52px;height:52px;border-radius:50%;border:2px solid var(--gold3);object-fit:cover;">
+          <button onclick="event.stopPropagation();n5RemoveStone(${i})" style="position:absolute;top:-4px;right:-4px;width:18px;height:18px;border-radius:50%;background:#8b0000;border:1px solid #ff6666;color:white;font-size:10px;cursor:pointer;padding:0;line-height:16px;text-align:center;z-index:2;">×</button>
+        </div>
+        <div style="font-size:9px;color:var(--gold2);text-align:center;max-width:56px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${stone.nameTH||stone.thai||stone.name}</div>
+        <div style="font-size:8px;color:var(--text3);">${stone.size||'?'}mm</div>`;
+    } else {
+      wrap.innerHTML=`
+        <div style="width:52px;height:52px;border-radius:50%;border:2px dashed rgba(201,160,64,0.35);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:18px;color:rgba(201,160,64,0.4);">+</div>
+        <div style="font-size:9px;color:var(--text3);">เม็ด ${i+1}</div>
+        <div style="font-size:8px;color:transparent;">–</div>`;
+    }
+    row.appendChild(wrap);
+  });
+}
+
+function drawN5Canvas(){
+  const cvs=document.getElementById('n5Canvas');
+  if(!cvs) return;
+  const ctx=cvs.getContext('2d');
+  const W=cvs.width, H=cvs.height;
+  ctx.clearRect(0,0,W,H);
+  // Background
+  const bg=ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1a0a02'); bg.addColorStop(1,'#0d0502');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+
+  const filled=n5Stones.filter(s=>s!==null);
+  const count=filled.length;
+  if(count===0){
+    ctx.fillStyle='rgba(200,170,100,0.3)';
+    ctx.font='13px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('📿 เลือกหินเพื่อดูตัวอย่าง',W/2,H/2);
+    return;
+  }
+
+  const bead_r=Math.min(24,(W*0.82)/(count*2.6));
+  const positions=_n5GetPositions(count,W,H,bead_r);
+
+  // Gold chain between stones
+  if(count>1){
+    ctx.strokeStyle='rgba(200,170,80,0.55)'; ctx.lineWidth=1.5;
+    ctx.beginPath();
+    positions.forEach((p,i)=>{ if(i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); });
+    ctx.stroke();
+  }
+
+  // Draw each stone using n2 stone renderer
+  filled.forEach((stone,i)=>{
+    const {x,y}=positions[i];
+    _n2Stone(ctx,x,y,bead_r,stone);
+    // Size label
+    if(stone.size){
+      ctx.fillStyle='rgba(240,210,100,0.72)';
+      ctx.font=`bold ${Math.max(9,Math.round(bead_r*0.4))}px sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='top';
+      ctx.fillText(stone.size+'mm',x,y+bead_r+5);
+    }
+  });
+}
+
+function _n5GetPositions(count,W,H,bead_r){
+  const pad=bead_r*1.6;
+  const usableW=W-pad*2;
+  const arcDepth=H*0.08;
+  return Array.from({length:count},(_,i)=>{
+    const t=count===1?0.5:i/(count-1);
+    const x=pad+t*usableW;
+    const arc=arcDepth*(1-Math.pow(2*t-1,2));
+    const y=H*0.44-arcDepth+arc;
+    return {x,y};
+  });
+}
+
+// ── N5 mode init ──
+function setN5Mode(){
+  renderN5Slots();
+  drawN5Canvas();
+  renderN5AuraChips();
+  renderN5GradeChips();
+  renderN5PropChips();
+  renderN5SortChips();
+  renderN5StoneGrid();
+}
+
+// ── N5 filter chips ──
+function renderN5AuraChips(){
+  const el=document.getElementById('n5AuraChips');if(!el)return;
+  el.innerHTML=CHAKRAS.filter(c=>c.id!=='all'&&c.id!=='deco').map(c=>`<div class="chakra-chip${_n5Auras.includes(c.id)?' active':''}"
+    style="${_n5Auras.includes(c.id)?'background:'+c.bg+';border-color:'+c.border+';color:'+c.color+';font-weight:700;':''}"
+    onclick="_n5ToggleAura('${c.id}')">${c.label}</div>`).join('');
+}
+function _n5ToggleAura(id){_n5Auras=_n5Auras.includes(id)?_n5Auras.filter(a=>a!==id):[..._n5Auras,id];renderN5AuraChips();renderN5StoneGrid();}
+
+function renderN5GradeChips(){
+  const el=document.getElementById('n5GradeChips');if(!el)return;
+  el.innerHTML=[{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'}]
+    .map(g=>`<div class="grade-chip${_n5Grade===g.id?' active':''}" onclick="_setN5Grade('${g.id}')">${g.label}</div>`).join('');
+}
+function _setN5Grade(v){_n5Grade=v;renderN5GradeChips();renderN5StoneGrid();}
+
+function renderN5PropChips(){
+  const el=document.getElementById('n5PropChips');if(!el)return;
+  el.innerHTML=[{id:'all',label:'✦ ทั้งหมด'},...(PROP_TAGS||[])].map(p=>`<div class="grade-chip${_n5Props.includes(p.id)?' active':''}" onclick="_toggleN5Prop('${p.id}')">${p.label}</div>`).join('');
+}
+function _toggleN5Prop(id){
+  if(id==='all'){_n5Props=['all'];}
+  else{_n5Props=_n5Props.filter(p=>p!=='all').concat(_n5Props.includes(id)?[]:[id]);if(!_n5Props.length)_n5Props=['all'];}
+  renderN5PropChips();renderN5StoneGrid();
+}
+
+function renderN5SortChips(){
+  const el=document.getElementById('n5SortChips');if(!el)return;
+  el.innerHTML=[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก→แพง'},{id:'desc',label:'฿ แพง→ถูก'}]
+    .map(c=>`<div class="grade-chip${_n5Sort===c.id?' active':''}" onclick="_setN5Sort('${c.id}')">${c.label}</div>`).join('');
+}
+function _setN5Sort(v){_n5Sort=v;renderN5SortChips();renderN5StoneGrid();}
+
+// ── N5 stone grid ──
+function renderN5StoneGrid(){
+  let visible=sortByGrade(stones.filter(s=>!s.hidden));
+  const q=(document.getElementById('n5SearchInput')?.value||_n5Search).toLowerCase();
+  if(q) visible=visible.filter(s=>(s.name+' '+(s.thai||'')+' '+(s.prop||'')).toLowerCase().includes(q));
+  if(_n5Auras.length) visible=visible.filter(s=>{const sc=Array.isArray(s.chakra)?s.chakra:[s.chakra];return _n5Auras.some(a=>sc.includes(a));});
+  if(_n5Grade!=='all') visible=visible.filter(s=>s.grade===_n5Grade);
+  if(!_n5Props.includes('all')){
+    visible=visible.filter(s=>{const st=Array.isArray(s.tags)?s.tags:(s.tags?[s.tags]:[]);return _n5Props.some(p=>p==='wealth'?(st.includes('wealth')||st.includes('finance')):st.includes(p));});
+  }
+  if(_n5Sort==='asc') visible.sort((a,b)=>(a.price||0)-(b.price||0));
+  else if(_n5Sort==='desc') visible.sort((a,b)=>(b.price||0)-(a.price||0));
+  else visible.sort((a,b)=>(a.name||'').localeCompare(b.name||'','en'));
+
+  // Group by name+grade
+  const groups=[]; const seen=new Set();
+  for(const s of visible){
+    const key=s.name+'|'+s.grade;
+    if(seen.has(key)) continue; seen.add(key);
+    const variants=stones.filter(x=>!x.hidden&&x.name===s.name&&x.grade===s.grade).sort((a,b)=>a.size-b.size);
+    groups.push({rep:s,variants});
+  }
+
+  const grid=document.getElementById('n5StoneGrid');if(!grid)return;
+  const hidePrice=window._customerMode;
+  grid.innerHTML=groups.map(({rep,variants})=>{
+    const hasMulti=variants.length>1;
+    const cnt=n5Stones.filter(s=>s&&s.name===rep.name&&s.grade===rep.grade).length;
+    const priceStr=hidePrice?'':
+      (hasMulti?(variants[0].price===variants[variants.length-1].price?
+        `฿${variants[0].price}`:`฿${variants[0].price}–${variants[variants.length-1].price}`)+'/เม็ด':
+        `฿${Number.isInteger(rep.price)?rep.price:rep.price.toFixed(1)}/เม็ด`);
+    return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
+      ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
+      <div class="grade-badge ${GRADE_CSS[rep.grade]||''}">${GRADE_LABELS[rep.grade]||rep.grade}</div>
+      ${typeof mkCatalogDot==='function'?mkCatalogDot(rep):''}
+      <div class="catalog-name">${rep.name}</div>
+      <div class="catalog-thai">${rep.thai||''}</div>
+      <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
+      ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
+      ${priceStr?`<div class="catalog-price">${priceStr}</div>`:''}
+      <button class="catalog-add" onclick="quickAddN5Stone(${rep.id})">+ เพิ่ม</button>
+    </div>`;
+  }).join('');
+  if(typeof initLazyLoad==='function') initLazyLoad();
+}
+
+function quickAddN5Stone(stoneId){
+  const filled=n5Stones.filter(s=>s!==null).length;
+  if(filled>=5){showToast('⚠️ เลือกได้สูงสุด 5 เม็ด');return;}
+  const variants=typeof getSizeVariants==='function'?getSizeVariants(stoneId):stones.filter(s=>s.id===stoneId);
+  if(variants.length>1){_n5ShowSizePicker(variants);return;}
+  const s=stones.find(x=>x.id===stoneId);
+  if(s) n5AddStone(s);
+}
+
+function _n5ShowSizePicker(variants){
+  let ov=document.getElementById('n5SizeOverlay');
+  if(!ov){ov=document.createElement('div');ov.id='n5SizeOverlay';document.body.appendChild(ov);}
+  ov.style.cssText='position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.75);z-index:9900;display:flex;align-items:flex-end;justify-content:center;';
+  const rep=variants[0];
+  const hidePrice=window._customerMode;
+  ov.innerHTML=`<div style="background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 16px 32px;width:100%;max-width:480px;">
+    <div style="font-size:14px;font-weight:700;color:var(--gold2);margin-bottom:14px;text-align:center;">📐 เลือกขนาด · ${rep.nameTH||rep.thai||rep.name}</div>
+    ${variants.map(v=>`<div onclick="n5AddStone(stones.find(s=>s.id===${v.id}));document.getElementById('n5SizeOverlay').style.display='none';"
+      style="display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;margin-bottom:6px;cursor:pointer;">
+      <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:#1a0a00;flex-shrink:0;"><img src="${v.img||''}" style="width:100%;height:100%;object-fit:cover;"></div>
+      <div><div style="font-size:13px;font-weight:700;color:var(--text1);">${v.size} mm</div>${!hidePrice?`<div style="font-size:12px;color:var(--gold2);">฿${v.price}/เม็ด</div>`:''}</div>
+    </div>`).join('')}
+    <button onclick="document.getElementById('n5SizeOverlay').style.display='none';" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;margin-top:4px;">ยกเลิก</button>
+  </div>`;
+  ov.onclick=e=>{if(e.target===ov)ov.style.display='none';};
+}
+
+function quickAddN2Stone(stoneId){
+  const variants=getSizeVariants(stoneId);
+  if(variants.length>1){
+    // Open size sub-picker in the stone modal
+    _n2PickSlot=!n2Stone1?1:(!n2Stone2?2:1);
+    document.getElementById('n2StoneTitle').textContent='🪨 เลือกขนาด';
+    document.getElementById('n2StoneSearch').value='';
+    document.getElementById('n2StoneOverlay').classList.add('open');
+    document.getElementById('n2StoneSheet').classList.add('open');
+    const grid=document.getElementById('n2StoneGrid');
+    if(grid) grid.innerHTML=`<div style="grid-column:1/-1;">
+      <button onclick="renderN2StonePicker('')" style="background:none;border:none;color:var(--gold3);font-size:12px;cursor:pointer;padding:0 0 10px;">← กลับ</button>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:10px;font-weight:600;">${variants[0].name} — เลือกขนาด</div>
+      ${variants.map(v=>`<div onclick="pickN2StoneConfirm(${v.id})" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:6px;cursor:pointer;">
+        <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:#1a0a00;flex-shrink:0;"><img src="${v.img||''}" style="width:100%;height:100%;object-fit:cover;"></div>
+        <div><div style="font-size:13px;font-weight:700;color:var(--text1);">${v.size} mm</div><div style="font-size:12px;color:var(--gold2);">฿${v.price}/เม็ด</div></div>
+      </div>`).join('')}
+    </div>`;
+    return;
+  }
+  const s=stones.find(x=>x.id===stoneId);
+  if(!s) return;
+  if(!n2Stone1){n2Stone1=s;updateN2Panel();showToast('🪨 หิน 1: '+s.name);return;}
+  if(!n2Stone2){n2Stone2=s;updateN2Panel();showToast('🪨 หิน 2: '+s.name);return;}
+  _n2ShowSlotChoice(s);
+}
+
+function _n2ShowSlotChoice(s){
+  _n2ChoosePending=s;
+  let overlay=document.getElementById('n2SlotChoiceOverlay');
+  if(!overlay){
+    overlay=document.createElement('div');
+    overlay.id='n2SlotChoiceOverlay';
+    overlay.style.cssText='position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.7);display:flex;align-items:flex-end;justify-content:center;';
+    overlay.innerHTML=`<div style="background:var(--bg2);border-radius:20px 20px 0 0;padding:20px 16px 28px;width:100%;max-width:480px;">
+      <div id="n2ChoiceLabel" style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:10px;margin-bottom:10px;">
+        <button onclick="_n2ChooseSlot(1)" style="flex:1;padding:13px;background:var(--card);border:1.5px solid var(--gold3);border-radius:12px;color:var(--gold2);font-size:13px;font-weight:700;cursor:pointer;">🪨 หิน 1</button>
+        <button onclick="_n2ChooseSlot(2)" style="flex:1;padding:13px;background:var(--card);border:1.5px solid var(--gold3);border-radius:12px;color:var(--gold2);font-size:13px;font-weight:700;cursor:pointer;">🪨 หิน 2</button>
+      </div>
+      <button onclick="document.getElementById('n2SlotChoiceOverlay').style.display='none'" style="width:100%;padding:10px;background:none;border:none;color:var(--text3);font-size:12px;cursor:pointer;">ยกเลิก</button>
+    </div>`;
+    overlay.addEventListener('click',e=>{if(e.target===overlay) overlay.style.display='none';});
+    document.body.appendChild(overlay);
+  }
+  const lbl=document.getElementById('n2ChoiceLabel');
+  if(lbl) lbl.textContent='ใส่ '+s.name+' ตำแหน่งไหน?';
+  overlay.style.display='flex';
+}
+function _n2ChooseSlot(slot){
+  const s=_n2ChoosePending;
+  if(!s) return;
+  if(slot===1) n2Stone1=s;
+  if(slot===2) n2Stone2=s;
+  updateN2Panel();
+  showToast('เปลี่ยนหิน '+slot+': '+s.name);
+  const overlay=document.getElementById('n2SlotChoiceOverlay');
+  if(overlay) overlay.style.display='none';
+  _n2ChoosePending=null;
+}
+function quickAddN2Pendant(decoId){
+  const d=decos.find(x=>x.id===decoId);
+  if(!d) return;
+  n2Pendant=d;
+  updateN2Panel();
+  showToast('📿 เลือกจี้: '+d.name);
+}
+
 function toggleDesignModeTabs(){
   const exp = document.getElementById('designModeTabsExpanded');
   const arrow = document.getElementById('dmtPillArrow');
@@ -1090,6 +2131,8 @@ function setDesignMode(mode){
   const arrow = document.getElementById('dmtPillArrow');
   if(exp) exp.style.display = 'none';
   if(arrow) arrow.classList.remove('open');
+  if(mode==='necklace2pendant') updateN2Panel();
+  if(mode==='necklace5') setTimeout(setN5Mode,0);
 }
 // ── DELETED SLOT SIZES — เก็บขนาด(mm) ของหินที่ถูกลบ เพื่อให้ null slot ไม่เลื่อนหินอื่น ──
 const deletedSlotSizes = {};
@@ -1189,7 +2232,7 @@ function loadImg(id, src) {
   if (imgCache[id] && imgCache[id].src === src) return imgCache[id];
   const img = new Image();
   img.src = src;
-  img.onload = () => { imgCache[id] = img; _rafDrawBracelet(); };
+  img.onload = () => { imgCache[id] = img; _rafDrawBracelet(); if(designMode==='necklace2pendant') drawN2Canvas(); };
   imgCache[id] = img;
   return img;
 }
@@ -2520,7 +3563,7 @@ function renderQuickGrid(){
     return cOk&&pOk&&gOk&&qOk;}));
   if(quickSort==='asc') visible.sort((a,b)=>(a.price||0)-(b.price||0));
   else if(quickSort==='desc') visible.sort((a,b)=>(b.price||0)-(a.price||0));
-  else visible.sort((a,b)=>a.name.localeCompare(b.name,'en'));
+  else visible.sort((a,b)=>a.name.localeCompare(b.name,'en')); // ปกติ = A-Z
   document.getElementById('quickGrid').innerHTML=visible.map(s=>{
     const cnt=bracelet.filter(b=>b&&b.isStone&&b.itemId===s.id).length;
     return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
@@ -3423,6 +4466,87 @@ function closeImgPicker(){
   document.getElementById('imgPickerOverlay').classList.remove('open');
   document.getElementById('imgPickerSheet').classList.remove('open');
 }
+function renderN2SummaryList(){
+  const el=document.getElementById('n2ItemList');
+  if(!el) return;
+  const items=[];
+  if(n2Stone1) items.push({label:'หิน 1',name:n2Stone1.name,thai:n2Stone1.thai||'',size:n2Stone1.size,price:n2Stone1.price,img:n2Stone1.img||''});
+  if(n2Stone2) items.push({label:'หิน 2',name:n2Stone2.name,thai:n2Stone2.thai||'',size:n2Stone2.size,price:n2Stone2.price,img:n2Stone2.img||''});
+  if(n2Pendant) items.push({label:'จี้',name:n2Pendant.name,thai:n2Pendant.thai||'',size:null,price:n2Pendant.price,img:n2Pendant.img||''});
+  el.innerHTML=items.map(it=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:6px;">
+    <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;background:#1a0808;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+      ${it.img?`<img src="${it.img}" style="width:100%;height:100%;object-fit:cover;">`:'<span style="font-size:18px;">💎</span>'}
+    </div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.5px;">${it.label}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--text1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${it.name}</div>
+      ${it.thai?`<div style="font-size:11px;color:var(--text3);">${it.thai}</div>`:''}
+      ${it.size?`<div style="font-size:11px;color:var(--text3);">${it.size}mm</div>`:''}
+    </div>
+    <div style="font-size:13px;font-weight:700;color:var(--gold2);flex-shrink:0;">฿${it.price.toLocaleString()}</div>
+  </div>`).join('');
+}
+function savePreviewImg(imgId, name){
+  const img=document.getElementById(imgId);
+  if(!img||!img.src||img.src===window.location.href){showToast('⚠️ ยังไม่มีภาพ');return;}
+  const a=document.createElement('a');
+  a.href=img.src;
+  a.download=name+'_'+new Date().toISOString().slice(0,10)+'.png';
+  a.click();
+  showToast('✅ บันทึกภาพแล้ว!');
+}
+function updateSummaryTab(){
+  try{
+  // exclude locked-logo-only bracelet from "has items"
+  const hasBracelet=bracelet.some(b=>b&&!b.locked);
+  const hasN2=!!(n2Stone1||n2Stone2||n2Pendant);
+  const hasN5=n5Stones.some(s=>s!==null);
+  const hasAny=hasBracelet||hasN2||hasN5;
+  const _g=id=>document.getElementById(id);
+  const _show=(id,vis)=>{const el=_g(id);if(el)el.style.display=vis?'block':'none';};
+  _show('summaryEmptyState',!hasAny);
+  _show('summaryBraceletSection',hasBracelet);
+  _show('n2SummarySection',hasN2);
+  _show('summaryModeDivider',hasBracelet&&hasN2);
+
+  // ── Grand total ──
+  let bTotal=0, n2Total=0;
+  if(hasBracelet){
+    bracelet.forEach(b=>{
+      if(!b||b.locked) return;
+      if(b.isStone){const s=stones.find(x=>x.id===b.itemId);if(s) bTotal+=s.price||0;}
+      else{const d=decos.find(x=>x.id===b.itemId);if(d) bTotal+=d.price||0;}
+    });
+  }
+  if(hasN2){
+    n2Total=(n2Stone1?n2Stone1.price||0:0)+(n2Stone2?n2Stone2.price||0:0)+(n2Pendant?n2Pendant.price||0:0);
+  }
+  const grandTotal=bTotal+n2Total;
+  _show('summaryGrandTotal',hasAny);
+  _show('gtBraceletRow',hasBracelet);
+  const a1=_g('gtBraceletAmt');if(a1)a1.textContent='฿'+bTotal.toLocaleString();
+  _show('gtN2Row',hasN2);
+  const a2=_g('gtN2Amt');if(a2)a2.textContent='฿'+n2Total.toLocaleString();
+  const gt=_g('gtTotal');if(gt)gt.textContent='฿'+grandTotal.toLocaleString();
+
+  if(hasBracelet){
+    try{
+      const bCvs=document.getElementById('braceletCanvas');
+      if(bCvs){const img=_g('summaryBraceletPreview');if(img)img.src=bCvs.toDataURL('image/png');}
+    }catch(e){}
+    setTimeout(()=>renderStoneMeanings(),0);
+  }
+  if(hasN2){
+    try{
+      drawN2Canvas();
+      const n2Cvs=document.getElementById('n2Canvas');
+      if(n2Cvs){const img=_g('summaryN2Preview');if(img)img.src=n2Cvs.toDataURL('image/png');}
+    }catch(e){}
+    updateN2Panel();
+    renderN2SummaryList();
+  }
+  }catch(e){console.error('updateSummaryTab error:',e);}
+}
 function showTab(tab,el){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
@@ -3430,7 +4554,7 @@ function showTab(tab,el){
   el.classList.add('active');
   if(tab==='catalog'){setTimeout(()=>{renderChakraChips();renderGradeChips();renderPropChips();renderAuraChips();renderQuickGradeChips();renderQuickPropChips();renderQuickSortChips();renderCatalog();},0);}
   if(tab==='admin'){setTimeout(()=>{renderAdmin();buildChakraChips('nStoneChakraGroup',[]);buildPropChips('nStoneTagGroup',[]);},0);}
-  if(tab==='summary'){setTimeout(()=>renderStoneMeanings(),0);}
+  if(tab==='summary'){ updateSummaryTab(); }
 }
 
 // ── DECO SECTION ──
@@ -5617,5 +6741,68 @@ self.addEventListener('fetch',e=>{
   document.body.appendChild(btn);
 })();
 </script>
+
+<script>
+// ══════════════════════════════════════════════════════
+// ── URL MODE ROUTING — customer-facing links ──
+// ══════════════════════════════════════════════════════
+(function applyURLMode(){
+  const p = new URLSearchParams(location.search);
+  const urlMode = p.get('mode');
+  if(!urlMode) return;
+
+  const modeMap = {
+    bracelet:'bracelet',
+    necklace5:'necklace5',
+    necklace2:'necklace2pendant',
+    necklace2pendant:'necklace2pendant'
+  };
+  const internalMode = modeMap[urlMode];
+  if(!internalMode) return;
+
+  // Mark as customer mode
+  window._customerMode = true;
+  document.body.classList.add('customer-mode');
+
+  // Wait for DOM + app init
+  function _apply(){
+    // 1. Hide catalog tab (customer doesn't need to browse all stones — it's inside the mode panel)
+    const tabCatalog = document.getElementById('tabCatalog');
+    if(tabCatalog) tabCatalog.style.display='none';
+
+    // 2. Hide mode picker (locked to one mode)
+    const picker = document.getElementById('designModePicker');
+    if(picker) picker.style.display='none';
+
+    // 3. Switch to correct design mode
+    if(typeof setDesignMode==='function') setDesignMode(internalMode);
+
+    // 4. Make sure design tab is active
+    if(typeof showTab==='function') showTab('design');
+
+    // 5. Hide prices for necklace modes
+    if(internalMode !== 'bracelet'){
+      const css = document.createElement('style');
+      css.textContent = [
+        '.catalog-price',
+        '#braceletPriceCard',
+        '#n2PriceBox',
+        '.bead-price-tag',
+        '#summaryGrandTotal .price-row',
+        '#gtBraceletAmt','#gtN2Amt','#gtTotal',
+        '.price-card .price-row',
+      ].join(',') + '{ display:none !important; }';
+      document.head.appendChild(css);
+    }
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded', ()=>setTimeout(_apply,120));
+  } else {
+    setTimeout(_apply,120);
+  }
+})();
+</script>
+
 </body>
 </html>
