@@ -627,29 +627,9 @@
     <div style="font-size:14px;color:var(--text3);line-height:1.7;">ยังไม่มีสินค้า<br>เริ่มออกแบบจากแท็บ ออกแบบ</div>
   </div>
 
-  <!-- ── Grand total card (shown when any mode has items) ── -->
-  <div id="summaryGrandTotal" style="display:none;margin-bottom:12px;">
-    <div class="price-card" style="margin-bottom:0;">
-      <div class="price-total" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);background:rgba(30,120,60,0.15);border-radius:10px;padding:10px 12px;margin:-2px -2px 10px;">
-        <span style="font-size:14px;color:#7defa0;">💰 ยอดรวมสุทธิ</span>
-        <span id="gtTotal" style="font-size:22px;color:#4ade80;font-weight:800;text-shadow:0 0 12px rgba(74,222,128,0.4);">฿0</span>
-      </div>
-      <div id="gtBraceletRow" class="price-row" style="display:none;font-size:12px;">
-        <span style="color:var(--text3);">🔮 ถาดหินเต็มเส้น</span><span id="gtBraceletAmt">฿0</span>
-      </div>
-      <div id="gtN2Row" class="price-row" style="display:none;font-size:12px;">
-        <span style="color:var(--text3);">💎 สร้อยคอ 2 เม็ด + จี้</span><span id="gtN2Amt">฿0</span>
-      </div>
-    </div>
-  </div>
-
   <!-- ── Bracelet section ── -->
   <div id="summaryBraceletSection" style="display:none;">
     <div class="summary-mode-hdr">🔮 ถาดหินเต็มเส้น</div>
-    <div style="position:relative;">
-      <img id="summaryBraceletPreview" style="width:100%;border-radius:10px;display:block;" src="" alt="">
-      <button onclick="savePreviewImg('summaryBraceletPreview','bracelet')" style="position:absolute;bottom:10px;right:10px;background:rgba(10,5,2,0.75);border:1px solid var(--gold3);color:var(--gold2);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);">📸 บันทึก</button>
-    </div>
     <div class="price-card" id="braceletPriceCard" style="margin-top:10px;">
       <div class="price-row"><span>จำนวนเม็ดในเส้น</span><span id="totalBeads">— เม็ด</span></div>
       <div class="price-row"><span>ราคาหิน</span><span id="stonePrice">฿0</span></div>
@@ -710,6 +690,27 @@
     <input type="text" id="adminAccessGold" placeholder="รหัส VIP"
       style="width:100%;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;margin-bottom:10px;box-sizing:border-box;">
     <button onclick="saveAccessCodes()" style="width:100%;background:rgba(201,160,64,.15);border:1px solid var(--gold3);color:var(--gold);border-radius:8px;padding:8px;font-size:12px;font-weight:700;cursor:pointer;">💾 บันทึกรหัส</button>
+  </div>
+
+  <!-- ☁️ GitHub Cloud Sync -->
+  <div id="githubSyncPanel" style="background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.25);border-radius:12px;padding:12px;margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <span style="font-size:14px;">☁️</span>
+      <span style="font-size:12px;font-weight:700;color:#4ade80;">Cloud Sync</span>
+      <span id="syncStatusDot" style="width:8px;height:8px;border-radius:50%;background:#555;margin-left:auto;" title="สถานะ Sync"></span>
+    </div>
+    <div style="font-size:11px;color:rgba(240,210,140,.5);margin-bottom:8px;line-height:1.6;">เพิ่ม/แก้หินแล้วกด Sync — ลูกค้าทุกคนจะเห็นข้อมูลใหม่ทันที โดยไม่ต้อง upload ไฟล์ใหม่</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">GitHub Token <span style="color:rgba(255,100,100,.7);">(เก็บในเครื่องนี้เท่านั้น)</span></div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <input type="password" id="ghSyncToken" placeholder="ghp_xxxxxxxxxxxxxxxx"
+        style="flex:1;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:12px;font-family:monospace;">
+      <button onclick="ghSaveToken()" style="padding:8px 12px;border-radius:8px;border:1px solid rgba(74,222,128,.4);background:rgba(74,222,128,.1);color:#4ade80;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">💾 บันทึก</button>
+    </div>
+    <button onclick="syncToGitHub()" id="ghSyncBtn"
+      style="width:100%;padding:9px;border-radius:8px;border:1px solid rgba(74,222,128,.5);background:rgba(74,222,128,.15);color:#4ade80;font-size:12px;font-weight:700;cursor:pointer;">
+      ☁️ Sync ข้อมูลขึ้น GitHub ทันที
+    </button>
+    <div id="ghSyncLastTime" style="font-size:10px;color:rgba(240,210,140,.3);text-align:center;margin-top:6px;"></div>
   </div>
 
   <!-- Google Calendar Booking URL Setting -->
@@ -5320,6 +5321,174 @@ function exportDesign(){
 
 // ── STORAGE ──
 const SK='soulful_v1';
+
+// ══════════════════════════════════════════════════════
+// ── GITHUB CLOUD SYNC ──
+// ══════════════════════════════════════════════════════
+const GH_REPO = 'yingwarinya/soulfulspiritjewelrydesign';
+const GH_DATA_PATH = 'data.json';
+const GH_RAW_URL = 'https://raw.githubusercontent.com/' + GH_REPO + '/main/' + GH_DATA_PATH;
+const GH_API_URL = 'https://api.github.com/repos/' + GH_REPO + '/contents/' + GH_DATA_PATH;
+const GH_TOKEN_KEY = 'gh_sync_token';
+const GH_LAST_SYNC_KEY = 'gh_last_sync';
+
+// ── Token management ──
+function ghGetToken(){ return localStorage.getItem(GH_TOKEN_KEY)||''; }
+function ghSaveToken(){
+  const input = document.getElementById('ghSyncToken');
+  const token = (input?.value||'').trim();
+  if(!token){ showToast('⚠️ กรุณากรอก Token ก่อน'); return; }
+  localStorage.setItem(GH_TOKEN_KEY, token);
+  showToast('✅ บันทึก Token แล้ว');
+  _updateSyncUI();
+}
+
+function _updateSyncUI(){
+  const token = ghGetToken();
+  const dot = document.getElementById('syncStatusDot');
+  const lastTimeEl = document.getElementById('ghSyncLastTime');
+  const tokenInput = document.getElementById('ghSyncToken');
+  if(dot) dot.style.background = token ? '#4ade80' : '#555';
+  const lastSync = localStorage.getItem(GH_LAST_SYNC_KEY);
+  if(lastTimeEl) lastTimeEl.textContent = lastSync ? 'Sync ล่าสุด: ' + lastSync : (token ? 'ยังไม่ได้ Sync' : 'กรอก Token ก่อน');
+  if(tokenInput && token) tokenInput.placeholder = '●●●●●●●●●●●● (บันทึกแล้ว)';
+}
+
+// ── Build data payload (metadata only, no images) ──
+function _buildCloudData(){
+  return {
+    _version: Date.now(),
+    _updated: new Date().toISOString(),
+    stones: stones.map(s => {
+      const {img, img2, img3, ...meta} = s;
+      return meta;
+    }),
+    decos: decos.map(d => {
+      const {img, img2, ...meta} = d;
+      return meta;
+    })
+  };
+}
+
+// ── Push to GitHub ──
+async function syncToGitHub(){
+  const token = ghGetToken();
+  if(!token){
+    showToast('⚠️ กรุณากรอก GitHub Token ก่อน');
+    document.getElementById('ghSyncToken')?.focus();
+    return;
+  }
+  const btn = document.getElementById('ghSyncBtn');
+  if(btn){ btn.disabled=true; btn.textContent='⏳ กำลัง Sync...'; }
+  try{
+    const data = _buildCloudData();
+    // Base64 encode (handle Thai characters)
+    const jsonStr = JSON.stringify(data, null, 2);
+    const b64 = btoa(unescape(encodeURIComponent(jsonStr)));
+    const headers = {
+      'Authorization': 'token ' + token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    // Get current SHA
+    let sha = null;
+    try{
+      const r = await fetch(GH_API_URL, {headers});
+      if(r.ok){ const j=await r.json(); sha=j.sha; }
+    }catch(e){}
+    // Upload
+    const body = {message: 'Sync data ' + new Date().toLocaleString('th-TH'), content: b64};
+    if(sha) body.sha = sha;
+    const r2 = await fetch(GH_API_URL, {method:'PUT', headers, body:JSON.stringify(body)});
+    if(r2.ok){
+      const now = new Date().toLocaleString('th-TH', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'});
+      localStorage.setItem(GH_LAST_SYNC_KEY, now);
+      _updateSyncUI();
+      showToast('✅ Sync สำเร็จ! ลูกค้าจะเห็นข้อมูลใหม่ทันที');
+    } else {
+      const err = await r2.json().catch(()=>({}));
+      if(r2.status===401){
+        showToast('❌ Token ไม่ถูกต้อง หรือหมดอายุ');
+      } else if(r2.status===422){
+        showToast('❌ ข้อมูลใหญ่เกินไป (' + r2.status + ')');
+      } else {
+        showToast('❌ Sync ไม่สำเร็จ: ' + (err.message||r2.status));
+      }
+    }
+  }catch(e){
+    showToast('❌ Error: ' + e.message);
+  }finally{
+    if(btn){ btn.disabled=false; btn.textContent='☁️ Sync ข้อมูลขึ้น GitHub ทันที'; }
+  }
+}
+
+// ── Auto-sync debounce (5 วินาทีหลัง saveData ครั้งสุดท้าย) ──
+let _autoSyncTimer = null;
+function _scheduleAutoSync(){
+  if(!ghGetToken()) return; // ไม่มี token ข้ามไป
+  clearTimeout(_autoSyncTimer);
+  _autoSyncTimer = setTimeout(()=>{
+    syncToGitHub().catch(()=>{});
+  }, 5000);
+}
+
+// ── Load cloud data on page start (for customers) ──
+async function loadCloudData(){
+  if(window._customerMode === true || !ghGetToken()){
+    // Customer mode หรือไม่มี token → ลอง fetch raw โดยไม่ต้องมี token
+    try{
+      const r = await fetch(GH_RAW_URL + '?nocache=' + Date.now(), {cache:'no-store'});
+      if(!r.ok) return;
+      const data = await r.json();
+      _applyCloudData(data);
+    }catch(e){ /* ไม่มี data.json = ใช้ hardcoded */ }
+    return;
+  }
+  // Admin mode → fetch แบบ authenticated (เร็วกว่า, bypass cache)
+  try{
+    const token = ghGetToken();
+    const r = await fetch(GH_API_URL, {
+      headers:{'Authorization':'token '+token,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(!r.ok) return;
+    const j = await r.json();
+    const jsonStr = decodeURIComponent(escape(atob(j.content.replace(/\n/g,''))));
+    const data = JSON.parse(jsonStr);
+    _applyCloudData(data);
+    _updateSyncUI();
+  }catch(e){}
+}
+
+function _applyCloudData(data){
+  if(!data) return;
+  // Apply stone metadata overrides (preserve images from hardcoded)
+  if(Array.isArray(data.stones)){
+    data.stones.forEach(cs=>{
+      const local = stones.find(s=>s.id===cs.id);
+      if(local){
+        // อัปเดต mutable fields เท่านั้น
+        const MUTABLE = ['price','hidden','stock','unlimitedStock','grade','sku','prop','tags','chakra','thai','name','size'];
+        MUTABLE.forEach(k=>{ if(cs[k]!==undefined) local[k]=cs[k]; });
+      } else if(cs.name){
+        // หินใหม่ที่ admin เพิ่ม (ไม่มีรูป)
+        stones.push({...cs, img:'', img2:'', img3:''});
+      }
+    });
+  }
+  // Apply deco metadata overrides
+  if(Array.isArray(data.decos)){
+    data.decos.forEach(cd=>{
+      const local = decos.find(d=>d.id===cd.id);
+      if(local){
+        const MUTABLE = ['price','hidden','stock','unlimitedStock','name','thai','type','metal','prop'];
+        MUTABLE.forEach(k=>{ if(cd[k]!==undefined) local[k]=cd[k]; });
+      } else if(cd.name && cd.id>105){
+        decos.push({...cd, img:'', img2:''});
+      }
+    });
+  }
+}
+
 function showStorageInfo(){
   let total=0, keys=[];
   for(let i=0;i<localStorage.length;i++){
@@ -5396,6 +5565,8 @@ function saveData(){
   // บันทึกรูปลง IndexedDB (async fire-and-forget)
   saveStoneImages().catch(()=>{});
   saveDecoImages().catch(()=>{});
+  // Auto-sync to GitHub if token is configured
+  _scheduleAutoSync();
 }
 let _loadDataPromise=null;
 async function loadData(){
@@ -5889,6 +6060,7 @@ function exitAdmin(){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   document.querySelector('.tab').classList.add('active');
   document.getElementById('tab-design').classList.add('active');
+  _updateSyncUI();
   showToast('🔒 ออกจากโหมด Admin แล้ว');
 }
 function saveAccessCodes(){
@@ -6187,6 +6359,7 @@ function _mkInitDrag(){
 // ── INIT ──
 (async()=>{
   await loadData();
+  await loadCloudData(); // ← โหลดข้อมูลจาก GitHub cloud
   const sd=document.getElementById('sizeDisplay');
   if(sd) sd.textContent=wristSize.toFixed(1)+' cm';
   ensureLockedLogo();
