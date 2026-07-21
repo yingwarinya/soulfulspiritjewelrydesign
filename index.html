@@ -1750,16 +1750,21 @@ function renderN2StoneFullGrid(){
     const isS2=n2Stone2&&n2Stone2.name===rep.name&&n2Stone2.grade===rep.grade;
     const cnt=(isS1?1:0)+(isS2?1:0);
     const priceStr=hasMulti?(variants[0].price===variants[variants.length-1].price?`฿${variants[0].price}`:`฿${variants[0].price}–${variants[variants.length-1].price}`)+'/เม็ด':`฿${Number.isInteger(rep.price)?rep.price:rep.price.toFixed(1)}/เม็ด`;
-    return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
+    return `<div class="catalog-card${cnt>0?' selected':''}" style="padding:0;overflow:hidden;${cnt>0?'border-color:var(--gold3);':''}">
       ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
-      <div class="grade-badge ${GRADE_CSS[rep.grade]}">${GRADE_LABELS[rep.grade]}</div>
-      ${mkCatalogDot(rep)}
-      <div class="catalog-name">${rep.name}</div>
-      <div class="catalog-thai">${rep.thai}</div>
-      <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
-      ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
-      <div class="catalog-price">${priceStr}</div>
-      <button class="catalog-add" onclick="quickAddN2Stone(${rep.id})">+ เพิ่ม</button>
+      ${rep.img2?`<div style="width:100%;aspect-ratio:3/2;background:#1a0a00;overflow:hidden;flex-shrink:0;">
+        <img data-src="${rep.img2}" src="" class="lazy-img" style="width:100%;height:100%;object-fit:cover;">
+      </div>`:''}
+      <div style="padding:${rep.img2?'7':'12'}px 9px 10px;text-align:center;">
+        <div class="grade-badge ${GRADE_CSS[rep.grade]}">${GRADE_LABELS[rep.grade]}</div>
+        ${rep.img2?'':mkCatalogDot(rep)}
+        <div class="catalog-name">${rep.name}</div>
+        <div class="catalog-thai">${rep.thai}</div>
+        <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
+        ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
+        <div class="catalog-price">${priceStr}</div>
+        <button class="catalog-add" onclick="quickAddN2Stone(${rep.id})">+ เพิ่ม</button>
+      </div>
     </div>`;
   }).join('');
   initLazyLoad();
@@ -2092,16 +2097,21 @@ function renderN5StoneGrid(){
       (hasMulti?(variants[0].price===variants[variants.length-1].price?
         `฿${variants[0].price}`:`฿${variants[0].price}–${variants[variants.length-1].price}`)+'/เม็ด':
         `฿${Number.isInteger(rep.price)?rep.price:rep.price.toFixed(1)}/เม็ด`);
-    return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
+    return `<div class="catalog-card${cnt>0?' selected':''}" style="padding:0;overflow:hidden;${cnt>0?'border-color:var(--gold3);':''}">
       ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
-      <div class="grade-badge ${GRADE_CSS[rep.grade]||''}">${GRADE_LABELS[rep.grade]||rep.grade}</div>
-      ${typeof mkCatalogDot==='function'?mkCatalogDot(rep):''}
-      <div class="catalog-name">${rep.name}</div>
-      <div class="catalog-thai">${rep.thai||''}</div>
-      <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
-      ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
-      ${priceStr?`<div class="catalog-price">${priceStr}</div>`:''}
-      <button class="catalog-add" onclick="quickAddN5Stone(${rep.id})">+ เพิ่ม</button>
+      ${rep.img2?`<div style="width:100%;aspect-ratio:3/2;background:#1a0a00;overflow:hidden;flex-shrink:0;">
+        <img data-src="${rep.img2}" src="" class="lazy-img" style="width:100%;height:100%;object-fit:cover;">
+      </div>`:''}
+      <div style="padding:${rep.img2?'7':'12'}px 9px 10px;text-align:center;">
+        <div class="grade-badge ${GRADE_CSS[rep.grade]||''}">${GRADE_LABELS[rep.grade]||rep.grade}</div>
+        ${rep.img2?'':(typeof mkCatalogDot==='function'?mkCatalogDot(rep):'')}
+        <div class="catalog-name">${rep.name}</div>
+        <div class="catalog-thai">${rep.thai||''}</div>
+        <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
+        ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
+        ${priceStr?`<div class="catalog-price">${priceStr}</div>`:''}
+        <button class="catalog-add" onclick="quickAddN5Stone(${rep.id})">+ เพิ่ม</button>
+      </div>
     </div>`;
   }).join('');
   if(typeof initLazyLoad==='function') initLazyLoad();
