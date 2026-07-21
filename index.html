@@ -6636,7 +6636,7 @@ function _renderSizePickerRows(variants){
       <div style="flex-shrink:0;">${mkThumb(v,44)}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:14px;font-weight:700;color:var(--text);">${v.size}mm</div>
-        <div style="font-size:11px;color:var(--text3);">฿${priceStr}/เม็ด &nbsp;<span class="grade-badge ${gradeCss}" style="font-size:10px;padding:1px 5px;">${gradeLabel}</span></div>
+        <div style="font-size:11px;color:var(--text3);">${window._customerMode?'':('฿'+priceStr+'/เม็ด  ')}<span class="grade-badge ${gradeCss}" style="font-size:10px;padding:1px 5px;">${gradeLabel}</span></div>
         ${hasMedia(v.id)?`<button class="bead-media-btn" style="font-size:11px;padding:3px 8px;margin-top:4px;" onclick="openStoneMedia(${v.id},'${v.name.replace(/'/g,"\\'")}')">📸 ดูเต็มเส้น</button>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:0;flex-shrink:0;background:var(--card);border:1.5px solid var(--border2);border-radius:24px;overflow:hidden;">
@@ -6979,9 +6979,12 @@ self.addEventListener('fetch',e=>{
         '#braceletPriceCard',
         '#n2PriceBox',
         '.bead-price-tag',
-        '#summaryGrandTotal .price-row',
+        '.price-card',
+        '.price-total',
+        '.price-row',
+        '#totalPrice','#stonePrice','#decoPrice',
         '#gtBraceletAmt','#gtN2Amt','#gtTotal',
-        '.price-card .price-row',
+        '#summaryGrandTotal',
       ].join(',') + '{ display:none !important; }';
       document.head.appendChild(css);
     }
