@@ -1767,155 +1767,106 @@ function renderN2StoneFullGrid(){
 }
 
 // ── N2 Pendant picker state ──
-let _n2PendantMetal = 'all'; // 'all' | 'gold' | 'silver' | 'rosegold'
-
-function _pendantBaseName(name){
-  return name.replace(/^(Rose Gold |Gold |Silver )/i,'').trim();
-}
-function _pendantThaiBase(thai){
-  return (thai||'').replace(/\s*(ทอง|เงิน|โรสโกล|Rose gold|Silver|Gold)\s*$/i,'').trim();
-}
+let _n2PendantMetal = 'all'; // 'all' | 'silver' | 'gold' | 'rosegold'
+let _n2PendantSubGroup = null; // null = group list view, string = sub-group view
 
 function _n2PendantMetalFilter(){
   const container = document.getElementById('n2PendantMetalTabs');
   if(!container) return;
   const metals = [
-    {id:'all', label:'✦ ทั้งหมด'},
-    {id:'silver', label:'🥈 เงิน'},
-    {id:'gold', label:'🥇 ทอง'},
+    {id:'all',      label:'✦ ทั้งหมด'},
+    {id:'silver',   label:'🥈 เงิน'},
+    {id:'gold',     label:'🥇 ทอง'},
     {id:'rosegold', label:'🌸 โรสโกล'},
   ];
   container.innerHTML = metals.map(m=>{
     const active = _n2PendantMetal === m.id;
-    return `<div onclick="_setN2PendantMetal('${m.id}')" style="flex:1;text-align:center;padding:8px 4px;font-size:11px;font-weight:${active?'700':'500'};cursor:pointer;background:${active?'rgba(201,160,64,.2)':'transparent'};color:${active?'var(--gold2)':'var(--text3)'};transition:all .15s;white-space:nowrap;">${m.label}</div>`;
+    return `<div onclick="_setN2PendantMetal('${m.id}')" style="flex:1;text-align:center;padding:8px 2px;font-size:11px;font-weight:${active?'700':'500'};cursor:pointer;background:${active?'rgba(201,160,64,.2)':'transparent'};color:${active?'var(--gold2)':'var(--text3)'};transition:all .15s;white-space:nowrap;">${m.label}</div>`;
   }).join('');
 }
 
 function _setN2PendantMetal(m){
   _n2PendantMetal = m;
+  _n2PendantSubGroup = null; // reset to group list on metal change
   _n2PendantMetalFilter();
   renderN2QuickPendant(document.getElementById('n2QPendantSearch')?.value||'');
 }
 
-// Show metal variant picker overlay
-function _n2ShowPendantGroup(base, variants){
-  const MC = {
-    gold:     {dot:'#f0cc60', label:'🥇 ทอง'},
-    silver:   {dot:'#c0c8d8', label:'🥈 เงิน'},
-    rosegold: {dot:'#e8a0a0', label:'🌸 โรสโกล'},
-  };
-  const metalOrder = ['gold','silver','rosegold'];
-  const sorted = [...variants].sort((a,b)=>metalOrder.indexOf(a.metal)-metalOrder.indexOf(b.metal));
-  const ov = document.createElement('div');
-  ov.id = '_pendGrpOv';
-  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);display:flex;align-items:flex-end;justify-content:center;';
-  ov.innerHTML = `
-    <div style="width:100%;max-width:480px;background:#1a0a00;border-radius:20px 20px 0 0;padding:20px 16px 36px;">
-      <div style="text-align:center;margin-bottom:16px;">
-        <div style="font-size:15px;font-weight:700;color:var(--text1);">${base}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">เลือกสีโลหะ</div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(${sorted.length},1fr);gap:10px;margin-bottom:16px;">
-        ${sorted.map(v=>{
-          const mc=MC[v.metal]||{dot:'#888',label:v.metal};
-          const isSel=n2Pendant&&n2Pendant.id===v.id;
-          return `<div onclick="_n2PendantGroupSelect(${v.id})" style="background:var(--card);border-radius:12px;border:2px solid ${isSel?'var(--gold3)':'var(--border)'};padding:12px 8px;text-align:center;cursor:pointer;">
-            <div style="width:32px;height:32px;border-radius:50%;background:${mc.dot};margin:0 auto 6px;border:2px solid rgba(255,255,255,.2);"></div>
-            <div style="font-size:11px;font-weight:700;color:var(--text1);margin-bottom:2px;">${mc.label}</div>
-            <div style="font-size:11px;color:var(--gold2);">฿${v.price}</div>
-            ${isSel?`<div style="font-size:9px;color:var(--gold3);margin-top:3px;">✓ เลือกแล้ว</div>`:''}
-          </div>`;
-        }).join('')}
-      </div>
-      <button onclick="document.getElementById('_pendGrpOv').remove()" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:transparent;color:var(--text3);font-size:13px;cursor:pointer;">ยกเลิก</button>
-    </div>`;
-  ov.onclick = e => { if(e.target===ov) ov.remove(); };
-  document.getElementById('_pendGrpOv')?.remove();
-  document.body.appendChild(ov);
-}
-
-function _n2PendantGroupSelect(id){
-  quickAddN2Pendant(id);
-  document.getElementById('_pendGrpOv')?.remove();
+// Individual pendant card for sub-group view (adapted from _decoItemCard for n2)
+function _n2PendantItemCard(d){
+  const isSel = n2Pendant && n2Pendant.id === d.id;
+  return `<div class="catalog-card${isSel?' selected':''}" style="${isSel?'border-color:var(--gold3);':''}">
+    ${isSel?`<div class="catalog-badge">✓</div>`:''}
+    ${mkDecoDot(d)}
+    <div class="catalog-name">${d.name}</div>
+    <div class="catalog-thai">${d.thai}</div>
+    ${d.prop?`<div class="catalog-prop">${d.prop}</div>`:''}
+    ${d.preorder?`<div style="font-size:10px;font-weight:700;color:#ff5555;margin:3px 0 2px;letter-spacing:.5px;">⏳ Pre-order 7-14 วัน</div>`:''}
+    <div class="catalog-price">฿${d.price}/ชิ้น</div>
+    <button class="catalog-add" style="${isSel?'background:var(--gold3);border-color:var(--gold);color:var(--bg);':''}"
+      onclick="quickAddN2Pendant(${d.id})">${isSel?'✓ เลือกแล้ว':'+ เพิ่ม'}</button>
+  </div>`;
 }
 
 function renderN2QuickPendant(search){
   const q = (search||'').toLowerCase();
   const grid = document.getElementById('n2QuickPendantGrid');
   if(!grid) return;
+
+  // Ensure metal tabs rendered
   _n2PendantMetalFilter();
 
-  const allPendants = decos.filter(d => !d.hidden && d.type === 'pendant');
+  // Filter pendants by metal + search
+  const all = decos.filter(d => !d.hidden && d.type === 'pendant' &&
+    (_n2PendantMetal === 'all' || (d.metal||'').split(',').some(m=>m.trim()===_n2PendantMetal)) &&
+    (!q || (d.name+' '+(d.thai||'')+' '+(d.group||'')).toLowerCase().includes(q))
+  );
 
-  // Group by English base name
-  const groupMap = new Map();
-  for(const d of allPendants){
-    const base = _pendantBaseName(d.name);
-    if(!groupMap.has(base)) groupMap.set(base, []);
-    groupMap.get(base).push(d);
-  }
-
-  let groups = [...groupMap.entries()];
-  if(_n2PendantMetal !== 'all'){
-    groups = groups.filter(([,vs]) => vs.some(v => v.metal === _n2PendantMetal));
-  }
-  if(q){
-    groups = groups.filter(([base, vs]) =>
-      base.toLowerCase().includes(q) || vs.some(v => (v.thai||'').toLowerCase().includes(q))
-    );
-  }
-
-  if(!groups.length){
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3);font-size:12px;">ไม่พบจี้ที่ต้องการ</div>`;
+  // ── SUB-GROUP VIEW ──────────────────────────────────────────────
+  if(_n2PendantSubGroup){
+    const groupItems = all.filter(d => _decoGroups(d).includes(_n2PendantSubGroup));
+    const backBtn = `<div style="grid-column:span 2;display:flex;align-items:center;gap:8px;padding:4px 0 10px;border-bottom:1px solid var(--border);margin-bottom:6px;">
+      <button onclick="_n2PendantSubGroup=null;renderN2QuickPendant(document.getElementById('n2QPendantSearch')?.value||'')" style="background:rgba(201,160,64,.15);border:1px solid var(--gold3);border-radius:20px;color:var(--gold3);font-size:12px;cursor:pointer;padding:5px 14px;flex-shrink:0;">← กลับ</button>
+      <span style="color:var(--text2);font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_n2PendantSubGroup}</span>
+    </div>`;
+    grid.innerHTML = backBtn + (groupItems.length
+      ? groupItems.map(d => _n2PendantItemCard(d)).join('')
+      : `<div class="empty" style="grid-column:span 2;padding:20px 0;text-align:center;color:var(--text3);font-size:12px;">ยังไม่มีรายการในกลุ่มนี้</div>`);
     return;
   }
 
-  const metalOrder = ['gold','silver','rosegold'];
+  // ── GROUP LIST VIEW ──────────────────────────────────────────────
+  const groupMap = {};
+  const ungrouped = [];
+  for(const d of all){
+    const gs = _decoGroups(d);
+    if(gs.length){ gs.forEach(g=>{ (groupMap[g]=groupMap[g]||[]).push(d); }); }
+    else { ungrouped.push(d); }
+  }
 
-  grid.innerHTML = groups.map(([base, allVariants]) => {
-    // Visible variants for current metal filter
-    const visVariants = _n2PendantMetal === 'all'
-      ? [...allVariants].sort((a,b)=>metalOrder.indexOf(a.metal)-metalOrder.indexOf(b.metal))
-      : allVariants.filter(v=>v.metal===_n2PendantMetal);
-
-    // Representative image: prefer selected, else first visible
-    const selVariant = allVariants.find(v => n2Pendant && v.id === n2Pendant.id);
-    const displayVariant = selVariant || visVariants[0] || allVariants[0];
-    const isSel = !!selVariant;
-
-    // Thai group name (strip metal word)
-    const thaiBase = _pendantThaiBase(displayVariant.thai || '') || base;
-
-    // Price: min of visible variants
-    const minPrice = Math.min(...visVariants.map(v=>v.price));
-    const priceStr = visVariants.length > 1
-      ? `ตั้งแต่ ฿${minPrice}/ชิ้น`
-      : `฿${visVariants[0].price}/ชิ้น`;
-
-    const countStr = _n2PendantMetal === 'all'
-      ? `${allVariants.length} ตัวเลือก`
-      : visVariants.length > 1 ? `${visVariants.length} ตัวเลือก` : '';
-
-    const imgSrc = displayVariant.img || '';
-
-    // On click เลือก →
-    const onSelect = visVariants.length === 1
-      ? `quickAddN2Pendant(${visVariants[0].id})`
-      : `_n2ShowPendantGroup('${base.replace(/'/g,"\\'")}', decos.filter(d=>d.type==='pendant'&&!d.hidden&&['${visVariants.map(v=>v.id).join("','")}'].map(Number).includes(d.id)))`;
-
-    return `<div style="background:var(--card);border-radius:12px;border:2px solid ${isSel?'var(--gold3)':'var(--border)'};overflow:hidden;position:relative;display:flex;flex-direction:column;">
-      ${isSel?`<div style="position:absolute;top:6px;right:6px;z-index:2;background:var(--gold3);color:#1a0a00;border-radius:8px;font-size:9px;font-weight:800;padding:2px 6px;">✓</div>`:''}
-      <div style="width:100%;background:#0d0502;display:flex;align-items:center;justify-content:center;padding:18px 10px 10px;min-height:110px;">
-        ${imgSrc?`<img src="${imgSrc}" style="max-height:90px;max-width:90%;object-fit:contain;">`:'<span style="font-size:34px;">📿</span>'}
-      </div>
-      <div style="padding:8px 10px 12px;flex:1;display:flex;flex-direction:column;gap:2px;">
-        <div style="font-size:12px;font-weight:700;color:var(--text1);line-height:1.3;">${thaiBase}</div>
-        ${countStr?`<div style="font-size:10px;color:var(--text3);">${countStr}</div>`:''}
-        <div style="font-size:12px;font-weight:700;color:var(--gold2);margin:4px 0 8px;">${priceStr}</div>
-        <button onclick="${onSelect}" style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(201,160,64,.4);background:rgba(201,160,64,.1);color:var(--gold2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">${isSel?'✓ เลือกแล้ว':'เลือก →'}</button>
-      </div>
+  const groupCards = Object.entries(groupMap).map(([gName, items])=>{
+    const isSel = n2Pendant && items.some(d => d.id === n2Pendant.id);
+    const minPrice = Math.min(...items.map(d=>d.price));
+    const rep = items.find(d=>imgCache['d_'+d.id]) || items[0];
+    return `<div class="catalog-card${isSel?' selected':''}" style="cursor:pointer;${isSel?'border-color:var(--gold3);':''}"
+      onclick="_n2PendantSubGroup='${gName.replace(/'/g,"\\'")}';renderN2QuickPendant(document.getElementById('n2QPendantSearch')?.value||'')">
+      ${isSel?`<div class="catalog-badge">✓</div>`:''}
+      ${mkDecoDot(rep)}
+      <div class="catalog-name">${gName}</div>
+      <div class="catalog-thai" style="font-size:10px;color:var(--text3);">${items.length} ตัวเลือก</div>
+      <div class="catalog-price">ตั้งแต่ ฿${minPrice}/ชิ้น</div>
+      <button class="catalog-add" style="background:rgba(201,160,64,.12);border-color:var(--gold3);color:var(--gold3);">เลือก →</button>
     </div>`;
-  }).join('');
+  });
+
+  const ungroupedCards = ungrouped.map(d => _n2PendantItemCard(d));
+  const combined = [...groupCards, ...ungroupedCards];
+
+  if(!combined.length){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3);font-size:12px;">ไม่พบจี้ที่ต้องการ</div>`;
+    return;
+  }
+  grid.innerHTML = combined.join('');
 }
 
 // ══════════════════════════════════════════════════════
