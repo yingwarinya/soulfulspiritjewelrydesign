@@ -3521,8 +3521,7 @@ function renderBeadList() {
         ${item.preorder?`<span style="font-size:10px;font-weight:700;color:#ff5555;background:rgba(200,30,30,.15);border:1px solid rgba(200,30,30,.35);border-radius:6px;padding:2px 6px;display:inline-block;margin-top:2px;">⏳ Pre-order 7-14 วัน</span>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-        ${(hasMedia(s.itemId)||isAdminMode)?`<button class="bead-media-btn" onclick="openStoneMedia(${s.itemId},'${item.name.replace(/'/g,"\\'")}')">
-          ${hasMedia(s.itemId)?'📸 ดูภาพ':'📷 เพิ่มภาพ'}</button>`:''}
+        ${hasMedia(s.itemId)?`<button class="bead-media-btn" onclick="openStoneMedia(${s.itemId},'${item.name.replace(/'/g,"\\'")}')">📸 ดูภาพ</button>`:''}
         <button class="bead-del" onclick="removeAllOfItem(${s.itemId},${s.isStone})">✕</button>
       </div>
     </div>`;
@@ -6962,11 +6961,7 @@ self.addEventListener('fetch',e=>{
 
   // Wait for DOM + app init
   function _apply(){
-    // 1. Hide catalog tab (customer doesn't need to browse all stones — it's inside the mode panel)
-    const tabCatalog = document.getElementById('tabCatalog');
-    if(tabCatalog) tabCatalog.style.display='none';
-
-    // 2. Hide mode picker (locked to one mode)
+    // 1. Hide mode picker (locked to one mode)
     const picker = document.getElementById('designModePicker');
     if(picker) picker.style.display='none';
 
