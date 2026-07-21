@@ -641,9 +641,6 @@
     <div class="bead-list-wrap" id="beadListWrap">
       <div id="beadList"><div class="empty"><div class="empty-icon">💎</div>ยังไม่มีหินในเส้น<br>เลือกหินในแท็บออกแบบ</div></div>
     </div>
-    <div class="section-divider"></div>
-    <div class="list-label">✨ ความหมายของหินในกำไล</div>
-    <div id="stoneMeanings"></div>
   </div>
 
   <!-- Divider between mode sections -->
@@ -3506,16 +3503,24 @@ function renderBeadList() {
   summary2.map(s=>{
     const item = s.isStone ? stones.find(x=>x.id===s.itemId) : decos.find(x=>x.id===s.itemId);
     if(!item) return '';
+    // Chakra chips (stones only)
+    const chakraHtml = s.isStone && item.chakra ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin:5px 0 2px;">
+      ${(Array.isArray(item.chakra)?item.chakra:[item.chakra]).map(id=>{
+        const c=CHAKRAS.find(x=>x.id===id);
+        return c?`<span style="font-size:10px;color:${c.color};background:${c.bg};border:1px solid ${c.border};border-radius:8px;padding:2px 7px;font-weight:600;">${c.label}</span>`:'';
+      }).join('')}
+    </div>` : '';
     return `<div class="bead-item">
-      ${mkThumb(item,34,!s.isStone)}
+      ${mkThumb(item,44,!s.isStone)}
       <div class="bead-info">
         <div class="bead-name">${item.name} <span style="color:var(--gold);font-size:12px;">×${s.count}</span></div>
         <div class="bead-sub">${item.thai} · ${item.size}mm${item.grade?' · '+GRADE_LABELS[item.grade]:''}</div>
+        ${chakraHtml}
         ${item.prop?`<div class="bead-prop">✦ ${item.prop}</div>`:''}
         <div class="bead-price-tag">฿${(item.price*s.count).toLocaleString()} (${s.count} เม็ด)</div>
+        ${item.preorder?`<span style="font-size:10px;font-weight:700;color:#ff5555;background:rgba(200,30,30,.15);border:1px solid rgba(200,30,30,.35);border-radius:6px;padding:2px 6px;display:inline-block;margin-top:2px;">⏳ Pre-order 7-14 วัน</span>`:''}
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
-        ${item.preorder?`<span style="font-size:10px;font-weight:700;color:#ff5555;background:rgba(200,30,30,.15);border:1px solid rgba(200,30,30,.35);border-radius:6px;padding:2px 6px;white-space:nowrap;">⏳ Pre-order<br>7-14 วัน</span>`:''}
         ${(hasMedia(s.itemId)||isAdminMode)?`<button class="bead-media-btn" onclick="openStoneMedia(${s.itemId},'${item.name.replace(/'/g,"\\'")}')">
           ${hasMedia(s.itemId)?'📸 ดูภาพ':'📷 เพิ่มภาพ'}</button>`:''}
         <button class="bead-del" onclick="removeAllOfItem(${s.itemId},${s.isStone})">✕</button>
@@ -3564,18 +3569,36 @@ function renderQuickGrid(){
     return cOk&&pOk&&gOk&&qOk;}));
   if(quickSort==='asc') visible.sort((a,b)=>(a.price||0)-(b.price||0));
   else if(quickSort==='desc') visible.sort((a,b)=>(b.price||0)-(a.price||0));
-  else visible.sort((a,b)=>a.name.localeCompare(b.name,'en')); // ปกติ = A-Z
-  document.getElementById('quickGrid').innerHTML=visible.map(s=>{
-    const cnt=bracelet.filter(b=>b&&b.isStone&&b.itemId===s.id).length;
+  else visible.sort((a,b)=>a.name.localeCompare(b.name,'en'));
+  // ── Group by name+grade (same name+grade+different size = one card) ──
+  const groups=[]; const seen=new Set();
+  for(const s of visible){
+    const key=s.name+'|'+s.grade;
+    if(seen.has(key)) continue; seen.add(key);
+    const variants=stones.filter(x=>!x.hidden&&x.name===s.name&&x.grade===s.grade).sort((a,b)=>a.size-b.size);
+    groups.push({rep:s, variants});
+  }
+  document.getElementById('quickGrid').innerHTML=groups.map(({rep:s, variants})=>{
+    const hasMulti=variants.length>1;
+    const cnt=variants.reduce((sum,v)=>sum+bracelet.filter(b=>b&&b.isStone&&b.itemId===v.id).length,0);
+    const sizes=[...new Set(variants.map(v=>v.size))].sort((a,b)=>a-b);
+    const sizeDisplay=hasMulti?`${sizes[0]}–${sizes[sizes.length-1]}mm`:s.size+'mm';
+    const minPrice=Math.min(...variants.map(v=>v.price));
+    const allSamePrice=variants.every(v=>v.price===minPrice);
+    const priceStr=hasMulti&&!allSamePrice
+      ?`ราคาเริ่ม ฿${Number.isInteger(minPrice)?minPrice:minPrice.toFixed(1)}/เม็ด`
+      :`฿${Number.isInteger(s.price)?s.price:s.price.toFixed(1)}/เม็ด`;
+    const variantNote=hasMulti?`<div style="font-size:10px;color:var(--gold3);margin:2px 0 4px;text-align:center;">📐 มีให้เลือกขนาดหิน</div>`:'';
     return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
       ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
       <div class="grade-badge ${GRADE_CSS[s.grade]}">${GRADE_LABELS[s.grade]}</div>
       ${mkCatalogDot(s)}
       <div class="catalog-name">${s.name}</div>
       <div class="catalog-thai">${s.thai}</div>
-      <div class="catalog-size">${s.size}mm</div>
+      <div class="catalog-size">${sizeDisplay}</div>
       ${s.prop?`<div class="catalog-prop">${s.prop}</div>`:''}
-      <div class="catalog-price">฿${Number.isInteger(s.price)?s.price:s.price.toFixed(1)}/เม็ด</div>
+      <div class="catalog-price">${priceStr}</div>
+      ${variantNote}
       ${hasMedia(s.id)?`<button class="bead-media-btn" style="width:100%;margin-bottom:4px;" onclick="openStoneMedia(${s.id},'${s.name.replace(/'/g,"\\'")}');event.stopPropagation()">📸 ดูภาพหินเต็มเส้น</button>`:''}
       ${cnt>0?`<div style="display:flex;gap:5px;"><button class="catalog-add" style="flex:1;background:var(--card2);border-color:var(--border2);color:var(--text2);" onclick="removeAllOfItem(${s.id},true);renderQuickGrid()">− ลด</button><button class="catalog-add" style="flex:1;" onclick="openSizePicker(${s.id})">+ เพิ่ม</button></div>`:`<button class="catalog-add" onclick="openSizePicker(${s.id})">+ เพิ่ม</button>`}
     </div>`;
