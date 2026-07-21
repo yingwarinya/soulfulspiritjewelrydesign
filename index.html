@@ -453,9 +453,9 @@
       <div><div class="brand-logo">✦ Soulful <span>Spirit</span></div><div class="brand-sub">Crystal Bracelet Designer</div></div>
     </div>
   </div>
-  <div style="display:flex;gap:7px;">
-    <button class="header-btn" onclick="clearBracelet()">Reset ถาดหิน</button>
+  <div style="display:flex;gap:7px;align-items:center;">
     <button class="header-btn" onclick="backToIntro()">🔮 ย้อนกลับหน้าแรกสุด</button>
+    <button id="clearAllBtn" onclick="clearAllDesign()" style="display:none;padding:4px 10px;border-radius:10px;border:1px solid rgba(200,60,60,.4);background:rgba(200,60,60,.08);color:rgba(220,100,100,.7);font-size:10px;cursor:pointer;font-family:inherit;">🗑 ล้างทั้งหมด</button>
   </div>
 </header>
 <div class="gold-line"></div>
@@ -611,8 +611,9 @@
     </div>
     <!-- Pendant grid -->
     <div id="n2PendantSection" style="display:none;">
-      <input id="n2QPendantSearch" class="search-bar" type="text" placeholder="🔍 ค้นหาจี้..." oninput="renderN2QuickPendant(this.value)" style="margin:6px 0 4px;">
-      <div id="n2QuickPendantGrid" style="display:flex;flex-direction:column;gap:8px;margin:0;"></div>
+      <div id="n2PendantMetalTabs" style="display:flex;border:1px solid var(--border);border-radius:20px;overflow:hidden;margin-bottom:8px;"></div>
+      <input id="n2QPendantSearch" class="search-bar" type="text" placeholder="🔍 ค้นหาจี้..." oninput="renderN2QuickPendant(this.value)" style="margin:0 0 8px;">
+      <div id="n2QuickPendantGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0;"></div>
     </div>
   </div>
 
@@ -1684,7 +1685,7 @@ function switchN2Tab(tab){
   if(ss) ss.style.display = tab==='stone' ? '' : 'none';
   if(ps) ps.style.display = tab==='pendant' ? '' : 'none';
   if(tab==='stone'){ renderN2AuraChips();renderN2GradeChips();renderN2PropChips();renderN2SortChips();renderN2StoneFullGrid(); }
-  if(tab==='pendant') renderN2QuickPendant('');
+  if(tab==='pendant'){ _n2PendantMetalFilter(); renderN2QuickPendant(''); }
 }
 
 // ── N2 STONE FULL GRID STATE ──
@@ -1764,24 +1765,118 @@ function renderN2StoneFullGrid(){
   initLazyLoad();
 }
 
+// ── N2 Pendant picker state ──
+let _n2PendantMetal = 'all'; // 'all' | 'gold' | 'silver' | 'rosegold'
+
+function _pendantBaseName(name){
+  return name.replace(/^(Rose Gold |Gold |Silver )/i,'').trim();
+}
+
+function _n2PendantMetalFilter(){
+  const container = document.getElementById('n2PendantMetalTabs');
+  if(!container) return;
+  const metals = [
+    {id:'all', label:'ทั้งหมด'},
+    {id:'gold', label:'🥇 ทอง'},
+    {id:'silver', label:'🥈 เงิน'},
+    {id:'rosegold', label:'🌸 โรสโกล'},
+  ];
+  container.innerHTML = metals.map(m=>{
+    const active = _n2PendantMetal === m.id;
+    return `<div onclick="_setN2PendantMetal('${m.id}')" style="flex:1;text-align:center;padding:7px 4px;font-size:11px;font-weight:${active?'700':'500'};cursor:pointer;background:${active?'rgba(201,160,64,.2)':'transparent'};color:${active?'var(--gold2)':'var(--text3)'};transition:all .15s;">${m.label}</div>`;
+  }).join('');
+}
+
+function _setN2PendantMetal(m){
+  _n2PendantMetal = m;
+  _n2PendantMetalFilter();
+  renderN2QuickPendant(document.getElementById('n2QPendantSearch')?.value||'');
+}
+
 function renderN2QuickPendant(search){
-  const q=(search||'').toLowerCase();
-  const grid=document.getElementById('n2QuickPendantGrid');if(!grid)return;
-  const pendants=decos.filter(d=>!d.hidden&&d.type==='pendant'&&(!q||d.name.toLowerCase().includes(q)||(d.thai||'').toLowerCase().includes(q)));
-  grid.innerHTML=pendants.map(d=>{
-    const isSel=n2Pendant&&n2Pendant.id===d.id;
-    return `<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--card);border-radius:12px;border:2px solid ${isSel?'var(--gold3)':'var(--border)'};cursor:pointer;" onclick="quickAddN2Pendant(${d.id})">
-      <div style="width:56px;height:56px;border-radius:10px;background:#1a0a00;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-        ${d.img?`<img src="${d.img}" style="max-width:100%;max-height:100%;object-fit:contain;">`:'<span style="font-size:24px;">📿</span>'}
+  const q = (search||'').toLowerCase();
+  const grid = document.getElementById('n2QuickPendantGrid');
+  if(!grid) return;
+
+  // Ensure metal tabs rendered
+  _n2PendantMetalFilter();
+
+  // All visible pendants
+  const allPendants = decos.filter(d => !d.hidden && d.type === 'pendant');
+
+  // Group by base name (strip Gold/Silver/Rose Gold prefix)
+  const groupMap = new Map();
+  for(const d of allPendants){
+    const base = _pendantBaseName(d.name);
+    if(!groupMap.has(base)) groupMap.set(base, []);
+    groupMap.get(base).push(d);
+  }
+
+  // Filter by metal tab
+  let groups = [...groupMap.entries()];
+  if(_n2PendantMetal !== 'all'){
+    groups = groups.filter(([,vs]) => vs.some(v => v.metal === _n2PendantMetal));
+  }
+
+  // Filter by search
+  if(q){
+    groups = groups.filter(([base, vs]) =>
+      base.toLowerCase().includes(q) || vs.some(v => (v.thai||'').toLowerCase().includes(q))
+    );
+  }
+
+  if(!groups.length){
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--text3);font-size:12px;">ไม่พบจี้ที่ต้องการ</div>`;
+    return;
+  }
+
+  const MC = {
+    gold:     {dot:'#f0cc60', border:'rgba(201,160,64,.7)',  label:'ทอง'},
+    silver:   {dot:'#c0c8d8', border:'rgba(180,180,200,.6)', label:'เงิน'},
+    rosegold: {dot:'#e8a0a0', border:'rgba(220,140,140,.6)', label:'โรสโกล'},
+  };
+
+  grid.innerHTML = groups.map(([base, variants]) => {
+    // Determine display variant
+    let displayVariant = variants[0];
+    // Prefer current metal tab variant
+    if(_n2PendantMetal !== 'all'){
+      displayVariant = variants.find(v => v.metal === _n2PendantMetal) || variants[0];
+    }
+    // If user already selected one from this group, show that
+    const selVariant = variants.find(v => n2Pendant && v.id === n2Pendant.id);
+    if(selVariant) displayVariant = selVariant;
+
+    const isSel = !!selVariant;
+    const thaiName = displayVariant.thai || '';
+
+    const imgHtml = displayVariant.img
+      ? `<img src="${displayVariant.img}" style="max-width:100%;max-height:100%;object-fit:contain;">`
+      : `<span style="font-size:28px;">📿</span>`;
+
+    // Metal chip picker — one dot per variant
+    const metalOrder = ['gold','silver','rosegold'];
+    const sortedVariants = [...variants].sort((a,b) => metalOrder.indexOf(a.metal) - metalOrder.indexOf(b.metal));
+    const chipsHtml = sortedVariants.map(v => {
+      const mc = MC[v.metal] || {dot:'#888', border:'rgba(136,136,136,.5)', label:v.metal};
+      const isChipSel = n2Pendant && n2Pendant.id === v.id;
+      return `<div onclick="event.stopPropagation();quickAddN2Pendant(${v.id})"
+        title="${mc.label}"
+        style="width:20px;height:20px;border-radius:50%;background:${mc.dot};border:2px solid ${isChipSel?'#fff':mc.border};cursor:pointer;box-shadow:${isChipSel?'0 0 0 2px var(--gold3)':'none'};transition:all .15s;flex-shrink:0;"></div>`;
+    }).join('');
+
+    return `<div onclick="quickAddN2Pendant(${displayVariant.id})"
+      style="background:var(--card);border-radius:12px;border:2px solid ${isSel?'var(--gold3)':'var(--border)'};cursor:pointer;overflow:hidden;position:relative;transition:border-color .2s;">
+      ${isSel?`<div style="position:absolute;top:6px;right:6px;z-index:2;background:var(--gold3);color:#1a0a00;border-radius:8px;font-size:9px;font-weight:800;padding:2px 6px;line-height:16px;">✓</div>`:''}
+      <div style="width:100%;aspect-ratio:1/1;background:#1a0a00;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+        ${imgHtml}
       </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text1);">${d.name}</div>
-        ${d.thai?`<div style="font-size:11px;color:var(--text3);">${d.thai}</div>`:''}
-        ${d.metal?`<div style="font-size:11px;color:var(--text3);">${d.metal}</div>`:''}
-        ${d.prop?`<div style="font-size:11px;color:var(--text2);margin-top:2px;">${d.prop}</div>`:''}
-        <div style="font-size:13px;font-weight:700;color:var(--gold2);margin-top:2px;">฿${d.price}/ชิ้น</div>
+      <div style="padding:8px 8px 10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text1);margin-bottom:2px;line-height:1.3;">${base}</div>
+        ${thaiName?`<div style="font-size:10px;color:var(--text3);margin-bottom:5px;">${thaiName}</div>`:'<div style="margin-bottom:5px;"></div>'}
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:5px;">${chipsHtml}</div>
+        <div style="font-size:11px;color:var(--gold2);font-weight:700;">฿${displayVariant.price}/ชิ้น</div>
       </div>
-      <button style="flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid ${isSel?'var(--gold3)':'rgba(201,160,64,.35)'};background:${isSel?'var(--gold3)':'rgba(201,160,64,.12)'};color:${isSel?'#1a0a00':'var(--gold2)'};font-size:12px;font-weight:700;cursor:pointer;" onclick="event.stopPropagation();quickAddN2Pendant(${d.id})">${isSel?'✓ เลือกแล้ว':'+ เลือก'}</button>
     </div>`;
   }).join('');
 }
@@ -3292,6 +3387,13 @@ document.addEventListener('mouseup', e=>{
   endDrag(e.clientX,e.clientY,true,mdrag.tgt);
 });
 function clearBracelet() { bracelet=[]; ensureLockedLogo(); refreshAll(); saveData(); showToast('เริ่มออกแบบใหม่ ✦'); }
+function clearN2(){ n2Stone1=null; n2Stone2=null; n2Pendant=null; updateN2Display(); drawN2Canvas(); updateSummaryTab(); showToast('🗑 ล้างข้อมูลสร้อยคอแล้ว'); }
+function clearAllDesign(){
+  const m = typeof currentDesignMode!=='undefined' ? currentDesignMode : '';
+  if(m==='necklace5'){ n5ClearAll(); }
+  else if(m==='necklace2pendant'){ clearN2(); }
+  else { clearBracelet(); }
+}
 function changeSize(d) {
   wristSize=Math.round((wristSize+d)*10)/10;
   if(wristSize<13)wristSize=13; if(wristSize>20)wristSize=20;
@@ -6972,6 +7074,10 @@ self.addEventListener('fetch',e=>{
     if(typeof showTab==='function') showTab('design');
 
     // 5. Hide prices for necklace modes
+    // Show 🗑 ล้างทั้งหมด button in customer mode
+    const _clearBtn = document.getElementById('clearAllBtn');
+    if(_clearBtn) _clearBtn.style.display = '';
+
     if(internalMode !== 'bracelet'){
       const css = document.createElement('style');
       css.textContent = [
