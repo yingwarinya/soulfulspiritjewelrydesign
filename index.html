@@ -4598,7 +4598,7 @@ function renderN2SummaryList(){
       ${it.thai?`<div style="font-size:11px;color:var(--text3);">${it.thai}</div>`:''}
       ${it.size?`<div style="font-size:11px;color:var(--text3);">${it.size}mm</div>`:''}
     </div>
-    <div style="font-size:13px;font-weight:700;color:var(--gold2);flex-shrink:0;">฿${it.price.toLocaleString()}</div>
+    ${!window._customerMode?`<div style="font-size:13px;font-weight:700;color:var(--gold2);flex-shrink:0;">฿${it.price.toLocaleString()}</div>`:''}
   </div>`).join('');
 }
 function savePreviewImg(imgId, name){
@@ -7081,6 +7081,7 @@ self.addEventListener('fetch',e=>{
         '#totalPrice','#stonePrice','#decoPrice',
         '#gtBraceletAmt','#gtN2Amt','#gtTotal',
         '#summaryGrandTotal',
+        '#n2SortChips','#n5SortChips',
       ].join(',') + '{ display:none !important; }';
       document.head.appendChild(css);
     }
