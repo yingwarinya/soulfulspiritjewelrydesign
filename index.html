@@ -737,6 +737,7 @@
       <div id="adminGradePremium"   class="metal-tab" style="border-left:1px solid var(--border);border-right:1px solid var(--border);" onclick="selectAdminGrade('premium')">🏆 พรีเมียม</div>
       <div id="adminGradeGem"       class="metal-tab" style="border-right:1px solid var(--border);" onclick="selectAdminGrade('gem')">💎 อัญมณี</div>
       <div id="adminGradeTopjewelry" class="metal-tab" onclick="selectAdminGrade('topjewelry')">⭐ Top</div>
+      <div id="adminGradeStarter" class="metal-tab" style="border-left:1px solid var(--border);" onclick="selectAdminGrade('starter')">🌱 เริ่มต้น</div>
     </div>
   </div>
 
@@ -805,6 +806,7 @@
       <div class="form-row"><input type="text" id="nStoneProp" placeholder="คุณสมบัติสั้น ๆ"></div>
       <div class="form-row">
         <select id="nStoneGrade">
+          <option value="starter">เกรดเริ่มต้น</option>
           <option value="premium" selected>เกรดพรีเมียม</option>
           <option value="gem">เกรดอัญมณี</option>
           <option value="topjewelry">Top Jewelry</option>
@@ -1027,7 +1029,7 @@
     <div id="editStoneFields">
       <div class="form-row">
         <select id="editGrade">
-          <option value="premium">เกรดพรีเมียม</option><option value="gem">เกรดอัญมณี</option><option value="topjewelry">Top Jewelry</option>
+          <option value="starter">เกรดเริ่มต้น</option><option value="premium">เกรดพรีเมียม</option><option value="gem">เกรดอัญมณี</option><option value="topjewelry">Top Jewelry</option>
         </select>
       </div>
       <div class="multi-label">⚡ Chakra</div>
@@ -1711,7 +1713,7 @@ function renderN2AuraChips(){
 }
 function renderN2GradeChips(){
   const el=document.getElementById('n2GradeChips');if(!el)return;
-  el.innerHTML=[{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'}]
+  el.innerHTML=[{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'},{id:'starter',label:'🌱 เริ่มต้น'}]
     .map(g=>`<div class="grade-chip${_n2Grade===g.id?' active':''}" onclick="setN2Grade('${g.id}')">${g.label}</div>`).join('');
 }
 function renderN2PropChips(){
@@ -2025,7 +2027,7 @@ function _n5ToggleAura(id){_n5Auras=_n5Auras.includes(id)?_n5Auras.filter(a=>a!=
 
 function renderN5GradeChips(){
   const el=document.getElementById('n5GradeChips');if(!el)return;
-  el.innerHTML=[{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'}]
+  el.innerHTML=[{id:'all',label:'ทุกเกรด'},{id:'topjewelry',label:'⭐ Top Jewelry'},{id:'gem',label:'💎 อัญมณี'},{id:'premium',label:'✦ พรีเมียม'},{id:'starter',label:'🌱 เริ่มต้น'}]
     .map(g=>`<div class="grade-chip${_n5Grade===g.id?' active':''}" onclick="_setN5Grade('${g.id}')">${g.label}</div>`).join('');
 }
 function _setN5Grade(v){_n5Grade=v;renderN5GradeChips();renderN5StoneGrid();}
@@ -3653,7 +3655,7 @@ function renderQuickGrid(){
     const cOk=!selectedAuras.length||(()=>{const sc=Array.isArray(s.chakra)?s.chakra:[s.chakra];return selectedAuras.some(a=>sc.includes(a));})();
     const sTags=Array.isArray(s.tags)?s.tags:(s.tags?[s.tags]:[]);
     const pOk=quickProps.includes('all')||quickProps.some(p=>p==='wealth'?(sTags.includes('wealth')||sTags.includes('finance')):sTags.includes(p));
-    const gOk=quickGrade==='all'||s.grade===quickGrade;
+    const gOk=(quickGrade==='all'?s.grade!=='starter':s.grade===quickGrade);
     const qOk=!quickSearchText||(s.name+' '+s.thai+' '+(s.prop||'')).toLowerCase().includes(quickSearchText.toLowerCase());
     return cOk&&pOk&&gOk&&qOk;}));
   if(quickSort==='asc') visible.sort((a,b)=>(a.price||0)-(b.price||0));
@@ -3729,7 +3731,7 @@ function renderCatalog(search=''){
     const ms=!q||item.name.toLowerCase().includes(q)||item.thai.includes(q)||(item.prop||'').includes(q);
     const itemC=Array.isArray(item.chakra)?item.chakra:[item.chakra];
     const mc=catChakra==='all'||itemC.includes(catChakra);
-    const mg=catGrade==='all'||item.grade===catGrade;
+    const mg=(catGrade==='all'?item.grade!=='starter':item.grade===catGrade);
     const itemTags=Array.isArray(item.tags)?item.tags:(item.tags?[item.tags]:[]);
     const mpMatches=(t)=>t==='wealth'?itemTags.includes('wealth')||itemTags.includes('finance'):itemTags.includes(t);
     const mp=catProp==='all'||mpMatches(catProp);
@@ -5871,7 +5873,7 @@ function selectAdminSection(sec){
 
 function selectAdminGrade(grade){
   adminStoneGrade=grade;
-  ['all','premium','gem','topjewelry'].forEach(g=>{
+  ['all','premium','gem','topjewelry','starter'].forEach(g=>{
     const el=document.getElementById('adminGrade'+g.charAt(0).toUpperCase()+g.slice(1));
     if(el)el.classList.toggle('active',g===grade);
   });
