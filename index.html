@@ -1722,8 +1722,8 @@ function renderN2PropChips(){
 }
 function renderN2SortChips(){
   const el=document.getElementById('n2SortChips');if(!el)return;
-  el.innerHTML=[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก → แพง'},{id:'desc',label:'฿ แพง → ถูก'}]
-    .map(c=>`<div class="grade-chip${_n2Sort===c.id?' active':''}" onclick="setN2Sort('${c.id}')">${c.label}</div>`).join('');
+  const _n2Chips=window._customerMode?[{id:'none',label:'⬚ ปกติ'}]:[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก → แพง'},{id:'desc',label:'฿ แพง → ถูก'}];
+  el.innerHTML=_n2Chips.map(c=>`<div class="grade-chip${_n2Sort===c.id?' active':''}" onclick="setN2Sort('${c.id}')">${c.label}</div>`).join('');
 }
 function renderN2StoneFullGrid(){
   let visible=sortByGrade(stones.filter(s=>!s.hidden).filter(s=>{
@@ -1751,7 +1751,8 @@ function renderN2StoneFullGrid(){
     const isS1=n2Stone1&&n2Stone1.name===rep.name&&n2Stone1.grade===rep.grade;
     const isS2=n2Stone2&&n2Stone2.name===rep.name&&n2Stone2.grade===rep.grade;
     const cnt=(isS1?1:0)+(isS2?1:0);
-    const priceStr=hasMulti?(variants[0].price===variants[variants.length-1].price?`฿${variants[0].price}`:`฿${variants[0].price}–${variants[variants.length-1].price}`)+'/เม็ด':`฿${Number.isInteger(rep.price)?rep.price:rep.price.toFixed(1)}/เม็ด`;
+    const _n2HideP=window._customerMode;
+    const priceStr=_n2HideP?'':hasMulti?(variants[0].price===variants[variants.length-1].price?`฿${variants[0].price}`:`฿${variants[0].price}–${variants[variants.length-1].price}`)+'/เม็ด':`฿${Number.isInteger(rep.price)?rep.price:rep.price.toFixed(1)}/เม็ด`;
     return `<div class="catalog-card${cnt>0?' selected':''}" style="${cnt>0?'border-color:var(--gold3);':''}">
       ${cnt>0?`<div class="catalog-badge">${cnt}</div>`:''}
       <div class="grade-badge ${GRADE_CSS[rep.grade]}">${GRADE_LABELS[rep.grade]}</div>
@@ -1760,7 +1761,7 @@ function renderN2StoneFullGrid(){
       <div class="catalog-thai">${rep.thai}</div>
       <div class="catalog-size">${hasMulti?'📐 มีหลายขนาด':rep.size+'mm'}</div>
       ${rep.prop?`<div class="catalog-prop">${rep.prop}</div>`:''}
-      <div class="catalog-price">${priceStr}</div>
+      ${priceStr?`<div class="catalog-price">${priceStr}</div>`:''}
       ${typeof hasMedia==='function'&&hasMedia(rep.id)?`<button class="bead-media-btn" style="width:100%;margin-bottom:4px;" onclick="openStoneMedia(${rep.id},'${rep.name.replace(/'/g,"\\'")}');event.stopPropagation()">📸 ดูภาพหินเต็มเส้น</button>`:''}
       <button class="catalog-add" onclick="quickAddN2Stone(${rep.id})">+ เพิ่ม</button>
     </div>`;
@@ -1804,7 +1805,7 @@ function _n2PendantItemCard(d){
     <div class="catalog-thai">${d.thai}</div>
     ${d.prop?`<div class="catalog-prop">${d.prop}</div>`:''}
     ${d.preorder?`<div style="font-size:10px;font-weight:700;color:#ff5555;margin:3px 0 2px;letter-spacing:.5px;">⏳ Pre-order 7-14 วัน</div>`:''}
-    <div class="catalog-price">฿${d.price}/ชิ้น</div>
+    ${!window._customerMode?`<div class="catalog-price">฿${d.price}/ชิ้น</div>`:''}
     <button class="catalog-add" style="${isSel?'background:var(--gold3);border-color:var(--gold);color:var(--bg);':''}"
       onclick="quickAddN2Pendant(${d.id})">${isSel?'✓ เลือกแล้ว':'+ เพิ่ม'}</button>
   </div>`;
@@ -1856,7 +1857,7 @@ function renderN2QuickPendant(search){
       ${mkDecoDot(rep)}
       <div class="catalog-name">${gName}</div>
       <div class="catalog-thai" style="font-size:10px;color:var(--text3);">${items.length} ตัวเลือก</div>
-      <div class="catalog-price">ตั้งแต่ ฿${minPrice}/ชิ้น</div>
+      ${!window._customerMode?`<div class="catalog-price">ตั้งแต่ ฿${minPrice}/ชิ้น</div>`:''}
       <button class="catalog-add" style="background:rgba(201,160,64,.12);border-color:var(--gold3);color:var(--gold3);">เลือก →</button>
     </div>`;
   });
@@ -2044,8 +2045,8 @@ function _toggleN5Prop(id){
 
 function renderN5SortChips(){
   const el=document.getElementById('n5SortChips');if(!el)return;
-  el.innerHTML=[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก→แพง'},{id:'desc',label:'฿ แพง→ถูก'}]
-    .map(c=>`<div class="grade-chip${_n5Sort===c.id?' active':''}" onclick="_setN5Sort('${c.id}')">${c.label}</div>`).join('');
+  const _n5Chips=window._customerMode?[{id:'none',label:'⬚ ปกติ'}]:[{id:'none',label:'⬚ ปกติ'},{id:'asc',label:'฿ ถูก→แพง'},{id:'desc',label:'฿ แพง→ถูก'}];
+  el.innerHTML=_n5Chips.map(c=>`<div class="grade-chip${_n5Sort===c.id?' active':''}" onclick="_setN5Sort('${c.id}')">${c.label}</div>`).join('');
 }
 function _setN5Sort(v){_n5Sort=v;renderN5SortChips();renderN5StoneGrid();}
 
