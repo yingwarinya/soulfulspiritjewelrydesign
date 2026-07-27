@@ -588,6 +588,8 @@
         <div id="n2CC_gold" onclick="setN2ChainColor('gold')" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;cursor:pointer;border:2px solid rgba(210,170,50,.35);background:rgba(210,170,50,.08);font-size:11px;font-weight:600;color:#c8a030;">🟡 ทอง</div>
         <div id="n2CC_rosegold" onclick="setN2ChainColor('rosegold')" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;cursor:pointer;border:2px solid rgba(210,140,110,.35);background:rgba(210,140,110,.08);font-size:11px;font-weight:600;color:#d08878;">🌸 โรสโกล</div>
       </div>
+      <!-- Grade pair price — customer-visible, hidden when no pair match -->
+      <div id="n2GradePrice" style="display:none;margin-top:10px;padding:9px 14px;background:rgba(201,160,64,.1);border:1px solid rgba(201,160,64,.3);border-radius:12px;text-align:center;"></div>
     </div>
     <!-- Hidden slot state holders (ไม่แสดง UI แต่ JS ยังใช้ ID เหล่านี้) -->
     <div style="display:none;">
@@ -655,6 +657,8 @@
       <button onclick="savePreviewImg('summaryN2Preview','necklace')" style="position:absolute;bottom:10px;right:10px;background:rgba(10,5,2,0.75);border:1px solid var(--gold3);color:var(--gold2);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px);">📸 บันทึก</button>
     </div>
     <div id="n2PriceBox" class="preview-card" style="padding:10px 14px 8px;margin:10px 0 8px;font-size:12px;min-height:60px;"></div>
+    <!-- Grade pair total — customer-visible (admin sees n2PriceBox above) -->
+    <div id="n2CustomerTotal" style="display:none;margin:8px 0;padding:10px 14px;background:rgba(201,160,64,.08);border:1px solid rgba(201,160,64,.25);border-radius:12px;font-size:12px;"></div>
     <div id="n2ItemList" style="margin-bottom:10px;"></div>
     <button id="n2SaveBtn" onclick="saveN2Image()" style="width:100%;background:linear-gradient(135deg,rgba(140,20,20,.7),rgba(100,10,10,.7));border:1px solid var(--gold3);color:var(--gold2);border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;letter-spacing:1px;opacity:.4;pointer-events:none;">📥 บันทึกภาพสร้อยคอแบบเต็ม</button>
   </div>
@@ -728,6 +732,7 @@
   <div style="display:flex;gap:8px;margin-bottom:10px;">
     <div id="adminL1Stone" onclick="selectAdminSection('stone')" style="flex:1;padding:12px 8px;text-align:center;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--text3);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;">🪨 รายการหิน</div>
     <div id="adminL1Deco" onclick="selectAdminSection('deco')" style="flex:1;padding:12px 8px;text-align:center;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--text3);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;">✨ ของตกแต่ง</div>
+    <div id="adminL1N2price" onclick="selectAdminSection('n2price')" style="flex:1;padding:12px 8px;text-align:center;border-radius:10px;border:1.5px solid var(--border);background:var(--card);color:var(--text3);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;">💰 ราคา N2</div>
   </div>
 
   <!-- L2 สำหรับหิน: เลือก grade -->
@@ -819,6 +824,13 @@
       <div class="form-row">
         <input type="number" id="nStonePrice" placeholder="ราคา/เม็ด (฿)" min="0" step="0.1">
         <input type="number" id="nStoneSize" placeholder="ขนาด mm" value="10" min="1" max="30" step="0.1" style="width:100px;text-align:center;"> <span style="color:var(--text3);font-size:12px;align-self:center;">mm</span>
+      </div>
+      <div style="background:rgba(201,160,64,.06);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;margin-bottom:7px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">💰 ค่าพิเศษสร้อย N2 — บวกเพิ่มจากราคาเกรด (เว้นว่างถ้าไม่มี)</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:var(--text3);">+ ฿</span>
+          <input type="number" id="nStoneSurcharge" value="0" min="0" step="10" placeholder="0" style="flex:1;text-align:center;font-weight:700;color:var(--gold2);">
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--text3);margin-bottom:7px;">สีพื้นหลัง: <input type="color" id="nStoneColor" value="#e8a0b0" style="width:32px;height:32px;border-radius:50%;cursor:pointer;"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
@@ -915,6 +927,23 @@
     </div>
   </div>
   </div><!-- /adminSectionDeco -->
+
+  <!-- N2 GRADE PAIR PRICING SECTION -->
+  <div id="adminSectionN2" style="display:none;">
+  <div class="admin-section" style="border:none;padding:0;">
+    <div class="form-label" style="margin-bottom:8px;">💰 ตั้งราคาสร้อยคอ 2 เม็ด ตามเกรดหิน</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;line-height:1.5;">ราคาด้านล่างนี้คือราคาค่าหิน 2 เม็ดรวมกัน ตามเกรดที่คู่กัน<br>ราคาสุทธิ = ราคาเกรดคู่ + ค่าสายสร้อย (฿1,000) + จี้</div>
+    <div id="n2GradePairEditor"></div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button onclick="_saveN2GradePairAll()" style="flex:1;background:linear-gradient(135deg,rgba(100,60,10,.8),rgba(60,30,5,.8));border:1px solid var(--gold3);color:var(--gold2);border-radius:10px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;">💾 บันทึกราคา</button>
+      <button onclick="resetN2GradePairs()" style="background:none;border:1px solid var(--border);color:var(--text3);border-radius:10px;padding:10px 14px;font-size:12px;cursor:pointer;">🔄 รีเซ็ต</button>
+    </div>
+    <div style="margin-top:16px;padding:12px;background:rgba(201,160,64,.06);border:1px solid var(--border2);border-radius:10px;">
+      <div style="font-size:12px;font-weight:700;color:var(--gold3);margin-bottom:6px;">📌 ข้อยกเว้น (ค่าพิเศษต่อหิน)</div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.6;">หินบางชนิดมีค่าพิเศษบวกเพิ่มจากราคาเกรด<br>ตั้งค่าในหน้า "แก้ไขหิน" → ช่อง "ค่าพิเศษสร้อย N2"<br>เช่น ไหมทองเกรดอัญมณี → +฿2,990</div>
+    </div>
+  </div>
+  </div><!-- /adminSectionN2 -->
 
   </div><!-- /adminContent -->
 </div>
@@ -1031,6 +1060,13 @@
         <select id="editGrade">
           <option value="starter">เกรดเริ่มต้น</option><option value="premium">เกรดพรีเมียม</option><option value="gem">เกรดอัญมณี</option><option value="topjewelry">Top Jewelry</option>
         </select>
+      </div>
+      <div style="background:rgba(201,160,64,.06);border:1px solid var(--border2);border-radius:8px;padding:8px 10px;margin-bottom:7px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:5px;">💰 ค่าพิเศษสร้อย N2 (บวกเพิ่มจากราคาเกรด)</div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:12px;color:var(--text3);">+ ฿</span>
+          <input type="number" id="editN2Surcharge" value="0" min="0" step="10" style="flex:1;text-align:center;font-weight:700;color:var(--gold2);">
+        </div>
       </div>
       <div class="multi-label">⚡ Chakra</div>
       <div class="multi-chip-group" id="editChakraGroup"></div>
@@ -1209,6 +1245,16 @@ let _n5Search = '', _n5Auras = [], _n5Grade = 'all', _n5Props = ['all'], _n5Sort
 let _n5DragFrom = -1;
 let _n2PickSlot = 0; // 1=stone1 2=stone2
 const N2_CHAIN_PRICE = 1000;
+// ── N2 Grade Pair Pricing ──
+const N2_GRADE_PAIR_DEFAULT = {
+  'starter-starter':4990,
+  'premium-premium':5990,
+  'gem-gem':6990,
+  'premium-starter':5390,
+  'gem-starter':5990,
+  'gem-premium':6390,
+};
+let n2GradePairPrices = {...N2_GRADE_PAIR_DEFAULT};
 let n2ChainColor = 'silver'; // 'silver' | 'gold' | 'rosegold'
 const N2_CHAIN_COLORS = {
   silver:  {hi:'#f0f0ff', main:'#d4d4e8', mid:'#9898b0', dark:'#505068', ball:'#e8e8f8'},
@@ -1387,6 +1433,94 @@ function pickN2Pendant(decoId){
   n2Pendant=d;
   closeN2PendantPicker();
   updateN2Panel();
+
+}
+
+// ── N2 Grade Pair Helpers ──
+function getN2PairKey(g1,g2){
+  const o=GRADE_ORDER;
+  return (o[g1]??9)<=(o[g2]??9)?g1+'-'+g2:g2+'-'+g1;
+}
+function calcN2StoneBasePrice(s1,s2){
+  if(!s1||!s2) return null;
+  const key=getN2PairKey(s1.grade,s2.grade);
+  if(!(key in n2GradePairPrices)) return null;
+  return n2GradePairPrices[key]+((s1.n2Surcharge||0)+(s2.n2Surcharge||0));
+}
+function _updateN2GradePrice(){
+  const el=document.getElementById('n2GradePrice');
+  const tot=document.getElementById('n2CustomerTotal');
+  const pairBase=calcN2StoneBasePrice(n2Stone1,n2Stone2);
+  if(!n2Stone1||!n2Stone2||pairBase===null){
+    if(el)el.style.display='none';
+    if(tot)tot.style.display='none';
+    return;
+  }
+  const g1l=GRADE_LABELS[n2Stone1.grade]||n2Stone1.grade;
+  const g2l=GRADE_LABELS[n2Stone2.grade]||n2Stone2.grade;
+  const sur=(n2Stone1.n2Surcharge||0)+(n2Stone2.n2Surcharge||0);
+  const pp=n2Pendant?n2Pendant.price:0;
+  const grand=N2_CHAIN_PRICE+pairBase+pp;
+  if(el){
+    el.style.display='';
+    const surHtml=sur>0?`<div style="font-size:10px;color:var(--text3);margin-top:1px;">ฐาน ฿${(pairBase-sur).toLocaleString()} + ค่าพิเศษ ฿${sur.toLocaleString()}</div>`:'';
+    el.innerHTML=`
+      <div style="font-size:10px;color:var(--text3);letter-spacing:.3px;margin-bottom:1px;">💎 ราคาสร้อย 2 เม็ด · ${g1l} + ${g2l}</div>
+      ${surHtml}
+      <div style="font-size:22px;font-weight:900;color:var(--gold2);margin-top:2px;">฿${pairBase.toLocaleString()}</div>
+    `;
+  }
+  if(tot){
+    tot.style.display='';
+    tot.innerHTML=`
+      <div style="font-size:11px;font-weight:700;color:var(--gold3);margin-bottom:6px;">💰 สรุปราคา</div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);padding:4px 0;border-bottom:1px solid var(--border);"><span>⛓ สายสร้อย</span><span>฿${N2_CHAIN_PRICE.toLocaleString()}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);padding:4px 0;${pp?'border-bottom:1px solid var(--border);':''}">
+        <span>💎 หิน (${g1l}+${g2l})${sur>0?' <span style=\"font-size:10px;\">(รวมค่าพิเศษ)</span>':''}</span><span>฿${pairBase.toLocaleString()}</span>
+      </div>
+      ${pp?`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);padding:4px 0;"><span>📿 จี้</span><span>฿${pp.toLocaleString()}</span></div>`:''}
+      <div style="display:flex;justify-content:space-between;padding-top:8px;margin-top:4px;border-top:2px solid var(--gold3);">
+        <span style="font-size:14px;font-weight:800;color:var(--text1);">รวมทั้งหมด</span>
+        <span style="font-size:20px;font-weight:900;color:var(--gold2);">฿${grand.toLocaleString()}</span>
+      </div>
+    `;
+  }
+}
+function renderN2GradePairAdmin(){
+  const c=document.getElementById('n2GradePairEditor');if(!c)return;
+  const pairs=[
+    {key:'starter-starter',label:'🌱 เริ่มต้น + 🌱 เริ่มต้น'},
+    {key:'premium-starter',label:'✦ พรีเมียม + 🌱 เริ่มต้น'},
+    {key:'premium-premium',label:'✦ พรีเมียม + ✦ พรีเมียม'},
+    {key:'gem-starter',    label:'💎 อัญมณี + 🌱 เริ่มต้น'},
+    {key:'gem-premium',    label:'💎 อัญมณี + ✦ พรีเมียม'},
+    {key:'gem-gem',        label:'💎 อัญมณี + 💎 อัญมณี'},
+  ];
+  c.innerHTML=pairs.map(p=>`<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
+    <div style="flex:1;font-size:12px;color:var(--text2);">${p.label}</div>
+    <div style="display:flex;align-items:center;gap:4px;">
+      <span style="font-size:11px;color:var(--text3);">฿</span>
+      <input type="number" value="${n2GradePairPrices[p.key]||0}" min="0" step="10" data-pairkey="${p.key}"
+        style="width:85px;text-align:right;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:5px 6px;font-size:13px;font-weight:700;color:var(--gold2);"
+        onchange="_saveN2GradePairAll()">
+    </div>
+  </div>`).join('');
+}
+function _saveN2GradePairAll(){
+  document.querySelectorAll('[data-pairkey]').forEach(inp=>{
+    const k=inp.dataset.pairkey;const v=parseFloat(inp.value);
+    if(!isNaN(v)&&v>=0) n2GradePairPrices[k]=v;
+  });
+  safeSave(SK+'_n2pairs',JSON.stringify(n2GradePairPrices));
+  _updateN2GradePrice();
+  showToast('✅ บันทึกราคาแล้ว');
+}
+function resetN2GradePairs(){
+  if(!confirm('รีเซ็ตกลับราคาตั้งต้น?')) return;
+  n2GradePairPrices={...N2_GRADE_PAIR_DEFAULT};
+  safeSave(SK+'_n2pairs',JSON.stringify(n2GradePairPrices));
+  renderN2GradePairAdmin();_updateN2GradePrice();
+  showToast('🔄 รีเซ็ตแล้ว');
 }
 
 function updateN2Panel(){
@@ -1417,25 +1551,32 @@ function updateN2Panel(){
     if(pname){pname.textContent=n2Pendant.name;pname.style.display='';}
     if(pbtn){pbtn.style.borderStyle='solid';pbtn.style.borderColor='var(--gold2)';}
   }
-  // Price box
-  const s1p=n2Stone1?n2Stone1.price:null, s2p=n2Stone2?n2Stone2.price:null, pp=n2Pendant?n2Pendant.price:null;
-  const total=N2_CHAIN_PRICE+(s1p||0)+(s2p||0)+(pp||0);
+  // Price box (admin) + customer price displays
+  const _pairBase=calcN2StoneBasePrice(n2Stone1,n2Stone2);
+  const _pp=n2Pendant?n2Pendant.price:0;
+  const _s1sur=n2Stone1?n2Stone1.n2Surcharge||0:0;
+  const _s2sur=n2Stone2?n2Stone2.n2Surcharge||0:0;
+  const _stoneAmt=_pairBase!==null?_pairBase:((n2Stone1?n2Stone1.price:0)+(n2Stone2?n2Stone2.price:0));
+  const _grandTotal=N2_CHAIN_PRICE+_stoneAmt+_pp;
   const box=document.getElementById('n2PriceBox');
   if(box){
+    const _g1l=n2Stone1?GRADE_LABELS[n2Stone1.grade]||n2Stone1.grade:'';
+    const _g2l=n2Stone2?GRADE_LABELS[n2Stone2.grade]||n2Stone2.grade:'';
+    const _surRow=(_s1sur||_s2sur)?`<div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px;"><span style="color:var(--text3);">  ↳ ค่าพิเศษ${n2Stone1&&_s1sur?' '+n2Stone1.name:''}${n2Stone2&&_s2sur?' + '+n2Stone2.name:''}</span><span style="color:var(--text3);">+฿${(_s1sur+_s2sur).toLocaleString()}</span></div>`:'';
     box.innerHTML=[
       `<div style="display:flex;justify-content:space-between;padding-bottom:5px;margin-bottom:5px;border-bottom:1px solid var(--border);">`,
       `<span style="color:var(--text3);">⛓ ค่าสายสร้อย</span><span style="color:var(--text2);">฿${N2_CHAIN_PRICE.toLocaleString()}</span></div>`,
-      n2Stone1?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">🪨 หิน 1 — ${n2Stone1.name} ${n2Stone1.size||''}mm</span><span style="color:var(--text2);">฿${s1p}</span></div>`
-              :`<div style="padding:2px 0;color:var(--text3);opacity:.5;">🪨 หิน 1 — ยังไม่ได้เลือก</div>`,
-      n2Stone2?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">🪨 หิน 2 — ${n2Stone2.name} ${n2Stone2.size||''}mm</span><span style="color:var(--text2);">฿${s2p}</span></div>`
-              :`<div style="padding:2px 0;color:var(--text3);opacity:.5;">🪨 หิน 2 — ยังไม่ได้เลือก</div>`,
-      n2Pendant?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">📿 จี้ — ${n2Pendant.name}</span><span style="color:var(--text2);">฿${pp}</span></div>`
+      _pairBase!==null&&n2Stone1&&n2Stone2
+        ?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">💎 หิน (${_g1l}+${_g2l})</span><span style="color:var(--text2);">฿${_pairBase.toLocaleString()}</span></div>${_surRow}`
+        :`${n2Stone1?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">🪨 หิน 1 — ${n2Stone1.name} ${n2Stone1.size||''}mm</span><span style="color:var(--text2);">฿${n2Stone1.price}</span></div>`:'<div style="padding:2px 0;color:var(--text3);opacity:.5;">🪨 หิน 1 — ยังไม่ได้เลือก</div>'}${n2Stone2?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">🪨 หิน 2 — ${n2Stone2.name} ${n2Stone2.size||''}mm</span><span style="color:var(--text2);">฿${n2Stone2.price}</span></div>`:'<div style="padding:2px 0;color:var(--text3);opacity:.5;">🪨 หิน 2 — ยังไม่ได้เลือก</div>'}`,
+      n2Pendant?`<div style="display:flex;justify-content:space-between;padding:2px 0;"><span style="color:var(--text3);">📿 จี้ — ${n2Pendant.name}</span><span style="color:var(--text2);">฿${_pp}</span></div>`
                :`<div style="padding:2px 0;color:var(--text3);opacity:.5;">📿 จี้ — ยังไม่ได้เลือก</div>`,
       `<div style="display:flex;justify-content:space-between;padding-top:6px;margin-top:4px;border-top:1px solid var(--border);">`,
       `<span style="font-size:13px;font-weight:700;color:var(--text1);">รวมทั้งหมด</span>`,
-      `<span style="font-size:14px;font-weight:700;color:var(--gold2);">฿${total.toLocaleString()}</span></div>`,
+      `<span style="font-size:14px;font-weight:700;color:var(--gold2);">฿${_grandTotal.toLocaleString()}</span></div>`,
     ].join('');
   }
+  _updateN2GradePrice();
   // Save button state
   const saveBtn=document.getElementById('n2SaveBtn');
   const ready=!!(n2Stone1&&n2Stone2&&n2Pendant);
@@ -4125,6 +4266,7 @@ function addStone(){
   const size=parseFloat(document.getElementById('nStoneSize').value)||8;
   const chakraArr=getChips('nStoneChakraGroup');const chakraVal=chakraArr[0]||'heart';const chakra=chakraArr;
   const grade=document.getElementById('nStoneGrade').value;
+  const n2Surcharge=parseFloat(document.getElementById('nStoneSurcharge').value)||0;
   const col=document.getElementById('nStoneColor').value;
   const unlimitedStock=document.getElementById('nStoneUnlimitedStock').checked;
   const stock=unlimitedStock?null:parseInt(document.getElementById('nStoneStock').value)||0;
@@ -4134,7 +4276,7 @@ function addStone(){
   const newTags=getChips('nStoneTagGroup');
   if(!name||!thai||!price){showToast('กรุณากรอกข้อมูลให้ครบ');return;}
   const id=Math.max(...stones.map(s=>s.id),100)+1;
-  stones.push({id,name,thai,sku,size,price,chakra:chakraArr.length?chakraArr:['heart'],grade,prop,img,img2,img3,tags:newTags,hidden:false,gradient:[lighten(col,35),darken(col,25)],unlimitedStock,stock});
+  stones.push({id,name,thai,sku,size,price,n2Surcharge,chakra:chakraArr.length?chakraArr:['heart'],grade,prop,img,img2,img3,tags:newTags,hidden:false,gradient:[lighten(col,35),darken(col,25)],unlimitedStock,stock});
   // บันทึกรูปลง IndexedDB ทันที
   try{ if(img) dbPut('stone_'+id,img); }catch(e){}
   try{ if(img2) dbPut('stone_'+id+'_2',img2); }catch(e){}
@@ -4143,6 +4285,7 @@ function addStone(){
   if(img2) loadImg(id+'_2',img2);
   if(img3) loadImg(id+'_3',img3);
   ['nStoneName','nStoneThai','nStoneSKU','nStoneProp','nStonePrice'].forEach(i=>document.getElementById(i).value='');
+  const _surEl=document.getElementById('nStoneSurcharge');if(_surEl)_surEl.value='0';
   ['nStoneImgData','nStoneImgData2','nStoneImgData3'].forEach(i=>document.getElementById(i).value='');
   ['nStoneImg','nStoneImg2','nStoneImg3'].forEach(i=>{const el=document.getElementById(i);if(el)el.value='';});
   ['nStoneImgPrev','nStoneImgPrev2','nStoneImgPrev3'].forEach(i=>document.getElementById(i).style.display='none');
@@ -4276,6 +4419,7 @@ function openEdit(id, isStone){
     buildChakraChips('editChakraGroup',Array.isArray(item.chakra)?item.chakra:[item.chakra||'heart']);
     buildPropChips('editTagGroup',item.tags||[]);
     document.getElementById('editGrade').value=item.grade||'premium';
+    const _sEl=document.getElementById('editN2Surcharge');if(_sEl)_sEl.value=item.n2Surcharge||0;
     const isUnlimited=item.unlimitedStock!==false;
     const chk=document.getElementById('editUnlimitedStock');
     const stockIn=document.getElementById('editStock');
@@ -4389,6 +4533,7 @@ function saveEdit(){
     const sCh=getChips('editChakraGroup');s.chakra=sCh.length?sCh:['heart'];
     s.tags=getChips('editTagGroup');
     s.grade=document.getElementById('editGrade').value;
+    s.n2Surcharge=parseFloat(document.getElementById('editN2Surcharge')?.value)||0;
     s.unlimitedStock=document.getElementById('editUnlimitedStock').checked;
     s.stock=s.unlimitedStock?null:parseInt(document.getElementById('editStock').value)||0;
     // อัพเดทรูปทุก slot เสมอ (รวมกรณีลบ)
@@ -5677,6 +5822,7 @@ function saveData(){
   safeSave(SK+'_stones', JSON.stringify(stones.map(s=>({...s,img:'',img2:'',img3:''}))));
   safeSave(SK+'_wrist', String(wristSize));
   safeSave(SK+'_uidc', String(uidCounter));
+  safeSave(SK+'_n2pairs', JSON.stringify(n2GradePairPrices));
   // บันทึกรูปลง IndexedDB (async fire-and-forget)
   saveStoneImages().catch(()=>{});
   saveDecoImages().catch(()=>{});
@@ -5788,6 +5934,10 @@ async function loadData(){
     const raw=localStorage.getItem(SK+'_uidc');
     if(raw){ const v=parseInt(raw); if(v>uidCounter) uidCounter=v; }
   } catch(e){}
+  try{
+    const raw=localStorage.getItem(SK+'_n2pairs');
+    if(raw){ const v=JSON.parse(raw); if(v&&typeof v==='object') n2GradePairPrices=Object.assign({...N2_GRADE_PAIR_DEFAULT},v); }
+  } catch(e){}
   // ── SEED IMAGE MERGE: ใส่รูปจาก seed ให้ items ที่ไม่มีรูป (user เก่าที่ localStorage ไม่มีรูป) ──
   try{
     const _sdMap={};_seedDecosAll.forEach(d=>{_sdMap[d.id]=d;});
@@ -5851,17 +6001,17 @@ let adminDecoMetal=['all']; // array, multi-select
 
 function selectAdminSection(sec){
   adminSection=sec;
-  ['stone','deco'].forEach(s=>{
-    document.getElementById('adminL1'+s.charAt(0).toUpperCase()+s.slice(1))
-      .classList.toggle('admin-l1-active', s===sec);
+  ['stone','deco','n2price'].forEach(s=>{
+    const el=document.getElementById('adminL1'+s.charAt(0).toUpperCase()+s.slice(1));
+    if(el) el.classList.toggle('admin-l1-active', s===sec);
   });
   document.getElementById('adminL2Stone').style.display=sec==='stone'?'block':'none';
   document.getElementById('adminL2Deco').style.display=sec==='deco'?'block':'none';
   document.getElementById('adminContent').style.display='block';
   document.getElementById('adminSectionStone').style.display=sec==='stone'?'block':'none';
   document.getElementById('adminSectionDeco').style.display=sec==='deco'?'block':'none';
+  document.getElementById('adminSectionN2').style.display=sec==='n2price'?'block':'none';
   if(sec==='stone'){
-    // pre-fill grade if filter is set
     const gSel=document.getElementById('nStoneGrade');
     if(gSel&&adminStoneGrade!=='all') gSel.value=adminStoneGrade;
   }
@@ -5869,6 +6019,7 @@ function selectAdminSection(sec){
     const sel=document.getElementById('nDecoType');
     if(sel){sel.value=adminDecoType;toggleDecoTierFields();}
   }
+  if(sec==='n2price'){ renderN2GradePairAdmin(); return; }
   renderAdmin();
 }
 
@@ -6688,7 +6839,12 @@ refreshMediaCache().then(()=>renderBeadList&&renderBeadList());
 // Current open media item
 let _mediaCurrentId = null;
 
-function hasMedia(id){ return _mediaCache[id]&&_mediaCache[id].hasImg; }
+function hasMedia(id){
+  if(_mediaCache[id]&&_mediaCache[id].hasImg) return true;
+  // Fallback: ถ้าหินมี img2 (ภาพเต็มเส้น) ใน memory ก็แสดงปุ่มได้
+  const _s=stones.find(x=>x.id===id);
+  return !!(_s&&_s.img2&&_s.img2.length>10);
+}
 
 // ── SIZE PICKER ──
 function getSizeVariants(stoneId){
@@ -6770,6 +6926,13 @@ function openStoneMedia(id, name){
     if(rec && rec.imgBlob){
       img.src = URL.createObjectURL(rec.imgBlob);
       img.style.display='block'; hasAny=true;
+    }
+    // Fallback: แสดง img2 จาก stone object ถ้าไม่มี Blob
+    if(!hasAny){
+      const _fs=stones.find(x=>x.id===id);
+      if(_fs&&_fs.img2&&_fs.img2.length>10){
+        img.src=_fs.img2; img.style.display='block'; hasAny=true;
+      }
     }
     if(!hasAny) empty.style.display='block';
     const delRow = document.getElementById('stoneMediaDelRow');
