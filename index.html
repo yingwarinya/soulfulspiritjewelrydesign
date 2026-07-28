@@ -1896,11 +1896,12 @@ function _n2Pendant(ctx,cx,cy){
 async function saveN2Image(){
   if(!n2Stone1||!n2Stone2||!n2Pendant){showToast('⚠️ กรุณาเลือกหินและจี้ก่อน');return;}
   showToast('⏳ กำลังสร้างภาพ...');
+
   // Pre-load stone images
   const toLoad=[
-    {key:n2Stone1.id,src:n2Stone1.img||''},
-    {key:n2Stone2.id,src:n2Stone2.img||''},
-    {key:'d_'+n2Pendant.id,src:n2Pendant.img||''},
+    {key:n2Stone1.id, src:n2Stone1.img||''},
+    {key:n2Stone2.id, src:n2Stone2.img||''},
+    {key:'d_'+n2Pendant.id, src:n2Pendant.img||''},
   ];
   await Promise.all(toLoad.map(({key,src})=>new Promise(res=>{
     if(!src){res();return;}
@@ -1912,193 +1913,265 @@ async function saveN2Image(){
   const designCvs=document.getElementById('n2Canvas');
   if(!designCvs){showToast('❌ ไม่พบ canvas');return;}
 
-  // ── Build composite offscreen canvas ────────────────────────────────────
+  // ── SCALE / DIMENSIONS ──────────────────────────────────────
   const SCALE=2;
-  const W=340;
-  const offW=W*SCALE;
-  // Measure height needed
-  const CANVASH=260; // design canvas logical height
-  const PAD=16;
-  // Estimate info section height: header + stone rows + price
-  const stoneCount=2;
-  const infoH=CANVASH+(PAD*2)+
-    // title
-    20+
-    // stone rows (each ~100px logical)
-    stoneCount*104+
-    // pendant row (~70px)
-    70+
-    // price box (~120px)
-    130+
-    // bottom pad
-    PAD;
-  const offH=infoH*SCALE;
-  const off=document.createElement('canvas');
-  off.width=offW; off.height=offH;
-  const ctx=off.getContext('2d');
-  ctx.setTransform(SCALE,0,0,SCALE,0,0);
+  const _physW=Math.round((screen.width||window.innerWidth)*(window.devicePixelRatio||1));
+  const W=Math.min(640,_physW>0?Math.floor(_physW/SCALE):640);
+  const PAD=28;
 
-  // ── Background ──
-  ctx.fillStyle='#150b07';
-  ctx.fillRect(0,0,W,infoH);
-
-  // ── Draw design canvas ──
-  ctx.drawImage(designCvs,0,0,W,CANVASH);
-
-  let y=CANVASH+PAD;
-
-  // ── Section title ──
-  ctx.fillStyle='rgba(201,160,64,0.15)';
-  _roundRect(ctx,PAD,y,W-PAD*2,22,6); ctx.fill();
-  ctx.fillStyle='#c9a040'; ctx.font='700 12px sans-serif'; ctx.textAlign='center';
-  ctx.fillText('💎 สร้อยคอ 2 เม็ด + จี้  ·  Soulful Spirit', W/2, y+15);
-  y+=30;
-
-  // ── Helper: draw stone info row ──
-  function drawStoneRow(s, label, yStart){
-    const ROW_H=96;
-    // card bg
-    ctx.fillStyle='rgba(255,255,255,0.04)';
-    _roundRect(ctx,PAD,yStart,W-PAD*2,ROW_H,10); ctx.fill();
-    ctx.strokeStyle='rgba(201,160,64,0.2)'; ctx.lineWidth=0.5;
-    _roundRect(ctx,PAD,yStart,W-PAD*2,ROW_H,10); ctx.stroke();
-    // image circle
-    const IMG_R=22;
-    const imgX=PAD+14+IMG_R, imgY=yStart+ROW_H/2;
-    ctx.save();
-    ctx.beginPath(); ctx.arc(imgX,imgY,IMG_R,0,Math.PI*2); ctx.clip();
-    ctx.fillStyle='#1a0808'; ctx.fill();
-    const ci=imgCache[s.id];
-    if(ci&&ci.naturalWidth>0){
-      ctx.drawImage(ci,imgX-IMG_R,imgY-IMG_R,IMG_R*2,IMG_R*2);
+  // ── TEXT WRAP HELPER ──────────────────────────────────────────
+  const _tc=document.createElement('canvas'),_tx=_tc.getContext('2d');
+  function wrapText(ctx,txt,maxW){
+    const words=txt.split('');// char-level wrap (Thai has no spaces)
+    // Use word-level for English, char-level for Thai mix
+    const tokens=txt.split(' ');
+    const lines=[];let line='';
+    for(const tok of tokens){
+      const test=line?line+' '+tok:tok;
+      if(ctx.measureText(test).width>maxW&&line){lines.push(line);line=tok;}
+      else line=test;
     }
-    ctx.restore();
+    if(line)lines.push(line);
+    // If single long token still overflows, force-break chars
+    const out=[];
+    for(const ln of lines){
+      if(ctx.measureText(ln).width<=maxW){out.push(ln);}
+      else{let buf='';for(const ch of ln){if(ctx.measureText(buf+ch).width>maxW){out.push(buf);buf=ch;}else buf+=ch;}if(buf)out.push(buf);}
+    }
+    return out;
+  }
+
+  // ── MEASURE PROP TEXT ─────────────────────────────────────────
+  const PROP_FONT='italic 11px "Tahoma","Segoe UI",Arial,sans-serif';
+  const PROP_LH=14;
+  const PROP_MAX_W=W-PAD*2-60; // leave room for image
+  _tx.font=PROP_FONT;
+  function propLines(s){ return s&&s.prop?wrapText(_tx,s.prop,PROP_MAX_W):[]; }
+  const s1Lines=propLines(n2Stone1);
+  const s2Lines=propLines(n2Stone2);
+  const pLines =propLines(n2Pendant);
+
+  const BASE_ROW=76;
+  const rowH=(s,lines)=>BASE_ROW+(lines.length>0?lines.length*PROP_LH+4:0);
+  const rH1=rowH(n2Stone1,s1Lines);
+  const rH2=rowH(n2Stone2,s2Lines);
+  const rHP=rowH(n2Pendant,pLines);
+
+  // ── LAYOUT ───────────────────────────────────────────────────
+  const HEADER_H=180;
+  const CVS_H=Math.round((designCvs.height/designCvs.width)*W); // preserve aspect
+  const CANVAS_SECTION=CVS_H+40;
+  const DIVIDER_H=44;
+  const PRICE_H=n2Pendant.price>0?112:92;
+  const FOOTER_H=40;
+  const totalH=HEADER_H+CANVAS_SECTION+DIVIDER_H+rH1+rH2+rHP+PRICE_H+FOOTER_H;
+
+  const ec=document.createElement('canvas');
+  ec.width=W*SCALE; ec.height=totalH*SCALE;
+  const c=ec.getContext('2d');
+  c.scale(SCALE,SCALE);
+
+  // ── PALETTE (same as bracelet export) ────────────────────────
+  const BG1='#130208',BG2='#1e0510',BG3='#160309';
+  const GOLD_HI='#f5e080',GOLD_MID='#d4a830',GOLD_DIM='#8a6010',GOLD_LINE='#c9a040';
+  const TEXT_PRI='#ffffff',TEXT_SEC='#f0d8c0',TEXT_DIM='#c4a070',TEXT_THAI='#e8c8a0';
+  const PRICE_COL='#f5d560';
+  const BORDER='rgba(201,160,64,0.28)';
+
+  function roundRect(x,y,w,h,r,fill,stroke,sw=1){
+    c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+    c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+    c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);c.closePath();
+    if(fill){c.fillStyle=fill;c.fill();}
+    if(stroke){c.strokeStyle=stroke;c.lineWidth=sw;c.stroke();}
+  }
+  function goldLine(y,alpha=1,thick=1){
+    const g=c.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'transparent');g.addColorStop(0.1,`rgba(138,96,16,${alpha})`);
+    g.addColorStop(0.5,`rgba(213,175,64,${alpha})`);g.addColorStop(0.9,`rgba(138,96,16,${alpha})`);
+    g.addColorStop(1,'transparent');
+    c.save();c.strokeStyle=g;c.lineWidth=thick;
+    c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();c.restore();
+  }
+  function goldGrad(x0,x1){
+    const g=c.createLinearGradient(x0,0,x1,0);
+    g.addColorStop(0,GOLD_DIM);g.addColorStop(0.35,GOLD_MID);g.addColorStop(0.5,GOLD_HI);
+    g.addColorStop(0.65,GOLD_MID);g.addColorStop(1,GOLD_DIM);return g;
+  }
+
+  // ── BACKGROUND ───────────────────────────────────────────────
+  const bgG=c.createLinearGradient(0,0,0,totalH);
+  bgG.addColorStop(0,BG1);bgG.addColorStop(0.15,BG2);bgG.addColorStop(0.5,BG3);
+  bgG.addColorStop(0.85,BG2);bgG.addColorStop(1,BG1);
+  c.fillStyle=bgG;c.fillRect(0,0,W,totalH);
+
+  // subtle center glow
+  const vG=c.createRadialGradient(W/2,90,10,W/2,90,260);
+  vG.addColorStop(0,'rgba(120,20,40,0.30)');vG.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=vG;c.fillRect(0,0,W,HEADER_H+60);
+
+  // ── HEADER — logo + brand ─────────────────────────────────────
+  const logoEl=document.querySelector('.logo-gold-wrap img');
+  const logoSz=70;
+  const logoX=(W-logoSz)/2,logoY=18;
+  if(logoEl&&logoEl.complete){
+    c.save();
+    c.filter='grayscale(1) sepia(1) saturate(2.2) brightness(1.15) drop-shadow(0 0 8px rgba(213,175,64,0.6))';
+    c.drawImage(logoEl,logoX,logoY,logoSz,logoSz);
+    c.restore();
+  }
+
+  const brandY=logoY+logoSz+20;
+  c.textAlign='center';
+  c.fillStyle=goldGrad(W/2-130,W/2+130);
+  c.font='bold 22px "Trebuchet MS",Arial,sans-serif';
+  c.fillText('S O U L F U L  S P I R I T',W/2,brandY);
+  c.font='10px "Trebuchet MS",Arial,sans-serif';
+  c.fillStyle='rgba(213,175,64,0.48)';
+  c.fillText('C R Y S T A L  N E C K L A C E  D E S I G N E R',W/2,brandY+18);
+
+  goldLine(brandY+32,0.7,1);
+  c.fillStyle=GOLD_LINE;c.font='12px serif';c.textAlign='center';
+  c.fillText('✦',W/2-56,brandY+42);c.fillText('✦',W/2,brandY+42);c.fillText('✦',W/2+56,brandY+42);
+
+  // ── NECKLACE CANVAS ───────────────────────────────────────────
+  const cvY=HEADER_H+8;
+  roundRect(PAD-8,cvY-8,W-PAD*2+16,CVS_H+16,14,'rgba(255,255,255,0.012)',BORDER,1);
+  c.drawImage(designCvs,PAD,cvY,W-PAD*2,CVS_H);
+
+  // ── SECTION DIVIDER ───────────────────────────────────────────
+  let sy=HEADER_H+CANVAS_SECTION+4;
+  goldLine(sy,0.5);sy+=14;
+  c.textAlign='left';
+  c.font='bold 14px "Tahoma","Segoe UI",Arial,sans-serif';
+  c.fillStyle=goldGrad(PAD,PAD+200);
+  c.fillText('💎 สร้อยคอ 2 เม็ด + จี้',PAD,sy);
+  sy+=22;goldLine(sy,0.3);sy+=10;
+
+  // ── ROW HELPER ────────────────────────────────────────────────
+  function drawItemRow(label,s,ciKey,propLns,rHt,yStart,alt){
+    roundRect(PAD-8,yStart,W-PAD*2+16,rHt-4,10,alt?'rgba(255,255,255,0.025)':'rgba(255,255,255,0.015)',BORDER,0.6);
+    // label chip
+    c.font='bold 9px "Trebuchet MS",Arial,sans-serif';
+    c.fillStyle='rgba(201,160,64,0.5)';
+    c.textAlign='left';
+    c.fillText(label.toUpperCase(),PAD,yStart+14);
+    // circle image
+    const IR=22;const ix=PAD+IR,iy=yStart+26+IR;
+    c.save();c.beginPath();c.arc(ix,iy,IR,0,Math.PI*2);c.clip();
+    c.fillStyle='#1a0808';c.fill();
+    const ci=imgCache[ciKey];
+    if(ci&&ci.naturalWidth>0) c.drawImage(ci,ix-IR,iy-IR,IR*2,IR*2);
+    c.restore();
     // text
-    const tx=imgX+IMG_R+12;
-    ctx.textAlign='left';
-    ctx.fillStyle='rgba(201,160,64,0.6)'; ctx.font='600 9px sans-serif';
-    ctx.fillText(label.toUpperCase(), tx, yStart+14);
-    ctx.fillStyle='#f0dbb0'; ctx.font='700 13px sans-serif';
-    ctx.fillText(s.name, tx, yStart+28);
-    ctx.fillStyle='#8a7060'; ctx.font='400 11px sans-serif';
-    ctx.fillText((s.thai||'')+(s.size?' · '+s.size+'mm':''), tx, yStart+42);
-    // prop (meaning)
-    if(s.prop){
-      ctx.fillStyle='rgba(201,160,64,0.8)'; ctx.font='italic 10px sans-serif';
-      const propText='✦ '+s.prop;
-      // Wrap text to fit width
-      const maxW=W-PAD*2-tx-8;
-      const words=propText.split(' ');
-      let line=''; let lineY=yStart+56;
-      for(const w of words){
-        const test=line?line+' '+w:w;
-        if(ctx.measureText(test).width>maxW&&line){
-          ctx.fillText(line,tx,lineY); line=w; lineY+=13;
-          if(lineY>yStart+ROW_H-8) break;
-        } else { line=test; }
-      }
-      if(line&&lineY<=yStart+ROW_H-8) ctx.fillText(line,tx,lineY);
-    }
-    // Chakra pills
+    const tx=PAD+IR*2+14;
+    const avW=W-tx-PAD;
+    // name
+    c.font='bold 13px "Tahoma","Segoe UI",Arial,sans-serif';
+    c.fillStyle=TEXT_PRI;c.textAlign='left';
+    c.fillText(s.name,tx,yStart+22);
+    // thai + size
+    c.font='11px "Tahoma","Segoe UI",Arial,sans-serif';
+    c.fillStyle=TEXT_THAI;
+    const subLine=(s.thai||'')+(s.size?' · '+s.size+'mm':'');
+    if(subLine) c.fillText(subLine,tx,yStart+36);
+    // chakra pills inline
+    const CHAKRA_COLORS={root:'#ff6060',sacral:'#ff9040',solar:'#ffd040',heart:'#40c060',throat:'#4090ff',thirdeye:'#8050d0',crown:'#c060d0'};
+    const CHAKRA_LABELS={root:'Root',sacral:'Sacral',solar:'Solar',heart:'Heart',throat:'Throat',thirdeye:'3rd Eye',crown:'Crown'};
     if(s.chakra&&s.chakra.length){
-      const CHAKRA_COLORS={root:'#ff6060',sacral:'#ff9040',solar:'#ffd040',heart:'#40c060',throat:'#4090ff',thirdeye:'#8050d0',crown:'#c060d0'};
-      const CHAKRA_LABELS={root:'Root',sacral:'Sacral',solar:'Solar',heart:'Heart',throat:'Throat',thirdeye:'3rd Eye',crown:'Crown'};
-      ctx.font='600 9px sans-serif';
-      let px=tx; const pillY=yStart+ROW_H-14;
-      s.chakra.slice(0,3).forEach(cid=>{
+      c.font='bold 9px "Trebuchet MS",Arial,sans-serif';
+      let px=tx;const pillY=yStart+52;
+      s.chakra.slice(0,4).forEach(cid=>{
         const col=CHAKRA_COLORS[cid]||'#8a6040';
         const lbl=CHAKRA_LABELS[cid]||cid;
-        const tw=ctx.measureText(lbl).width;
-        const pw=tw+10;
-        ctx.fillStyle=col+'22'; ctx.strokeStyle=col+'88'; ctx.lineWidth=0.8;
-        _roundRect(ctx,px,pillY-10,pw,13,5); ctx.fill(); ctx.stroke();
-        ctx.fillStyle=col; ctx.fillText(lbl,px+5,pillY);
-        px+=pw+5;
+        const tw=c.measureText(lbl).width+12;
+        roundRect(px,pillY-9,tw,13,5,col+'22',col+'88',0.8);
+        c.fillStyle=col;c.fillText(lbl,px+6,pillY);
+        px+=tw+5;
       });
+    }
+    // prop lines
+    if(propLns.length>0){
+      c.font=PROP_FONT;c.fillStyle='rgba(213,175,64,0.75)';c.textAlign='left';
+      const propStartY=yStart+(s.chakra&&s.chakra.length?66:52);
+      propLns.forEach((ln,i)=>c.fillText(ln,tx,propStartY+i*PROP_LH));
     }
   }
 
-  drawStoneRow(n2Stone1,'หิน 1',y); y+=104;
-  drawStoneRow(n2Stone2,'หิน 2',y); y+=104;
+  drawItemRow('หิน 1',n2Stone1,n2Stone1.id,s1Lines,rH1,sy,false); sy+=rH1;
+  drawItemRow('หิน 2',n2Stone2,n2Stone2.id,s2Lines,rH2,sy,true);  sy+=rH2;
+  drawItemRow('จี้',n2Pendant,'d_'+n2Pendant.id,pLines,rHP,sy,false); sy+=rHP;
 
-  // ── Pendant row (simpler) ──
-  {
-    const ROW_H=60;
-    ctx.fillStyle='rgba(255,255,255,0.04)';
-    _roundRect(ctx,PAD,y,W-PAD*2,ROW_H,10); ctx.fill();
-    ctx.strokeStyle='rgba(201,160,64,0.2)'; ctx.lineWidth=0.5;
-    _roundRect(ctx,PAD,y,W-PAD*2,ROW_H,10); ctx.stroke();
-    const IMG_R=18;
-    const imgX=PAD+14+IMG_R, imgY=y+ROW_H/2;
-    ctx.save(); ctx.beginPath(); ctx.arc(imgX,imgY,IMG_R,0,Math.PI*2); ctx.clip();
-    ctx.fillStyle='#1a0808'; ctx.fill();
-    const pd=imgCache['d_'+n2Pendant.id];
-    if(pd&&pd.naturalWidth>0) ctx.drawImage(pd,imgX-IMG_R,imgY-IMG_R,IMG_R*2,IMG_R*2);
-    ctx.restore();
-    const tx=imgX+IMG_R+12;
-    ctx.textAlign='left';
-    ctx.fillStyle='rgba(201,160,64,0.6)'; ctx.font='600 9px sans-serif'; ctx.fillText('จี้', tx, y+16);
-    ctx.fillStyle='#f0dbb0'; ctx.font='700 13px sans-serif'; ctx.fillText(n2Pendant.name, tx, y+30);
-    if(n2Pendant.thai){ctx.fillStyle='#8a7060'; ctx.font='400 11px sans-serif'; ctx.fillText(n2Pendant.thai, tx, y+44);}
-    y+=ROW_H+8;
-  }
-
-  // ── Price summary ──
-  y+=4;
+  // ── PRICE BOX ─────────────────────────────────────────────────
+  sy+=6;
   const _pairBase=calcN2StoneBasePrice(n2Stone1,n2Stone2);
   const _pp=n2Pendant.price||0;
   const _stoneAmt=_pairBase!==null?_pairBase:((n2Stone1.price||0)+(n2Stone2.price||0));
   const _grand=N2_CHAIN_PRICE+_stoneAmt+_pp;
   const g1l=GRADE_LABELS[n2Stone1.grade]||n2Stone1.grade;
   const g2l=GRADE_LABELS[n2Stone2.grade]||n2Stone2.grade;
-  const PRICE_H=_pp>0?110:94;
-  ctx.fillStyle='rgba(201,160,64,0.07)';
-  _roundRect(ctx,PAD,y,W-PAD*2,PRICE_H,10); ctx.fill();
-  ctx.strokeStyle='rgba(201,160,64,0.25)'; ctx.lineWidth=0.8;
-  _roundRect(ctx,PAD,y,W-PAD*2,PRICE_H,10); ctx.stroke();
-  ctx.textAlign='left'; ctx.font='700 11px sans-serif'; ctx.fillStyle='#c9a040';
-  ctx.fillText('💰 สรุปราคา', PAD+10, y+16);
-  const _prow=(label,amt,yy,isBig)=>{
-    ctx.font=(isBig?'800':'400')+' '+(isBig?'14':'11')+'px sans-serif';
-    ctx.fillStyle=isBig?'#f0dbb0':'rgba(240,219,176,0.6)';
-    ctx.fillText(label,PAD+10,yy);
-    ctx.textAlign='right'; ctx.fillStyle=isBig?'#c9a040':'rgba(240,219,176,0.7)';
-    ctx.fillText('฿'+amt.toLocaleString(),W-PAD-10,yy);
-    ctx.textAlign='left';
-  };
-  let py2=y+32;
-  _prow('⛓ สายสร้อย',N2_CHAIN_PRICE,py2); py2+=18;
-  _prow('💎 หิน ('+g1l+'+'+g2l+')',_stoneAmt,py2); py2+=18;
-  if(_pp>0){_prow('📿 จี้',_pp,py2); py2+=18;}
-  // divider
-  ctx.strokeStyle='rgba(201,160,64,0.3)'; ctx.lineWidth=0.5;
-  ctx.beginPath(); ctx.moveTo(PAD+8,py2-6); ctx.lineTo(W-PAD-8,py2-6); ctx.stroke();
-  _prow('รวมทั้งหมด',_grand,py2+6,true);
-  y+=PRICE_H+PAD;
 
-  // ── Footer ──
-  ctx.textAlign='center'; ctx.font='400 9px sans-serif'; ctx.fillStyle='rgba(201,160,64,0.35)';
-  ctx.fillText('Soulful Spirit Jewelry  ·  soulful-spirit.com', W/2, y+6);
+  roundRect(PAD-8,sy,W-PAD*2+16,PRICE_H-4,10,'rgba(201,160,64,0.07)',BORDER,0.8);
+  c.font='bold 12px "Tahoma","Segoe UI",Arial,sans-serif';
+  c.fillStyle=GOLD_MID;c.textAlign='left';
+  c.fillText('💰 สรุปราคา',PAD,sy+16);
 
-  // ── Export ──
-  const dataUrl=off.toDataURL('image/jpeg',0.92);
-  const filename='soulful_necklace_'+new Date().toISOString().slice(0,10)+'.jpg';
-
-  // Mobile: try Web Share API first
-  if(navigator.share&&navigator.canShare){
-    try{
-      const blob=await(await fetch(dataUrl)).blob();
-      const file=new File([blob],filename,{type:'image/jpeg'});
-      if(navigator.canShare({files:[file]})){
-        await navigator.share({files:[file],title:'Soulful Spirit Necklace'});
-        showToast('✅ บันทึก/แชร์สำเร็จ!');
-        return;
-      }
-    }catch(e){if(e.name==='AbortError'){showToast('ยกเลิกการแชร์');return;}}
+  function priceRow(label,amt,y2,big){
+    c.font=(big?'bold 15px':'11px')+' "Tahoma","Segoe UI",Arial,sans-serif';
+    c.fillStyle=big?TEXT_PRI:'rgba(240,216,176,0.65)';c.textAlign='left';
+    c.fillText(label,PAD,y2);
+    c.textAlign='right';c.fillStyle=big?PRICE_COL:TEXT_DIM;
+    c.fillText('฿'+amt.toLocaleString(),W-PAD,y2);
+    c.textAlign='left';
   }
-  // Desktop / fallback: download link
-  const a=document.createElement('a'); a.href=dataUrl; a.download=filename; a.click();
-  showToast('✅ บันทึกภาพสร้อยคอแล้ว!');
+
+  let py=sy+32;
+  priceRow('⛓ สายสร้อย',N2_CHAIN_PRICE,py); py+=18;
+  priceRow('💎 หิน ('+g1l+'+'+g2l+')',_stoneAmt,py); py+=18;
+  if(_pp>0){priceRow('📿 จี้',_pp,py); py+=18;}
+  // divider
+  goldLine(py-4,0.25,0.5);
+  priceRow('รวมทั้งหมด',_grand,py+10,true);
+
+  // ── WATERMARK (identical to bracelet export) ──────────────────
+  c.save();
+  c.globalAlpha=0.18;c.fillStyle='#d4a830';
+  c.font='bold 15px "Trebuchet MS",Arial,sans-serif';c.textAlign='center';
+  const wmText='✦ Soulful Spirit ©';
+  const step=120;
+  for(let wy=-step;wy<totalH+step;wy+=step){
+    for(let wx=-W;wx<W*2;wx+=220){
+      c.save();c.translate(wx,wy);c.rotate(-Math.PI/8);c.fillText(wmText,0,0);c.restore();
+    }
+  }
+  c.restore();
+
+  // bottom watermark bar
+  const wmBarH=28,wmBarY=totalH-wmBarH;
+  const wmBarG=c.createLinearGradient(0,wmBarY,0,totalH);
+  wmBarG.addColorStop(0,'rgba(8,2,6,0.0)');wmBarG.addColorStop(0.3,'rgba(8,2,6,0.72)');wmBarG.addColorStop(1,'rgba(8,2,6,0.88)');
+  c.fillStyle=wmBarG;c.fillRect(0,wmBarY,W,wmBarH);
+  c.save();c.globalAlpha=0.7;
+  c.font='bold 11px "Trebuchet MS",Arial,sans-serif';c.fillStyle='#d4a830';c.textAlign='center';
+  c.fillText('✦  Soulful Spirit  ·  Crystal Necklace Designer  ·  © Soulful Spirit',W/2,totalH-9);
+  c.restore();
+
+  // ── EXPORT ───────────────────────────────────────────────────
+  const d=new Date();
+  const filename=`soulful-necklace-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.png`;
+  ec.toBlob(async(blob)=>{
+    if(navigator.share&&navigator.canShare){
+      const file=new File([blob],filename,{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Soulful Spirit Necklace'});showToast('✅ บันทึก/แชร์สำเร็จ!');return;}
+        catch(e){if(e.name==='AbortError'){showToast('ยกเลิกการแชร์');return;}}
+      }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    showToast('✅ บันทึกภาพสร้อยคอแล้ว!');
+  },'image/png');
 }
 
 // ── Shared helper: rounded rect path (used by saveN2Image) ──
