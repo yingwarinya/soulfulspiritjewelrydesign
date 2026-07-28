@@ -6063,7 +6063,7 @@ function _applyCloudData(data){
     data.decos.forEach(cd=>{
       const local = decos.find(d=>d.id===cd.id);
       if(local){
-        const MUTABLE = ['price','hidden','stock','unlimitedStock','name','thai','type','metal','prop'];
+        const MUTABLE = ['price','hidden','stock','unlimitedStock','name','thai','type','metal','prop','group','preorder','freeQty','tierPrice','w','h','size'];
         MUTABLE.forEach(k=>{ if(cd[k]!==undefined) local[k]=cd[k]; });
         // Restore image for custom decos that may not have img on this device
         if(cd.id>5000 && cd.img && !local.img){ local.img=cd.img; loadImg(cd.id,cd.img); }
