@@ -1,6 +1,6 @@
 {
-  "_version": 1785251379479,
-  "_updated": "2026-07-28T15:09:39.479Z",
+  "_version": 1785251400616,
+  "_updated": "2026-07-28T15:10:00.616Z",
   "stones": [
     {
       "id": 200,
@@ -5095,6 +5095,29 @@
         "องค์เทพ"
       ],
       "metal": "silver",
+      "preorder": true,
+      "hidden": false,
+      "gradient": [
+        "#e6e6e6",
+        "#b4b4b4"
+      ],
+      "unlimitedStock": true,
+      "stock": null
+    },
+    {
+      "id": 5150,
+      "name": "Tree of life (2) Pendant",
+      "thai": "จี้ Tree of life (2)",
+      "type": "pendant",
+      "size": 1,
+      "w": 11,
+      "h": 11,
+      "price": 1000,
+      "prop": "ต้นไม้แห่งชีวิต สัญลักษณ์ฺ ของความเป็นหนึ่งเดียวกับโลกใบนี้",
+      "group": [
+        "Tree of Life"
+      ],
+      "metal": "silver,rosegold",
       "preorder": true,
       "hidden": false,
       "gradient": [
