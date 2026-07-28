@@ -589,6 +589,8 @@
         <div id="n2CC_rosegold" onclick="setN2ChainColor('rosegold')" style="display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;cursor:pointer;border:2px solid rgba(210,140,110,.35);background:rgba(210,140,110,.08);font-size:11px;font-weight:600;color:#d08878;">🌸 โรสโกล</div>
       </div>
       <!-- Grade pair price — customer-visible, hidden when no pair match -->
+      <!-- Price list download button (always visible) -->
+      <button onclick="downloadN2PriceList()" style="width:100%;margin-top:10px;display:flex;align-items:center;justify-content:center;gap:6px;background:rgba(201,160,64,.08);border:1px solid rgba(201,160,64,.35);color:var(--gold3);border-radius:10px;padding:9px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:.5px;">📋 ดาวน์โหลดราคาสร้อยทั้งหมด</button>
       <div id="n2GradePrice" style="display:none;margin-top:10px;padding:9px 14px;background:rgba(201,160,64,.1);border:1px solid rgba(201,160,64,.3);border-radius:12px;text-align:center;"></div>
     </div>
     <!-- Hidden slot state holders (ไม่แสดง UI แต่ JS ยังใช้ ID เหล่านี้) -->
@@ -1891,6 +1893,212 @@ function _n2Pendant(ctx,cx,cy){
     ctx.fillStyle='rgba(201,160,64,0.35)'; ctx.font='bold 11px sans-serif';
     ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('+ จี้',cx,cy); ctx.restore();
   }
+}
+
+async function downloadN2PriceList(){
+  showToast('⏳ กำลังสร้างภาพราคา...');
+  await new Promise(r=>setTimeout(r,30)); // let toast show
+
+  // ── DIMENSIONS ──────────────────────────────────────────────
+  const SCALE=2;
+  const _physW=Math.round((screen.width||window.innerWidth)*(window.devicePixelRatio||1));
+  const W=Math.min(600,_physW>0?Math.floor(_physW/SCALE):600);
+  const PAD=26;
+
+  // ── PALETTE (same as bracelet export) ────────────────────────
+  const BG1='#130208',BG2='#1e0510',BG3='#160309';
+  const GOLD_HI='#f5e080',GOLD_MID='#d4a830',GOLD_DIM='#8a6010',GOLD_LINE='#c9a040';
+  const TEXT_PRI='#ffffff',TEXT_SEC='#f0d8c0',TEXT_DIM='#c4a070';
+  const PRICE_COL='#f5d560';
+  const BORDER='rgba(201,160,64,0.28)';
+  const CARD_BG='rgba(255,255,255,0.025)';
+  const CARD_ALT='rgba(201,160,64,0.05)';
+
+  // ── ROW DATA ─────────────────────────────────────────────────
+  const pairs=[
+    {key:'starter-starter', g1:'🌱 เริ่มต้น', g2:'🌱 เริ่มต้น'},
+    {key:'premium-starter', g1:'✦ พรีเมียม',  g2:'🌱 เริ่มต้น'},
+    {key:'premium-premium', g1:'✦ พรีเมียม',  g2:'✦ พรีเมียม'},
+    {key:'gem-starter',     g1:'💎 อัญมณี',  g2:'🌱 เริ่มต้น'},
+    {key:'gem-premium',     g1:'💎 อัญมณี',  g2:'✦ พรีเมียม'},
+    {key:'gem-gem',         g1:'💎 อัญมณี',  g2:'💎 อัญมณี'},
+  ];
+
+  // ── LAYOUT ───────────────────────────────────────────────────
+  const HEADER_H=165;
+  const CHAIN_NOTE_H=44;
+  const COL_HEAD_H=32;
+  const ROW_H=52;
+  const CHAIN_ROW_H=44;
+  const PENDANT_NOTE_H=64;
+  const FOOTER_H=48;
+  const totalH=HEADER_H+CHAIN_NOTE_H+COL_HEAD_H+(ROW_H*pairs.length)+CHAIN_ROW_H+PENDANT_NOTE_H+FOOTER_H;
+
+  const ec=document.createElement('canvas');
+  ec.width=W*SCALE; ec.height=totalH*SCALE;
+  const c=ec.getContext('2d');
+  c.scale(SCALE,SCALE);
+
+  // ── HELPERS ──────────────────────────────────────────────────
+  function roundRect(x,y,w,h,r,fill,stroke,sw=1){
+    c.beginPath();c.moveTo(x+r,y);c.lineTo(x+w-r,y);c.quadraticCurveTo(x+w,y,x+w,y+r);
+    c.lineTo(x+w,y+h-r);c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);c.lineTo(x+r,y+h);
+    c.quadraticCurveTo(x,y+h,x,y+h-r);c.lineTo(x,y+r);c.quadraticCurveTo(x,y,x+r,y);
+    c.closePath();
+    if(fill){c.fillStyle=fill;c.fill();}
+    if(stroke){c.strokeStyle=stroke;c.lineWidth=sw;c.stroke();}
+  }
+  function goldLine(y,alpha=1,thick=1){
+    const g=c.createLinearGradient(0,0,W,0);
+    g.addColorStop(0,'transparent');g.addColorStop(0.1,`rgba(138,96,16,${alpha})`);
+    g.addColorStop(0.5,`rgba(213,175,64,${alpha})`);g.addColorStop(0.9,`rgba(138,96,16,${alpha})`);
+    g.addColorStop(1,'transparent');
+    c.save();c.strokeStyle=g;c.lineWidth=thick;c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();c.restore();
+  }
+  function goldGrad(x0,x1){
+    const g=c.createLinearGradient(x0,0,x1,0);
+    g.addColorStop(0,GOLD_DIM);g.addColorStop(0.35,GOLD_MID);g.addColorStop(0.5,GOLD_HI);
+    g.addColorStop(0.65,GOLD_MID);g.addColorStop(1,GOLD_DIM);return g;
+  }
+  function gradeBadge(txt,x,cy){
+    c.font='bold 11px "Trebuchet MS",Arial,sans-serif';
+    const tw=c.measureText(txt).width+18;
+    roundRect(x,cy-11,tw,22,7,CARD_ALT,'rgba(201,160,64,0.3)',0.8);
+    c.fillStyle=TEXT_SEC;c.textAlign='left';c.fillText(txt,x+9,cy+4);
+    return tw;
+  }
+
+  // ── BACKGROUND ───────────────────────────────────────────────
+  const bgG=c.createLinearGradient(0,0,0,totalH);
+  bgG.addColorStop(0,BG1);bgG.addColorStop(0.15,BG2);bgG.addColorStop(0.5,BG3);
+  bgG.addColorStop(0.85,BG2);bgG.addColorStop(1,BG1);
+  c.fillStyle=bgG;c.fillRect(0,0,W,totalH);
+  const vG=c.createRadialGradient(W/2,80,10,W/2,80,240);
+  vG.addColorStop(0,'rgba(120,20,40,0.25)');vG.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=vG;c.fillRect(0,0,W,HEADER_H);
+
+  // ── HEADER ───────────────────────────────────────────────────
+  const logoEl=document.querySelector('.logo-gold-wrap img');
+  const logoSz=60;const logoX=(W-logoSz)/2,logoY=14;
+  if(logoEl&&logoEl.complete){
+    c.save();
+    c.filter='grayscale(1) sepia(1) saturate(2.2) brightness(1.15) drop-shadow(0 0 8px rgba(213,175,64,0.6))';
+    c.drawImage(logoEl,logoX,logoY,logoSz,logoSz);
+    c.restore();
+  }
+  const brandY=logoY+logoSz+16;
+  c.textAlign='center';
+  c.fillStyle=goldGrad(W/2-110,W/2+110);
+  c.font='bold 20px "Trebuchet MS",Arial,sans-serif';
+  c.fillText('S O U L F U L  S P I R I T',W/2,brandY);
+  c.font='9px "Trebuchet MS",Arial,sans-serif';
+  c.fillStyle='rgba(213,175,64,0.45)';
+  c.fillText('C R Y S T A L  N E C K L A C E  D E S I G N E R',W/2,brandY+16);
+  goldLine(brandY+28,0.6,1);
+  c.fillStyle=GOLD_LINE;c.font='11px serif';c.textAlign='center';
+  c.fillText('✦',W/2-44,brandY+38);c.fillText('✦',W/2,brandY+38);c.fillText('✦',W/2+44,brandY+38);
+
+  // Section title
+  let sy=brandY+50;
+  c.font='bold 15px "Tahoma","Segoe UI",Arial,sans-serif';
+  c.fillStyle=goldGrad(W/2-120,W/2+120);c.textAlign='center';
+  c.fillText('💎 ราคาสร้อยคอ 2 เม็ด + จี้',W/2,sy);
+  sy+=8;goldLine(sy,0.4);
+
+  // ── CHAIN NOTE ────────────────────────────────────────────────
+  sy+=10;
+  roundRect(PAD,sy,W-PAD*2,CHAIN_NOTE_H-8,8,CARD_ALT,'rgba(201,160,64,0.2)',0.7);
+  c.font='11px "Tahoma","Segoe UI",Arial,sans-serif';c.fillStyle=TEXT_DIM;c.textAlign='left';
+  c.fillText('ราคาด้านล่างรวม ค่าสายสร้อย ฿'+N2_CHAIN_PRICE.toLocaleString()+' แล้ว  ·  ยังไม่รวมราคาจี้',PAD+10,sy+14);
+  c.fillStyle='rgba(201,160,64,0.5)';c.font='10px "Trebuchet MS",Arial,sans-serif';
+  c.fillText('ราคาอาจเปลี่ยนแปลงได้ตามชนิดหินพิเศษ',PAD+10,sy+28);
+  sy+=CHAIN_NOTE_H;
+
+  // ── COLUMN HEADERS ───────────────────────────────────────────
+  c.font='bold 10px "Trebuchet MS",Arial,sans-serif';c.fillStyle='rgba(213,175,64,0.6)';
+  c.textAlign='left';c.fillText('หินเม็ดที่ 1',PAD,sy+COL_HEAD_H-10);
+  c.textAlign='center';c.fillText('หินเม็ดที่ 2',W*0.5,sy+COL_HEAD_H-10);
+  c.textAlign='right';c.fillText('ราคารวม',W-PAD,sy+COL_HEAD_H-10);
+  sy+=COL_HEAD_H-4;goldLine(sy,0.2);sy+=6;
+
+  // ── PAIR ROWS ─────────────────────────────────────────────────
+  pairs.forEach((p,ri)=>{
+    const price=n2GradePairPrices[p.key]||N2_GRADE_PAIR_DEFAULT[p.key]||0;
+    const total=price; // already includes chain in display convention — actually no, let's show stone+chain
+    const totalWithChain=price+N2_CHAIN_PRICE;
+    // actually n2GradePairPrices is stone-only, total = stone + chain
+    const isAlt=ri%2===1;
+    roundRect(PAD,sy,W-PAD*2,ROW_H-4,9,isAlt?CARD_ALT:CARD_BG,BORDER,0.5);
+    const cy=sy+ROW_H/2-2;
+    // Grade 1 badge
+    const b1w=gradeBadge(p.g1,PAD+6,cy);
+    // + separator
+    c.font='bold 13px "Trebuchet MS",Arial,sans-serif';c.fillStyle='rgba(201,160,64,0.4)';
+    c.textAlign='left';c.fillText('+',PAD+6+b1w+4,cy+5);
+    // Grade 2 badge
+    gradeBadge(p.g2,W*0.5-4,cy);
+    // Price
+    c.font='bold 16px "Trebuchet MS",Arial,sans-serif';
+    c.fillStyle=PRICE_COL;c.textAlign='right';
+    c.fillText('฿'+totalWithChain.toLocaleString(),W-PAD-6,cy+6);
+    sy+=ROW_H;
+  });
+
+  // ── CHAIN PRICE ROW ───────────────────────────────────────────
+  sy+=4;goldLine(sy,0.3);sy+=6;
+  roundRect(PAD,sy,W-PAD*2,CHAIN_ROW_H-4,8,CARD_ALT,'rgba(201,160,64,0.2)',0.6);
+  c.font='11px "Tahoma","Segoe UI",Arial,sans-serif';c.fillStyle=TEXT_DIM;c.textAlign='left';
+  c.fillText('⛓ รวมค่าสายสร้อย ฿'+N2_CHAIN_PRICE.toLocaleString()+' ในทุกราคาข้างต้นแล้ว',PAD+10,sy+16);
+  c.fillStyle='rgba(201,160,64,0.5)';c.font='10px "Trebuchet MS",Arial,sans-serif';
+  c.fillText('(ราคาข้างต้น = ค่าหิน 2 เม็ด + ค่าสายสร้อย)',PAD+10,sy+30);
+  sy+=CHAIN_ROW_H;
+
+  // ── PENDANT NOTE ──────────────────────────────────────────────
+  sy+=4;
+  roundRect(PAD,sy,W-PAD*2,PENDANT_NOTE_H-4,8,'rgba(100,50,100,0.12)','rgba(180,100,200,0.3)',0.7);
+  c.font='bold 11px "Tahoma","Segoe UI",Arial,sans-serif';c.fillStyle='rgba(220,160,240,0.9)';c.textAlign='left';
+  c.fillText('📿 ราคาจี้คิดแยกต่างหาก',PAD+10,sy+16);
+  c.font='10px "Tahoma","Segoe UI",Arial,sans-serif';c.fillStyle='rgba(200,160,220,0.65)';
+  c.fillText('ราคาสุทธิ = ราคาสร้อยในตาราง + ราคาจี้ที่เลือก',PAD+10,sy+30);
+  c.fillText('สอบถามราคาจี้แต่ละชิ้นได้จากหน้าออกแบบ',PAD+10,sy+44);
+  sy+=PENDANT_NOTE_H;
+
+  // ── WATERMARK ─────────────────────────────────────────────────
+  c.save();c.globalAlpha=0.15;c.fillStyle='#d4a830';
+  c.font='bold 14px "Trebuchet MS",Arial,sans-serif';c.textAlign='center';
+  const wmText='✦ Soulful Spirit ©';
+  for(let wy=-100;wy<totalH+100;wy+=110){
+    for(let wx=-W;wx<W*2;wx+=210){
+      c.save();c.translate(wx,wy);c.rotate(-Math.PI/8);c.fillText(wmText,0,0);c.restore();
+    }
+  }
+  c.restore();
+
+  const wmBarY=totalH-30;
+  const wmG=c.createLinearGradient(0,wmBarY,0,totalH);
+  wmG.addColorStop(0,'rgba(8,2,6,0)');wmG.addColorStop(0.4,'rgba(8,2,6,0.75)');wmG.addColorStop(1,'rgba(8,2,6,0.9)');
+  c.fillStyle=wmG;c.fillRect(0,wmBarY,W,30);
+  c.save();c.globalAlpha=0.7;c.font='bold 10px "Trebuchet MS",Arial,sans-serif';
+  c.fillStyle='#d4a830';c.textAlign='center';
+  c.fillText('✦  Soulful Spirit  ·  Crystal Necklace Designer  ·  © Soulful Spirit',W/2,totalH-10);
+  c.restore();
+
+  // ── EXPORT ────────────────────────────────────────────────────
+  const d=new Date();
+  const filename=`soulful-pricelist-n2-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.png`;
+  ec.toBlob(async(blob)=>{
+    if(navigator.share&&navigator.canShare){
+      const file=new File([blob],filename,{type:'image/png'});
+      if(navigator.canShare({files:[file]})){
+        try{await navigator.share({files:[file],title:'Soulful Spirit Price List'});showToast('✅ บันทึก/แชร์สำเร็จ!');return;}
+        catch(e){if(e.name==='AbortError'){showToast('ยกเลิกการแชร์');return;}}
+      }
+    }
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download=filename;a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),3000);
+    showToast('✅ ดาวน์โหลดราคาสร้อยแล้ว!');
+  },'image/png');
 }
 
 async function saveN2Image(){
