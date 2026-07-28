@@ -1,6 +1,6 @@
 {
-  "_version": 1785251596635,
-  "_updated": "2026-07-28T15:13:16.635Z",
+  "_version": 1785251602893,
+  "_updated": "2026-07-28T15:13:22.893Z",
   "stones": [
     {
       "id": 200,
@@ -2316,7 +2316,7 @@
         "#afafaf"
       ],
       "group": [
-        "Tree of Life"
+        "จี้ Tree of Life"
       ],
       "unlimitedStock": true,
       "stock": null
