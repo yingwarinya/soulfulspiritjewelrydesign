@@ -1,6 +1,6 @@
 {
-  "_version": 1785251561480,
-  "_updated": "2026-07-28T15:12:41.480Z",
+  "_version": 1785251596635,
+  "_updated": "2026-07-28T15:13:16.635Z",
   "stones": [
     {
       "id": 200,
@@ -5118,14 +5118,14 @@
       "price": 1000,
       "prop": "ต้นไม้แห่งชีวิต สัญลักษณ์ฺ ของความเป็นหนึ่งเดียวกับโลกใบนี้",
       "group": [
-        "Tree of Life"
+        "จี้ Tree of Life"
       ],
       "metal": "silver,rosegold",
       "preorder": true,
       "hidden": false,
       "gradient": [
-        "#e6e6e6",
-        "#b4b4b4"
+        "#ebebeb",
+        "#afafaf"
       ],
       "unlimitedStock": true,
       "stock": null
