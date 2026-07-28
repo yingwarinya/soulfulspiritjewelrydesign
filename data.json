@@ -1,6 +1,6 @@
 {
-  "_version": 1785251400616,
-  "_updated": "2026-07-28T15:10:00.616Z",
+  "_version": 1785251414722,
+  "_updated": "2026-07-28T15:10:14.722Z",
   "stones": [
     {
       "id": 200,
@@ -2337,6 +2337,9 @@
       "gradient": [
         "#ecc363",
         "#b08727"
+      ],
+      "group": [
+        "Tree of Life"
       ],
       "unlimitedStock": true,
       "stock": null
