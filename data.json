@@ -1,6 +1,6 @@
 {
-  "_version": 1785251623800,
-  "_updated": "2026-07-28T15:13:43.800Z",
+  "_version": 1785251755389,
+  "_updated": "2026-07-28T15:15:55.389Z",
   "stones": [
     {
       "id": 200,
@@ -2315,11 +2315,8 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "group": [
-        "จี้ Tree of Life"
-      ],
-      "unlimitedStock": true,
-      "stock": null
+      "stock": null,
+      "unlimitedStock": true
     },
     {
       "id": 5005,
@@ -2338,11 +2335,8 @@
         "#ecc363",
         "#b08727"
       ],
-      "group": [
-        "จี้ Tree of Life"
-      ],
-      "unlimitedStock": true,
-      "stock": null
+      "stock": null,
+      "unlimitedStock": true
     },
     {
       "id": 5006,
@@ -4757,7 +4751,7 @@
       "thai": "ชาร์มจิ้งจอกเก้าหาง สีเงิน",
       "type": "charm",
       "size": 10,
-      "w": 7,
+      "w": 10,
       "h": 10,
       "price": 500,
       "prop": "นำโชค",
@@ -4768,11 +4762,11 @@
       "preorder": false,
       "hidden": false,
       "gradient": [
-        "#ebebeb",
-        "#afafaf"
+        "#e6e6e6",
+        "#b4b4b4"
       ],
-      "unlimitedStock": true,
-      "stock": null
+      "stock": null,
+      "unlimitedStock": true
     },
     {
       "id": 5135,
@@ -4780,7 +4774,7 @@
       "thai": "ชาร์มจิ้งจอกเก้าหาง สีทอง",
       "type": "charm",
       "size": 10,
-      "w": 7,
+      "w": 10,
       "h": 10,
       "price": 500,
       "prop": "นำโชค",
@@ -4794,8 +4788,8 @@
         "#ecc363",
         "#b08727"
       ],
-      "unlimitedStock": true,
-      "stock": null
+      "stock": null,
+      "unlimitedStock": true
     },
     {
       "id": 5136,
@@ -5005,9 +4999,9 @@
       "name": "Silver Celestial Hamsa Hand Charm",
       "thai": "ชาร์มหัตถ์พระหัตถ์คุ้มครองภัย สีเงิน",
       "type": "charm",
-      "size": 10,
+      "size": 11,
       "w": 6,
-      "h": 10,
+      "h": 11,
       "price": 500,
       "prop": "สัญลักษณ์สากลแห่งการปกป้องคุ้มครองขั้นสุด ช่วยปัดเป่าพลังงานลบและสิ่งไม่ดี พร้อมพลังจากดวงอาทิตย์และพระจันทร์ที่ช่วยนำพาสมดุล โชคลาภ และความเจริญรุ่งเรือง",
       "metal": "silver",
