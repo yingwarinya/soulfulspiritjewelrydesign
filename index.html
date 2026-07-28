@@ -5946,6 +5946,8 @@ function _buildCloudData(){
     }),
     decos: decos.map(d => {
       const {img, img2, ...meta} = d;
+      // Custom decos (id > 5000) carry their image in cloud data so other devices can see them
+      if(d.id > 5000 && img) meta.img = img;
       return meta;
     })
   };
@@ -6063,8 +6065,12 @@ function _applyCloudData(data){
       if(local){
         const MUTABLE = ['price','hidden','stock','unlimitedStock','name','thai','type','metal','prop'];
         MUTABLE.forEach(k=>{ if(cd[k]!==undefined) local[k]=cd[k]; });
+        // Restore image for custom decos that may not have img on this device
+        if(cd.id>5000 && cd.img && !local.img){ local.img=cd.img; loadImg(cd.id,cd.img); }
       } else if(cd.name && cd.id>105){
-        decos.push({...cd, img:'', img2:''});
+        // Restore image from cloud data if present (custom decos carry img for cross-device visibility)
+        decos.push({...cd, img:cd.img||'', img2:''});
+        if(cd.img) loadImg(cd.id, cd.img);
       }
     });
   }
