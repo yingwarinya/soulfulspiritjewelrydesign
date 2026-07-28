@@ -1934,11 +1934,10 @@ async function downloadN2PriceList(){
   showToast('⏳ กำลังสร้างภาพราคา...');
   await new Promise(r=>setTimeout(r,30)); // let toast show
 
-  // ── DIMENSIONS ──────────────────────────────────────────────
+  // ── DIMENSIONS — fixed width for cross-device consistency ──
   const SCALE=2;
-  const _physW=Math.round((screen.width||window.innerWidth)*(window.devicePixelRatio||1));
-  const W=Math.min(600,_physW>0?Math.floor(_physW/SCALE):600);
-  const PAD=26;
+  const W=600;
+  const PAD=30;
 
   // ── PALETTE (same as bracelet export) ────────────────────────
   const BG1='#130208',BG2='#1e0510',BG3='#160309';
@@ -2015,10 +2014,12 @@ async function downloadN2PriceList(){
   // ── HEADER ───────────────────────────────────────────────────
   const logoEl=document.querySelector('.logo-gold-wrap img');
   const logoSz=60;const logoX=(W-logoSz)/2,logoY=14;
-  if(logoEl&&logoEl.complete){
+  if(logoEl&&logoEl.complete&&logoEl.naturalWidth>0){
     c.save();
-    c.filter='grayscale(1) sepia(1) saturate(2.2) brightness(1.15) drop-shadow(0 0 8px rgba(213,175,64,0.6))';
+    c.shadowColor='rgba(213,175,64,0.7)'; c.shadowBlur=14;
+    c.filter='grayscale(1) sepia(1) saturate(2.2) brightness(1.15)';
     c.drawImage(logoEl,logoX,logoY,logoSz,logoSz);
+    c.filter='none';
     c.restore();
   }
   const brandY=logoY+logoSz+16;
@@ -2033,11 +2034,14 @@ async function downloadN2PriceList(){
   c.fillStyle=GOLD_LINE;c.font='11px serif';c.textAlign='center';
   c.fillText('✦',W/2-44,brandY+38);c.fillText('✦',W/2,brandY+38);c.fillText('✦',W/2+44,brandY+38);
 
-  // Section title
+  // Section title — split emoji from text (emoji+gradient = invisible on mobile Safari)
   let sy=brandY+50;
   c.font='bold 15px "Tahoma","Segoe UI",Arial,sans-serif';
-  c.fillStyle=goldGrad(W/2-120,W/2+120);c.textAlign='center';
-  c.fillText('💎 ราคาสร้อยคอ 2 เม็ด + จี้',W/2,sy);
+  const _tE='💎 ';const _tB='ราคาสร้อยคอ 2 เม็ด + จี้';
+  const _tEW=c.measureText(_tE).width;const _tBW=c.measureText(_tB).width;
+  const _tLX=W/2-(_tEW+_tBW)/2;
+  c.fillStyle=GOLD_MID;c.textAlign='left';c.fillText(_tE,_tLX,sy);
+  c.fillStyle=goldGrad(_tLX+_tEW,_tLX+_tEW+_tBW);c.fillText(_tB,_tLX+_tEW,sy);
   sy+=8;goldLine(sy,0.4);
 
   // ── CHAIN NOTE ────────────────────────────────────────────────
