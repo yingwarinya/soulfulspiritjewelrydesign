@@ -6187,6 +6187,13 @@ async function loadData(){
             decos.push(bi);
           }
         } else {
+          // Merge fields from hardcoded seed that may be missing in old localStorage (e.g. group added later)
+          const _sd=_seedDecosAll.find(x=>x.id===sd.id);
+          if(_sd){
+            if(!sd.group&&_sd.group) sd.group=_sd.group;
+            if(!sd.prop&&_sd.prop) sd.prop=_sd.prop;
+            if(!sd.img&&_sd.img) sd.img=_sd.img;
+          }
           try{ const img=await dbGet('deco_'+sd.id); if(img){ sd.img=img; _migrateDecoJpeg(sd); } }catch(e){}
           try{ const img2=await dbGet('deco_'+sd.id+'_2'); if(img2) sd.img2=img2; }catch(e){}
           decos.push(sd);
