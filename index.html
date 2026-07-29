@@ -6267,7 +6267,8 @@ function _updateSyncUI(){
   if(tokenInput && token) tokenInput.placeholder = '●●●●●●●●●●●● (บันทึกแล้ว)';
 }
 
-// ── Build data payload (metadata only, no images) ──
+// ── Build data payload (metadata only, no images — keeps data.json small) ──
+// Images for custom decos are handled via decoImages.json → upload_github.py bake
 function _buildCloudData(){
   return {
     _version: Date.now(),
@@ -6278,9 +6279,7 @@ function _buildCloudData(){
     }),
     decos: decos.map(d => {
       const {img, img2, ...meta} = d;
-      // Custom decos (id > 5000) carry their image in cloud data so other devices can see them
-      if(d.id > 5000 && img) meta.img = img;
-      return meta;
+      return meta; // images stripped — keeps sync small & reliable
     })
   };
 }
