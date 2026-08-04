@@ -1,6 +1,6 @@
 {
-  "_version": 1785854608275,
-  "_updated": "2026-08-04T14:43:28.275Z",
+  "_version": 1785854645286,
+  "_updated": "2026-08-04T14:44:05.287Z",
   "stones": [
     {
       "id": 200,
@@ -4748,12 +4748,14 @@
         "Clover"
       ],
       "metal": "silver,rosegold",
-      "preorder": false,
+      "preorder": true,
       "hidden": false,
       "gradient": [
         "#ebebeb",
         "#afafaf"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5133,
