@@ -1,6 +1,6 @@
 {
-  "_version": 1785855796793,
-  "_updated": "2026-08-04T15:03:16.793Z",
+  "_version": 1785856416678,
+  "_updated": "2026-08-04T15:13:36.678Z",
   "stones": [
     {
       "id": 200,
@@ -1994,6 +1994,34 @@
         "#d0b0e6"
       ],
       "n2Surcharge": 0,
+      "unlimitedStock": true,
+      "stock": null
+    },
+    {
+      "id": 281,
+      "name": "Silver Rutilated Quartz",
+      "thai": "ไหมเงิน",
+      "sku": "BL002-J",
+      "size": 8.5,
+      "price": 1444,
+      "n2Surcharge": 0,
+      "chakra": [
+        "thirdeye",
+        "crown"
+      ],
+      "grade": "gem",
+      "prop": "เสริมโชคลาภ ดึงดูดเงินทอง ชำระล้างพลังงานลบ และปกป้องคุ้มครอง",
+      "tags": [
+        "protect",
+        "wealth",
+        "calm",
+        "success"
+      ],
+      "hidden": false,
+      "gradient": [
+        "#ffc3d3",
+        "#cf8797"
+      ],
       "unlimitedStock": true,
       "stock": null
     }
