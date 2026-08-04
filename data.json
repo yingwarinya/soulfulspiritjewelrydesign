@@ -1,6 +1,6 @@
 {
-  "_version": 1785855743861,
-  "_updated": "2026-08-04T15:02:23.861Z",
+  "_version": 1785855757373,
+  "_updated": "2026-08-04T15:02:37.373Z",
   "stones": [
     {
       "id": 200,
@@ -1972,8 +1972,8 @@
     },
     {
       "id": 280,
-      "name": "Snow Golden Rutilated Quartz (2)",
-      "thai": "ไหมหิมะทองคำ (2)",
+      "name": "Snow Golden Rutilated Quartz",
+      "thai": "ไหมหิมะทองคำ",
       "sku": "BL066-J-2",
       "size": 9,
       "price": 2222,
@@ -1990,8 +1990,8 @@
       ],
       "hidden": false,
       "gradient": [
-        "#e9c9ff",
-        "#ad8dcd"
+        "#ffecff",
+        "#d0b0e6"
       ],
       "n2Surcharge": 0,
       "unlimitedStock": true,
