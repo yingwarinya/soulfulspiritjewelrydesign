@@ -1,6 +1,6 @@
 {
-  "_version": 1785925921183,
-  "_updated": "2026-08-05T10:32:01.183Z",
+  "_version": 1785925929083,
+  "_updated": "2026-08-05T10:32:09.083Z",
   "stones": [
     {
       "id": 200,
@@ -2049,8 +2049,8 @@
     },
     {
       "id": 151,
-      "name": "Logo Charm Silver with Diamonds (6mm)",
-      "thai": "Logo เงิน มีเพขร (6mm)",
+      "name": "Logo Charm Silver with Diamonds (4mm)",
+      "thai": "Logo เงิน มีเพขร (4mm)",
       "type": "logo",
       "metal": "silver",
       "size": 4,
