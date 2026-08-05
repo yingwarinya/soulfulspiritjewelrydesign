@@ -1,6 +1,6 @@
 {
-  "_version": 1785926065878,
-  "_updated": "2026-08-05T10:34:25.878Z",
+  "_version": 1785926140049,
+  "_updated": "2026-08-05T10:35:40.049Z",
   "stones": [
     {
       "id": 200,
@@ -2046,28 +2046,6 @@
       "preorder": false,
       "freeQty": 1,
       "tierPrice": 500
-    },
-    {
-      "id": 151,
-      "name": "Logo Charm Silver with Diamonds (4mm)",
-      "thai": "Logo เงิน มีเพขร (4mm)",
-      "type": "logo",
-      "metal": "silver",
-      "size": 4,
-      "w": 4,
-      "h": 4,
-      "price": 500,
-      "prop": "",
-      "gradient": [
-        "#ebebeb",
-        "#afafaf"
-      ],
-      "hidden": false,
-      "preorder": false,
-      "freeQty": 1,
-      "tierPrice": 500,
-      "unlimitedStock": true,
-      "stock": null
     },
     {
       "id": 152,
@@ -5214,6 +5192,28 @@
       ],
       "unlimitedStock": true,
       "stock": null
+    },
+    {
+      "id": 1,
+      "type": "logo",
+      "name": "Logo Charm Silver with Diamonds (4mm)",
+      "thai": "โลโก้ชาร์ม Silver (4mm)",
+      "size": 4,
+      "price": 500,
+      "freeQty": 1,
+      "metal": "silver",
+      "gradient": [
+        "#ebebeb",
+        "#afafaf"
+      ],
+      "hidden": false,
+      "preorder": false,
+      "prop": "",
+      "w": 4,
+      "h": 4,
+      "unlimitedStock": true,
+      "stock": null,
+      "tierPrice": 500
     }
   ]
 }
