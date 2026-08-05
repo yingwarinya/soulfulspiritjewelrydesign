@@ -1,6 +1,6 @@
 {
-  "_version": 1785925907863,
-  "_updated": "2026-08-05T10:31:47.863Z",
+  "_version": 1785925921183,
+  "_updated": "2026-08-05T10:32:01.183Z",
   "stones": [
     {
       "id": 200,
@@ -2071,13 +2071,13 @@
     },
     {
       "id": 152,
-      "name": "Logo Charm Silver with Diamonds (8mm)",
-      "thai": "Logo เงิน มีเพชร (8mm)",
+      "name": "Logo Charm Silver with Diamonds (6mm)",
+      "thai": "Logo เงิน มีเพชร (6mm)",
       "type": "logo",
       "metal": "silver",
-      "size": 8,
-      "w": 8,
-      "h": 8,
+      "size": 6,
+      "w": 6,
+      "h": 6,
       "price": 500,
       "prop": "",
       "gradient": [
@@ -2087,7 +2087,9 @@
       "hidden": false,
       "preorder": false,
       "freeQty": 1,
-      "tierPrice": 500
+      "tierPrice": 500,
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 154,
