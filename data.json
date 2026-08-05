@@ -1,6 +1,6 @@
 {
-  "_version": 1785927124154,
-  "_updated": "2026-08-05T10:52:04.154Z",
+  "_version": 1785927327382,
+  "_updated": "2026-08-05T10:55:27.382Z",
   "stones": [
     {
       "id": 200,
@@ -2171,28 +2171,6 @@
       "group": [
         "จี้องค์เทพ"
       ]
-    },
-    {
-      "id": 160,
-      "name": "Logo Charm Gold with Diamonds (4mm)",
-      "thai": "Logo ทอง มีเพขร (4mm)",
-      "type": "logo",
-      "metal": "gold",
-      "size": 4,
-      "w": 4,
-      "h": 4,
-      "price": 500,
-      "prop": "",
-      "gradient": [
-        "#ecc363",
-        "#b08727"
-      ],
-      "hidden": false,
-      "preorder": false,
-      "freeQty": 1,
-      "tierPrice": 500,
-      "unlimitedStock": true,
-      "stock": null
     },
     {
       "id": 161,
@@ -5234,6 +5212,28 @@
       "preorder": false,
       "freeQty": 1,
       "tierPrice": 500
+    },
+    {
+      "id": 160,
+      "name": "Logo Charm Gold with Diamonds (4mm)",
+      "thai": "Logo ทอง มีเพขร (4mm)",
+      "type": "logo",
+      "metal": "gold",
+      "size": 4,
+      "w": 4,
+      "h": 4,
+      "price": 500,
+      "prop": "",
+      "gradient": [
+        "#ecc363",
+        "#b08727"
+      ],
+      "hidden": false,
+      "preorder": false,
+      "freeQty": 1,
+      "tierPrice": 500,
+      "stock": null,
+      "unlimitedStock": true
     }
   ]
 }
