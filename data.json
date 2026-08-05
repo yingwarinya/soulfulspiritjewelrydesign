@@ -1,6 +1,6 @@
 {
-  "_version": 1785926051101,
-  "_updated": "2026-08-05T10:34:11.101Z",
+  "_version": 1785926065878,
+  "_updated": "2026-08-05T10:34:25.878Z",
   "stones": [
     {
       "id": 200,
@@ -3673,13 +3673,13 @@
     },
     {
       "id": 5073,
-      "name": "Logo Charm Rose Gold without Diamonds (mm)",
-      "thai": "Logo โรสโกล ไม่มีเพชร (8mm)",
+      "name": "Logo Charm Rose Gold without Diamonds (4mm)",
+      "thai": "Logo โรสโกล ไม่มีเพชร (4mm)",
       "type": "logo",
       "metal": "rosegold",
-      "size": 8,
-      "w": 8,
-      "h": 8,
+      "size": 4,
+      "w": 4,
+      "h": 4,
       "price": 500,
       "prop": "",
       "gradient": [
@@ -3689,7 +3689,9 @@
       "hidden": false,
       "preorder": false,
       "freeQty": 1,
-      "tierPrice": 500
+      "tierPrice": 500,
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5074,
