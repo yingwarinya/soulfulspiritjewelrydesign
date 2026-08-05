@@ -1,6 +1,6 @@
 {
-  "_version": 1785925963640,
-  "_updated": "2026-08-05T10:32:43.640Z",
+  "_version": 1785925991236,
+  "_updated": "2026-08-05T10:33:11.236Z",
   "stones": [
     {
       "id": 200,
@@ -3728,21 +3728,6 @@
       "tierPrice": 500,
       "unlimitedStock": true,
       "stock": null
-    },
-    {
-      "id": 1,
-      "type": "logo",
-      "name": "Logo Charm Silver with Diamonds (6mm)",
-      "thai": "โลโก้ชาร์ม Silver",
-      "size": 6,
-      "price": 500,
-      "freeQty": 1,
-      "metal": "silver",
-      "gradient": [
-        "#d8d8d8",
-        "#a0a0a0"
-      ],
-      "hidden": false
     },
     {
       "id": 5077,
