@@ -1,6 +1,6 @@
 {
-  "_version": 1785925839534,
-  "_updated": "2026-08-05T10:30:39.534Z",
+  "_version": 1785925907863,
+  "_updated": "2026-08-05T10:31:47.863Z",
   "stones": [
     {
       "id": 200,
@@ -1968,8 +1968,7 @@
         "#cf8797"
       ],
       "unlimitedStock": true,
-      "stock": null,
-      "n2Surcharge": 0
+      "stock": null
     },
     {
       "id": 280,
@@ -1991,8 +1990,8 @@
       ],
       "hidden": false,
       "gradient": [
-        "#ffecff",
-        "#d0b0e6"
+        "#ffffff",
+        "#e6e6e6"
       ],
       "n2Surcharge": 0,
       "unlimitedStock": true,
@@ -2020,8 +2019,8 @@
       ],
       "hidden": false,
       "gradient": [
-        "#ffc3d3",
-        "#cf8797"
+        "#ffe6f6",
+        "#e6aaba"
       ],
       "unlimitedStock": true,
       "stock": null
@@ -2054,9 +2053,9 @@
       "thai": "Logo เงิน มีเพขร (6mm)",
       "type": "logo",
       "metal": "silver",
-      "size": 6,
-      "w": 6,
-      "h": 6,
+      "size": 4,
+      "w": 4,
+      "h": 4,
       "price": 500,
       "prop": "",
       "gradient": [
@@ -2066,7 +2065,9 @@
       "hidden": false,
       "preorder": false,
       "freeQty": 1,
-      "tierPrice": 500
+      "tierPrice": 500,
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 152,
@@ -2371,11 +2372,11 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้ Tree of Life"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5005,
@@ -2394,11 +2395,11 @@
         "#ecc363",
         "#b08727"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้ Tree of Life"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5006,
@@ -2480,11 +2481,11 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้องค์เทพ"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5010,
@@ -2665,11 +2666,11 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้ Yin Yang"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5022,
@@ -2688,11 +2689,11 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้ Yin Yang"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5023,
@@ -3276,8 +3277,8 @@
       "group": [
         "จี้ Clover"
       ],
-      "stock": null,
-      "unlimitedStock": true
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5054,
@@ -4101,11 +4102,11 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้องค์เทพ"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5097,
@@ -4124,11 +4125,11 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true,
       "group": [
         "จี้องค์เทพ"
-      ]
+      ],
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5098,
@@ -4812,8 +4813,8 @@
         "#ebebeb",
         "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5133,
@@ -4853,11 +4854,11 @@
       "preorder": false,
       "hidden": false,
       "gradient": [
-        "#e6e6e6",
-        "#b4b4b4"
+        "#ebebeb",
+        "#afafaf"
       ],
-      "stock": null,
-      "unlimitedStock": true
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5135,
@@ -4879,8 +4880,8 @@
         "#ecc363",
         "#b08727"
       ],
-      "stock": null,
-      "unlimitedStock": true
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5136,
