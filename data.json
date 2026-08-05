@@ -1,6 +1,6 @@
 {
-  "_version": 1785925929083,
-  "_updated": "2026-08-05T10:32:09.083Z",
+  "_version": 1785925940411,
+  "_updated": "2026-08-05T10:32:20.411Z",
   "stones": [
     {
       "id": 200,
@@ -3687,13 +3687,13 @@
     },
     {
       "id": 5074,
-      "name": "Logo Charm Silver without Diamonds (6mm)",
-      "thai": "Logo เงิน ไม่มีเพชร (6mm)",
+      "name": "Logo Charm Silver without Diamonds (4mm)",
+      "thai": "Logo เงิน ไม่มีเพชร (4mm)",
       "type": "logo",
       "metal": "silver",
-      "size": 6,
-      "w": 6,
-      "h": 6,
+      "size": 4,
+      "w": 4,
+      "h": 4,
       "price": 500,
       "prop": "",
       "gradient": [
@@ -3703,7 +3703,9 @@
       "hidden": false,
       "preorder": false,
       "freeQty": 1,
-      "tierPrice": 500
+      "tierPrice": 500,
+      "unlimitedStock": true,
+      "stock": null
     },
     {
       "id": 5075,
